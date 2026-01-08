@@ -1,0 +1,1 @@
+JJ - Just Job is a full-featured recruitment ecosystem that supports multi-level access control (administrator, employer, and applicant). It includes a robust filtering system for both job postings and resumes, ensuring seamless matching between candidates and opportunities. To get started, simply set up your PostgreSQL database and run the application from the main file.
