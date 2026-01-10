@@ -1,1 +1,2 @@
 JJ - Just Job is a full-featured recruitment ecosystem that supports multi-level access control (administrator, employer, and applicant). It includes a robust filtering system for both job postings and resumes, ensuring seamless matching between candidates and opportunities.
+To start service in docker container rename .env.example to .env and fill out fields, in DB_HOST enter db than enter in terminal: docker compose -p jj-web up --build
