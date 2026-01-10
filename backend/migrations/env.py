@@ -19,9 +19,9 @@ if config.config_file_name is not None:
 #from os.path import abspath, dirname
 #sys.path.insert(0, dirname(dirname(abspath(__file__))))
 
-from database.config import settings
-from database.database import Base
-from models.models import UserModel
+from backend.database.config import settings
+from backend.database.database import Base
+from backend.models.models import UserModel
 
 config.set_main_option('sqlalchemy.url', f"{settings.database}?async_fallback=True")
 

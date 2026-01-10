@@ -9,8 +9,8 @@ psycopg[binary]
 databases>=0.9.0
 authx
 python-jose[cryptography]
+bcrypt==4.0.1
 passlib[bcrypt]
-bcrypt
 cryptography
 redis
 httpx
