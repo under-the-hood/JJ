@@ -30,7 +30,7 @@ async def check_admin(session: session_dep, admin_id: int = Depends(get_user_tok
     return current_admin
 
 
-async def check_user(session: session_dep, user_id: int = Depends(get_user_token)):
+async def check_user(session: session_dep, user_id: int):
 
     query = await session.execute(select(UserModel).where(UserModel.id == user_id))
     current_user = query.scalar_one_or_none()
