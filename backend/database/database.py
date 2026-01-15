@@ -1,4 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from typing import Annotated
 from fastapi import Depends
@@ -6,7 +7,7 @@ from fastapi import Depends
 from backend.database.config import settings
 
 
-engine = create_async_engine(settings.database, future=True, echo=False)
+engine = create_async_engine(settings.database, future=True, echo=False, poolclass=NullPool)
 
 new_session = async_sessionmaker(autoflush=False, expire_on_commit=False, bind=engine)
 
