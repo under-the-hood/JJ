@@ -27,9 +27,9 @@ class UserModel(Base):
     role: Mapped[Role]
     name: Mapped[str]
 
-    vacancy = relationship('VacancyModel', back_populates='user')
-    resume = relationship('ResumeModel', back_populates='user')
-    responses = relationship('ResponseModel', back_populates='user')
+    vacancy = relationship('VacancyModel', back_populates='user', cascade="all, delete-orphan", passive_deletes=True)
+    resume = relationship('ResumeModel', back_populates='user', cascade="all, delete-orphan", passive_deletes=True)
+    responses = relationship('ResponseModel', back_populates='user', cascade="all, delete-orphan", passive_deletes=True)
 
 
 class VacancyModel(Base):
@@ -68,7 +68,7 @@ class ResponseModel(Base):
     resume_id: Mapped[int] = mapped_column(ForeignKey('resumes.id', ondelete='CASCADE'))
     vacancy_id: Mapped[int] = mapped_column(ForeignKey('vacancies.id', ondelete='CASCADE'))
     cover_letter: Mapped[str | None] = mapped_column(default=None)
-    status: Mapped[ResponseStatus]
+    status: Mapped[ResponseStatus] = mapped_column(default="send")
 
     user = relationship('UserModel', back_populates='responses')
     vacancy = relationship('VacancyModel', back_populates='responses')

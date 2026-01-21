@@ -6,7 +6,7 @@ from backend.database.database import session_dep
 from backend.models.models import UserModel, Role, VacancyModel, ResumeModel
 
 
-async def get_user_token(token: str = Cookie):
+async def get_user_token(token: str = Cookie()):
 
     try:
         payload = security._decode_token(token)
@@ -30,7 +30,18 @@ async def check_admin(session: session_dep, admin_id: int = Depends(get_user_tok
     return current_admin
 
 
-async def check_user(session: session_dep, user_id: int):
+async def check_user(session: session_dep, user_id: int = Depends(get_user_token)):
+
+    query = await session.execute(select(UserModel).where(UserModel.id == user_id))
+    current_user = query.scalar_one_or_none()
+
+    if not current_user:
+        raise HTTPException(status_code=404, detail='User not found')
+
+    return current_user
+
+
+async def check_user_for_edit_by_admib(session: session_dep, user_id: int):
 
     query = await session.execute(select(UserModel).where(UserModel.id == user_id))
     current_user = query.scalar_one_or_none()

@@ -1,9 +1,13 @@
 from pydantic import Field, BaseModel
+from enum import Enum
 
-from backend.schemas.user_schema import Role
+class RoleSchema(str, Enum):
+    tenant = 'tenant'
+    applicant = 'applicant' 
+    admin = "admin"   
 
 class EditUserNameByAdmin(BaseModel):
     new_name: str = Field(min_length=3, max_length=15, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
 
-class UpdateUserRole(BaseModel):
-    new_role: Role
+class UpdateUserRoleByAdmin(BaseModel):
+    new_role: RoleSchema

@@ -42,7 +42,7 @@ async def search_resumes(session: session_dep, data: SearchResumesSchema = Depen
     return resumes
 
 
-@router.get('/search/search_vacancy', tags=['Search'])
+@router.get('/search/search_vacancies', tags=['Search'])
 async def search_vacancy(session: session_dep, data: SearchVacancySchema = Depends(), user_id: int = Depends(get_user_token)):
 
     query_user = await session.execute(select(UserModel).where(UserModel.id == user_id))

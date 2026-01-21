@@ -34,10 +34,10 @@ async def apply_to_vacancy(data: ResponseSchema, session: session_dep, current_v
     session.add(response)
     await session.commit()
 
-    return {'success': True, 'message': 'You responded to vacancy'}
+    return {'success': True, 'message': 'You responded to vacancy', "Response": response}
 
 
-@router.get('/response/{vacancy_id}/get_responses/', response_model=list[ResponseReadSchema], tags=['Response'])
+@router.get('/response/{vacancy_id}/get_responses', response_model=list[ResponseReadSchema], tags=['Response'])
 async def get_responses(session: session_dep, current_vacancy: VacancyModel = Depends(check_vacancy), current_user: UserModel = Depends(check_user)):
 
     if current_user.role != Role.tenant:

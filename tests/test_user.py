@@ -1,34 +1,58 @@
 import pytest
-from sqlalchemy import select
-
-from backend.models.models import UserModel
-from tests.conftest import ac
 
 
 @pytest.mark.anyio
-async def test_create_user(ac, get_test_session):
-    new_user = {
-        "email": "user@example.com",
-        "name": "artyom",
-        "password": "12345678",
-        "repeat_password": "12345678",
-        "role": "tenant"
-    }
+async def test_create_user(get_token_as_tenant):
+    assert get_token_as_tenant.headers.get("Authorization") is not None
 
-    response = await ac.post('/user/sign_up', json=new_user)
+
+@pytest.mark.anyio
+async def test_get_info_about_user(get_token_as_tenant):
+
+    response = await get_token_as_tenant.get("/user/get_info")
 
     assert response.status_code == 200
-    assert response.json()['success'] is True
 
-    query = await get_test_session.execute(select(UserModel).where(UserModel.email == "user@example.com"))
-    current_user = query.scalar_one_or_none()
+    data = response.json()
 
-    assert current_user is not None
+    assert data["info"]["email"] == "tenant_account@example.com"
+    assert isinstance(data["info"]["id"], int)
 
 
-    login_res = await ac.post('/user/sign_in', json={
-        'email': new_user["email"],
-        'password': new_user["password"]
-    })
+@pytest.mark.anyio
+async def test_edit_password(get_token_as_tenant):
 
-    assert login_res.status_code == 200
+    new_password = {
+        "old_password": "12345678",
+        "new_password": "12345678",
+        "repeat_new_password": "12345678"
+    }
+
+    response = await get_token_as_tenant.put("/user/edit_password", json=new_password)
+
+    assert response.status_code == 200
+
+
+@pytest.mark.anyio
+async def test_edit_name(get_token_as_tenant):
+        
+    new_name = {
+        "new_name": "Andrey",
+        "password": "12345678"
+    }
+
+    response = await get_token_as_tenant.put("/user/edit_name", json=new_name)
+
+    assert response.status_code == 200
+
+
+@pytest.mark.order(-1)
+async def test_delete_user(get_token_as_tenant):
+
+    confirm_password = {
+        "password": "12345678"
+    }
+
+    response = await get_token_as_tenant.request("DELETE", "/user/delete_user", json=confirm_password)
+
+    assert response.status_code == 200

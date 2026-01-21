@@ -1,10 +1,12 @@
 import os
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 class Settings(BaseSettings):
-    MODE: str
+    MODE: str = "DEV"
 
     DB_HOST: str
     DB_PORT: int
@@ -16,6 +18,16 @@ class Settings(BaseSettings):
     def database(self):
         return f'postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.POSTGRES_DB}'
 
-    model_config = SettingsConfigDict(env_file=(os.path.join(current_dir, '.dev.env'), os.path.join(current_dir, '.test.env')), extra='ignore')
+    @classmethod
+    def load_settings(cls):
+        mode = os.getenv("MODE", "DEV").upper()
+        
+        if mode == "TEST":
+            env_file = ".test.env"
+        else:
+            env_file = ".dev.env"
+            
+        return cls(_env_file=os.path.join(current_dir, "..", env_file))
 
-settings = Settings()
+
+settings = Settings.load_settings()

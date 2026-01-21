@@ -23,7 +23,7 @@ async def create_resume(data: CreateResumeSchema, session: session_dep, current_
     session.add(new_resume)
     await session.commit()
 
-    return {'success': True, 'message': 'Resume was created'}
+    return {'success': True, 'message': 'Resume was created', "Resume": new_resume}
 
 
 @router.get('/resume/get_all_my_resumes', tags=['Resume'])

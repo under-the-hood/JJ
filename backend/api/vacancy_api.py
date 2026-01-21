@@ -34,7 +34,7 @@ async def get_all_my_vacancies(session: session_dep, current_user: int = Depends
     return {'success': True, 'Your vacancies': all_vacancies}
 
 
-@router.put('/resume/edit_vacancy/{vacancy_id}', tags=['Vacancy'])
+@router.put('/vacancy/edit_vacancy/{vacancy_id}', tags=['Vacancy'])
 async def edit_vacancy(session: session_dep, current_vacancy: int = Depends(check_vacancy), data: EditVacancySchema = Depends(), current_user: int = Depends(check_user)):
 
     if current_user.role != Role.tenant:
