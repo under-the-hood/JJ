@@ -5,7 +5,9 @@ from backend.database.database import session_dep
 from backend.database.hash import hashing_password, pwd_context, security, config
 from backend.models.models import UserModel
 from backend.schemas.user_schema import CreateUserSchema, LoginUserSchema, EditUserPasswordSchema, EditUserNameSchema, DeleteUserSchema
-from backend.dependencies import get_user_token, check_user
+from backend.dependencies import check_user
+from backend.database.limiter import rate_limiter_factory, rate_limiter_factory_by_ip
+
 
 
 router = APIRouter()
@@ -38,6 +40,8 @@ async def sign_up(data: CreateUserSchema, session: session_dep):
     return {'success': True, 'message': 'Account was created'}
 
 
+login_limit = rate_limiter_factory_by_ip("/user/sign_in", 5, 60)
+
 @router.post('/user/sign_in', tags=['Users'])
 async def sign_in(data: LoginUserSchema, session: session_dep, response: Response):
 
@@ -65,7 +69,9 @@ async def get_info(session: session_dep, current_user: int = Depends(check_user)
                                       'role': current_user.role}}
 
 
-@router.put('/user/edit_password', tags=['Users'])
+password_limit = rate_limiter_factory("/user/edit_password", 5, 60)
+
+@router.put('/user/edit_password', tags=['Users'], dependencies=[Depends(password_limit)])
 async def edit_password(data: EditUserPasswordSchema, session: session_dep, current_user: int = Depends(check_user)):
 
     if not pwd_context.verify(data.old_password, current_user.password):
@@ -95,6 +101,8 @@ async def edit_name(data: EditUserNameSchema, session: session_dep, current_user
 
     return {'success': True, 'message': 'Name was changed'}
 
+
+delete_limit = rate_limiter_factory("/user/delete_user", 5, 60)
 
 @router.delete('/user/delete_user', tags=['Users'])
 async def delete_user(data: DeleteUserSchema, session: session_dep, current_user: int = Depends(check_user)):

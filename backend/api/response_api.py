@@ -4,14 +4,17 @@ from sqlalchemy.orm import joinedload
 
 from backend.database.database import session_dep
 from backend.dependencies import check_user, check_vacancy, check_resume
-from backend.models.models import UserModel, VacancyModel, ResumeModel, ResponseModel, Role, ResponseStatus
+from backend.models.models import UserModel, VacancyModel, ResumeModel, ResponseModel, Role
 from backend.schemas.response_schema import ResponseSchema, ResponseReadSchema, SetStatusSchema
+from backend.database.limiter import rate_limiter_factory
 
 
 router = APIRouter()
 
 
-@router.post('/response/apply_to_vacancy/{vacancy_id}', tags=['Response'])
+response_limiter = rate_limiter_factory("/response/apply_to_vacancy/{vacancy_id}", 5, 60)
+
+@router.post('/response/apply_to_vacancy/{vacancy_id}', tags=['Response'], dependencies=[Depends(response_limiter)])
 async def apply_to_vacancy(data: ResponseSchema, session: session_dep, current_vacancy: VacancyModel = Depends(check_vacancy), current_resume: ResumeModel = Depends(check_resume), current_user: UserModel = Depends(check_user)):
 
     if current_user.id != current_resume.applicant_id:
@@ -60,7 +63,9 @@ async def get_responses(session: session_dep, current_vacancy: VacancyModel = De
     return all_resumes
 
 
-@router.put('/response/set_status/{response_id}', tags=['Response'])
+set_status_limiter = rate_limiter_factory("/response/set_status/{response_id}", 5, 60)
+
+@router.put('/response/set_status/{response_id}', tags=['Response'], dependencies=[Depends(set_status_limiter)])
 async def set_status(response_id: int, data: SetStatusSchema, session: session_dep, current_user: int = Depends(check_user)):
 
     if current_user.role != Role.tenant:

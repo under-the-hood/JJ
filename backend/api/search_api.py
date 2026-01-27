@@ -6,12 +6,15 @@ from backend.dependencies import get_user_token
 from backend.database.database import session_dep
 from backend.models.models import ResumeModel, UserModel, Role, VacancyModel
 from backend.schemas.search_schema import SearchResumesSchema, SearchVacancySchema
+from backend.database.limiter import rate_limiter_factory
 
 
 router = APIRouter()
 
 
-@router.get('/search/search_resumes', tags=['Search'])
+search_resumes_limiter = rate_limiter_factory("/search/search_resumes", 5, 60)
+
+@router.get('/search/search_resumes', tags=['Search'], dependencies=[Depends(search_resumes_limiter)])
 async def search_resumes(session: session_dep, data: SearchResumesSchema = Depends(), user_id: int = Depends(get_user_token)):
 
     query_user = await session.execute(select(UserModel).where(UserModel.id == user_id))
@@ -42,7 +45,9 @@ async def search_resumes(session: session_dep, data: SearchResumesSchema = Depen
     return resumes
 
 
-@router.get('/search/search_vacancies', tags=['Search'])
+search_vacancy_limiter = rate_limiter_factory("/search/search_vacancies", 5, 60)
+
+@router.get('/search/search_vacancies', tags=['Search'], dependencies=[Depends(search_vacancy_limiter)])
 async def search_vacancy(session: session_dep, data: SearchVacancySchema = Depends(), user_id: int = Depends(get_user_token)):
 
     query_user = await session.execute(select(UserModel).where(UserModel.id == user_id))

@@ -1,13 +1,16 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy import text, select
+from sqlalchemy import text
+from redis.asyncio import Redis
 
 from main import app
 from backend.database.database import Base, engine, get_session
 from backend.database.config import settings
 from backend.database.hash import config
-from backend.models.models import ResumeModel, VacancyModel, ResponseModel
+from backend.api.response_api import set_status_limiter, response_limiter
+from backend.api.user_api import password_limit, delete_limit
+from backend.api.search_api import search_vacancy_limiter
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -36,6 +39,20 @@ async def get_test_session():
         yield session
 
         app.dependency_overrides.clear()
+
+
+@pytest.fixture(scope='session', autouse=True)
+async def disable_all_limits():
+    skip = lambda: None
+
+    limiters = [password_limit, delete_limit, set_status_limiter, response_limiter, search_vacancy_limiter]
+
+    for lim in limiters:
+        app.dependency_overrides[lim] = skip
+
+    yield
+
+    app.dependency_overrides.clear() 
 
 
 @pytest.fixture

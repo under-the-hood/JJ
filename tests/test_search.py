@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.anyio
-async def test_resume_search(get_token_as_tenant):
+async def test_search_resumes(get_token_as_tenant):
 
     response = await get_token_as_tenant.get("/search/search_resumes")
 
@@ -18,7 +18,7 @@ async def test_resume_search(get_token_as_tenant):
 
 
 @pytest.mark.anyio
-async def test_vacancy_search(get_token_as_applicant):
+async def test_search_vacancies(get_token_as_applicant):
 
     response = await get_token_as_applicant.get("/search/search_vacancies")
 
