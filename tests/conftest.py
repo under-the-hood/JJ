@@ -9,7 +9,7 @@ from backend.database.database import Base, engine, get_session
 from backend.database.config import settings
 from backend.database.hash import config
 from backend.api.response_api import set_status_limiter, response_limiter
-from backend.api.user_api import password_limit, delete_limit
+from backend.api.user_api import password_limit, delete_limit, login_limit
 from backend.api.search_api import search_vacancy_limiter
 
 
@@ -45,7 +45,7 @@ async def get_test_session():
 async def disable_all_limits():
     skip = lambda: None
 
-    limiters = [password_limit, delete_limit, set_status_limiter, response_limiter, search_vacancy_limiter]
+    limiters = [login_limit, password_limit, delete_limit, set_status_limiter, response_limiter, search_vacancy_limiter]
 
     for lim in limiters:
         app.dependency_overrides[lim] = skip

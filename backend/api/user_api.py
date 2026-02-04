@@ -42,20 +42,22 @@ async def sign_up(data: CreateUserSchema, session: session_dep):
 
 login_limit = rate_limiter_factory_by_ip("/user/sign_in", 5, 60)
 
-@router.post('/user/sign_in', tags=['Users'])
+@router.post('/user/sign_in', tags=['Users'], dependencies=[Depends(login_limit)])
 async def sign_in(data: LoginUserSchema, session: session_dep, response: Response):
 
     query = await session.execute(select(UserModel).where(UserModel.email == data.email))
     current_user = query.scalar_one_or_none()
 
+    error = HTTPException(status_code=401, detail="Incorrect email or password")
+
     if not current_user:
-        raise HTTPException(status_code=404, detail='User not found')
+        raise error
 
     if not pwd_context.verify(data.password, current_user.password):
-        raise HTTPException(status_code=400, detail='Incorrect password')
+        raise error
 
     token = security.create_access_token(uid=str(current_user.id))
-    response.set_cookie(key=config.JWT_ACCESS_COOKIE_NAME, value=token, httponly=True, samesite='Lax', max_age=60*60)
+    security.set_access_cookies(token, response=response)
 
     return {'success': True, 'message': 'Login succesfull', 'token': token}
 

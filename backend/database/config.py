@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
+    KEY_FOR_JWT: str
 
     @property
     def database(self):
