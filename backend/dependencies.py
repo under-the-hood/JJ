@@ -1,5 +1,9 @@
 from fastapi import Depends, Cookie, HTTPException
 from sqlalchemy import select
+import hashlib
+from typing import Any, Callable, Dict, Optional, Tuple
+from starlette.requests import Request
+from starlette.responses import Response
 
 from backend.database.hash import security
 from backend.database.database import session_dep
@@ -41,7 +45,7 @@ async def check_user(session: session_dep, user_id: int = Depends(get_user_token
     return current_user
 
 
-async def check_user_for_edit_by_admib(session: session_dep, user_id: int):
+async def check_user_for_edit_by_admin(session: session_dep, user_id: int):
 
     query = await session.execute(select(UserModel).where(UserModel.id == user_id))
     current_user = query.scalar_one_or_none()
@@ -72,3 +76,9 @@ async def check_resume(session: session_dep, resume_id: int):
         raise HTTPException(status_code=404, detail='Resume not found')
 
     return current_resume
+
+
+def get_cache_key(resource: str, *args) -> str:
+    parts = ["cache", resource] + [str(arg) for arg in args if arg is not None]
+    
+    return ":".join(parts)

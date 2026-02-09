@@ -6,10 +6,7 @@ from fastapi import HTTPException, Depends, Request
 
 from backend.dependencies import get_user_token
 from backend.models.models import UserModel
-
-
-def get_redis() -> Redis:
-    return Redis(host="localhost", port=6379)
+from backend.database.redis_database import get_redis
 
 
 class RateLimiter:
@@ -39,8 +36,8 @@ class RateLimiter:
         return False
 
 
-def get_rate_limiter() -> RateLimiter:
-    return RateLimiter(get_redis())
+def get_rate_limiter(redis: Annotated[Redis, Depends(get_redis)]):
+    return RateLimiter(redis)
 
 
 def rate_limiter_factory(endpoint: str, max_requests: int, window_seconds: int):

@@ -1,7 +1,4 @@
 import pytest
-from sqlalchemy import select
-
-from backend.models.models import UserModel
 
 
 #Test admin role for work with users

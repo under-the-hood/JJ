@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, func
-
+from fastapi_cache.decorator import cache
 
 from backend.database.database import session_dep
-from backend.dependencies import check_admin, check_vacancy, check_resume, check_user_for_edit_by_admib
+from backend.dependencies import check_admin, check_vacancy, check_resume, check_user_for_edit_by_admin
 from backend.models.models import UserModel, Role, VacancyModel, ResumeModel, ResponseModel
 from backend.schemas.admin_schema import EditUserNameByAdmin, UpdateUserRoleByAdmin
 from backend.schemas.vacancy_schema import EditVacancySchema
@@ -29,7 +29,7 @@ async def get_users(session: session_dep, limit: int = 10, offset: int = 0, admi
 
 
 @router.put('/admin/edit_user_name/{user_id}', tags=['Admin'])
-async def edit_user_name(data: EditUserNameByAdmin, session: session_dep, current_user: UserModel = Depends(check_user_for_edit_by_admib), admin: int = Depends(check_admin)):
+async def edit_user_name(data: EditUserNameByAdmin, session: session_dep, current_user: UserModel = Depends(check_user_for_edit_by_admin), admin: int = Depends(check_admin)):
 
     if current_user.id == admin.id:
         raise HTTPException(status_code=403, detail='You can not edit your own admin account')
@@ -46,7 +46,7 @@ async def edit_user_name(data: EditUserNameByAdmin, session: session_dep, curren
 
 
 @router.put('/admin/update_user_role/{user_id}', tags=['Admin'])
-async def update_user_role(session: session_dep, data: UpdateUserRoleByAdmin, current_user: UserModel = Depends(check_user_for_edit_by_admib), admin: int = Depends(check_admin)):
+async def update_user_role(session: session_dep, data: UpdateUserRoleByAdmin, current_user: UserModel = Depends(check_user_for_edit_by_admin), admin: int = Depends(check_admin)):
 
     if current_user.id == admin.id:
         raise HTTPException(status_code=403, detail='You can not update your own role')
@@ -60,7 +60,7 @@ async def update_user_role(session: session_dep, data: UpdateUserRoleByAdmin, cu
 
 
 @router.delete('/admin/delete_user/{user_id}', tags=['Admin'])
-async def delete_user(session: session_dep, current_user: UserModel = Depends(check_user_for_edit_by_admib), admin: int = Depends(check_admin)):
+async def delete_user(session: session_dep, current_user: UserModel = Depends(check_user_for_edit_by_admin), admin: int = Depends(check_admin)):
 
     if current_user.id == admin.id:
         raise HTTPException(status_code=403, detail='You can not delete your own admin account')

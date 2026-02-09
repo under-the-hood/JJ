@@ -1,17 +1,19 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import select
+from redis.asyncio import Redis
 
 from backend.models.models import UserModel, ResumeModel, Role
 from backend.database.database import session_dep
 from backend.schemas.resume_schema import CreateResumeSchema, EditResumeSchema
 from backend.dependencies import check_user, check_resume
+from backend.database.redis_database import get_redis
 
 
 router = APIRouter()
 
 
 @router.post('/resume/create_resume', tags=['Resume'])
-async def create_resume(data: CreateResumeSchema, session: session_dep, current_user: UserModel = Depends(check_user)):
+async def create_resume(data: CreateResumeSchema, session: session_dep, current_user: UserModel = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     if current_user.role != Role.applicant:
         raise HTTPException(status_code=403, detail='Only applicant can make resumes')
@@ -22,6 +24,8 @@ async def create_resume(data: CreateResumeSchema, session: session_dep, current_
 
     session.add(new_resume)
     await session.commit()
+
+    await redis.incr("resume_version")
 
     return {'success': True, 'message': 'Resume was created', "Resume": new_resume}
 
@@ -36,7 +40,7 @@ async def get_all_resumes(session: session_dep, current_user: UserModel = Depend
 
 
 @router.put('/resume/edit_resume/{resume_id}', tags=['Resume'])
-async def edit_resume(session: session_dep, current_resume: ResumeModel = Depends(check_resume), data: EditResumeSchema = Depends(), current_user: UserModel = Depends(check_user)):
+async def edit_resume(session: session_dep, current_resume: ResumeModel = Depends(check_resume), data: EditResumeSchema = Depends(), current_user: UserModel = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     if current_user.role != Role.applicant:
         raise HTTPException(status_code=403, detail='Only applicant can edit resume')
@@ -59,11 +63,13 @@ async def edit_resume(session: session_dep, current_resume: ResumeModel = Depend
     await session.commit()
     await session.refresh(current_resume)
 
+    await redis.incr("resume_version")
+
     return {'success': True, 'message': 'Resume was edited'}
 
 
 @router.delete('/resume/delete_resume/{resume_id}', tags=['Resume'])
-async def delete_resume(session: session_dep, current_resume: ResumeModel = Depends(check_resume), current_user: UserModel = Depends(check_user)):
+async def delete_resume(session: session_dep, current_resume: ResumeModel = Depends(check_resume), current_user: UserModel = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     if current_user.role != Role.applicant:
         raise HTTPException(status_code=403, detail='Only applicant can edit resumes')
@@ -73,5 +79,7 @@ async def delete_resume(session: session_dep, current_resume: ResumeModel = Depe
 
     await session.delete(current_resume)
     await session.commit()
+
+    await redis.incr("resume_version")
 
     return {'success': True, 'message': 'Resume was deleted'}

@@ -44,6 +44,15 @@ class VacancyModel(Base):
     user = relationship('UserModel', back_populates='vacancy')
     responses = relationship('ResponseModel', back_populates='vacancy')
 
+    def vacancies_to_dict(self):
+        return {
+            "id": self.id,
+            "tenant_id": self.tenant_id,
+            "title": self.title,
+            "compensation": self.compensation,
+            "city": self.city
+        }
+
 
 class ResumeModel(Base):
     __tablename__ = 'resumes'
@@ -58,6 +67,16 @@ class ResumeModel(Base):
 
     user = relationship('UserModel', back_populates='resume')
     responses = relationship('ResponseModel', back_populates='resume')
+
+    def resumes_to_dict(self):
+        return {
+            "id": self.id,
+            "applicant_id": self.applicant_id,
+            "title": self.title,
+            "about": self.about,
+            "stack": self.stack,
+            "city": self.city
+        }
 
 
 class ResponseModel(Base):

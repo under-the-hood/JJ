@@ -17,3 +17,5 @@ httpx
 python-dotenv
 tortoise-orm
 email-validator>=2.0.0
+redis
+redis_om

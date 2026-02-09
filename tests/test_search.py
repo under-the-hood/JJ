@@ -9,6 +9,7 @@ async def test_search_resumes(get_token_as_tenant):
     assert response.status_code == 200
 
     data = response.json()
+    data = data["resumes"]
 
     assert isinstance(data, list)
     assert len(data) > 0
@@ -25,6 +26,7 @@ async def test_search_vacancies(get_token_as_applicant):
     assert response.status_code == 200
 
     data = response.json()
+    data = data["vacancies"]
 
     assert isinstance(data, list)
     assert len(data) > 0

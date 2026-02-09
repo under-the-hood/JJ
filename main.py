@@ -2,7 +2,6 @@ from fastapi import FastAPI
 import uvicorn
 
 from backend.router import main_router
-from backend.database.database import engine
 
 
 app = FastAPI()

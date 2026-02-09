@@ -1,6 +1,5 @@
 import os
-from pathlib import Path
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,6 +12,10 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
+
+    REDIS_HOST: str
+    REDIS_PORT: int
+
     KEY_FOR_JWT: str
 
     @property
@@ -25,6 +28,8 @@ class Settings(BaseSettings):
         
         if mode == "TEST":
             env_file = ".test.env"
+        elif mode == "PROD":
+            env_file = ".prod.env"
         else:
             env_file = ".dev.env"
             

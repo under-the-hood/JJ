@@ -1,12 +1,15 @@
-from fastapi import APIRouter, HTTPException, Cookie, Response, Depends
+from fastapi import APIRouter, HTTPException, Response, Depends
 from sqlalchemy import select
+from redis.asyncio import Redis
+import json
 
 from backend.database.database import session_dep
-from backend.database.hash import hashing_password, pwd_context, security, config
-from backend.models.models import UserModel
+from backend.database.hash import hashing_password, pwd_context, security
+from backend.models.models import UserModel, ResumeModel
 from backend.schemas.user_schema import CreateUserSchema, LoginUserSchema, EditUserPasswordSchema, EditUserNameSchema, DeleteUserSchema
-from backend.dependencies import check_user
+from backend.dependencies import check_user, get_cache_key
 from backend.database.limiter import rate_limiter_factory, rate_limiter_factory_by_ip
+from backend.database.redis_database import get_redis
 
 
 
@@ -63,18 +66,30 @@ async def sign_in(data: LoginUserSchema, session: session_dep, response: Respons
 
 
 @router.get('/user/get_info', tags=['Users'])
-async def get_info(session: session_dep, current_user: int = Depends(check_user)):
+async def get_info(current_user: UserModel = Depends(check_user), redis: Redis = Depends(get_redis)):
 
-    return {'success': True, 'info': {'id': current_user.id,
-                                      'email': current_user.email,
-                                      'name': current_user.name,
-                                      'role': current_user.role}}
+    key = get_cache_key("user", current_user.id, "profile")
+    cached_info = await redis.get(key)
+
+    #If info about info have in redis, return cached info
+    if cached_info:
+        return {"success": True, "info": json.loads(cached_info), "source": "cache"}
+
+    user_info = {'id': current_user.id,
+                    'email': current_user.email,
+                    'name': current_user.name,
+                    'role': str(current_user.role)}
+    
+    #Else save info about user in cache on 1 hour
+    await redis.set(key, json.dumps(user_info), ex=3600)
+
+    return {"success": True, "info": user_info, "source": "db"}
 
 
 password_limit = rate_limiter_factory("/user/edit_password", 5, 60)
 
 @router.put('/user/edit_password', tags=['Users'], dependencies=[Depends(password_limit)])
-async def edit_password(data: EditUserPasswordSchema, session: session_dep, current_user: int = Depends(check_user)):
+async def edit_password(data: EditUserPasswordSchema, session: session_dep, current_user: UserModel = Depends(check_user)):
 
     if not pwd_context.verify(data.old_password, current_user.password):
         raise HTTPException(status_code=400, detail='Incorrect password')
@@ -91,7 +106,7 @@ async def edit_password(data: EditUserPasswordSchema, session: session_dep, curr
 
 
 @router.put('/user/edit_name', tags=['Users'])
-async def edit_name(data: EditUserNameSchema, session: session_dep, current_user: int = Depends(check_user)):
+async def edit_name(data: EditUserNameSchema, session: session_dep, current_user: UserModel = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     if not pwd_context.verify(data.password, current_user.password):
         raise HTTPException(status_code=400, detail='Incorrect password')
@@ -101,18 +116,25 @@ async def edit_name(data: EditUserNameSchema, session: session_dep, current_user
     await session.commit()
     await session.refresh(current_user)
 
+    #Delete cache
+    key = get_cache_key("user", current_user.id, "profile")
+    await redis.delete(key)
+
     return {'success': True, 'message': 'Name was changed'}
 
 
 delete_limit = rate_limiter_factory("/user/delete_user", 5, 60)
 
 @router.delete('/user/delete_user', tags=['Users'])
-async def delete_user(data: DeleteUserSchema, session: session_dep, current_user: int = Depends(check_user)):
+async def delete_user(data: DeleteUserSchema, session: session_dep, current_user: UserModel = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     if not pwd_context.verify(data.password, current_user.password):
         raise HTTPException(status_code=400, detail='Incorrect password')
 
     await session.delete(current_user)
     await session.commit()
+
+    key = get_cache_key("user", current_user.id, "profile")
+    await redis.delete(key)
 
     return {'success': True, 'message': 'Account was deleted'}

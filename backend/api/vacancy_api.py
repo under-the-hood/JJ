@@ -1,17 +1,19 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import select
+from redis.asyncio import Redis
 
-from backend.models.models import VacancyModel, UserModel, Role
+from backend.models.models import VacancyModel, Role
 from backend.schemas.vacancy_schema import CreateVacancySchema, EditVacancySchema
 from backend.database.database import session_dep
-from backend.dependencies import get_user_token, check_user, check_vacancy
+from backend.dependencies import check_user, check_vacancy
+from backend.database.redis_database import get_redis
 
 
 router = APIRouter()
 
 
 @router.post('/vacancy/create_vacancy', tags=['Vacancy'])
-async def create_vacancy(data: CreateVacancySchema, session: session_dep, current_user: int = Depends(check_user)):
+async def create_vacancy(data: CreateVacancySchema, session: session_dep, current_user: int = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     if current_user.role != Role.tenant:
         raise HTTPException(status_code=403, detail='Only tenants can make vacancies')
@@ -21,6 +23,8 @@ async def create_vacancy(data: CreateVacancySchema, session: session_dep, curren
 
     session.add(new_vacancy)
     await session.commit()
+
+    await redis.incr("vacancy_version")
 
     return {'success': True, 'message': 'Vacancy was created', 'Vacancy': new_vacancy}
 
@@ -35,10 +39,10 @@ async def get_all_my_vacancies(session: session_dep, current_user: int = Depends
 
 
 @router.put('/vacancy/edit_vacancy/{vacancy_id}', tags=['Vacancy'])
-async def edit_vacancy(session: session_dep, current_vacancy: int = Depends(check_vacancy), data: EditVacancySchema = Depends(), current_user: int = Depends(check_user)):
+async def edit_vacancy(session: session_dep, current_vacancy: int = Depends(check_vacancy), data: EditVacancySchema = Depends(), current_user: int = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     if current_user.role != Role.tenant:
-        raise HTTPException(status_code=403, detail='Only applicant can edit resume')
+        raise HTTPException(status_code=403, detail='Only applicant can edit vacancy')
 
     if current_user.id != current_vacancy.tenant_id:
         raise HTTPException(status_code=403, detail="It's not your resume")
@@ -55,11 +59,13 @@ async def edit_vacancy(session: session_dep, current_vacancy: int = Depends(chec
     await session.commit()
     await session.refresh(current_vacancy)
 
+    await redis.incr("vacancy_version")
+
     return {'success': True, 'message': 'Vacancy was edited'}
 
 
 @router.delete('/vacancy/delete_vacancy/{vacancy_id}', tags=['Vacancy'])
-async def delete_vacancy(session: session_dep, current_vacancy: int = Depends(check_vacancy), current_user: int = Depends(check_user)):
+async def delete_vacancy(session: session_dep, current_vacancy: int = Depends(check_vacancy), current_user: int = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     if current_user.role != Role.tenant:
         raise HTTPException(status_code=403, detail='Only tenants can delete vacancy')
@@ -69,5 +75,7 @@ async def delete_vacancy(session: session_dep, current_vacancy: int = Depends(ch
 
     await session.delete(current_vacancy)
     await session.commit()
+
+    await redis.incr("vacancy_version")
 
     return {'success': True, 'message': 'Vacancy was deleted'}

@@ -2,7 +2,7 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy import text
-from redis.asyncio import Redis
+import fakeredis.aioredis
 
 from main import app
 from backend.database.database import Base, engine, get_session
@@ -11,6 +11,7 @@ from backend.database.hash import config
 from backend.api.response_api import set_status_limiter, response_limiter
 from backend.api.user_api import password_limit, delete_limit, login_limit
 from backend.api.search_api import search_vacancy_limiter
+from backend.database.redis_database import get_redis
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -38,8 +39,6 @@ async def get_test_session():
         app.dependency_overrides[get_session] = lambda: session
         yield session
 
-        app.dependency_overrides.clear()
-
 
 @pytest.fixture(scope='session', autouse=True)
 async def disable_all_limits():
@@ -52,7 +51,24 @@ async def disable_all_limits():
 
     yield
 
-    app.dependency_overrides.clear() 
+
+@pytest.fixture(scope="session")
+async def test_redis_server():
+    return fakeredis.aioredis.FakeServer()
+
+@pytest.fixture(autouse=True)
+async def get_test_redis(test_redis_server):
+
+    test_redis_conn = fakeredis.aioredis.FakeRedis(
+        server=test_redis_server,
+        decode_responses=True)
+
+    app.dependency_overrides[get_redis] = lambda: test_redis_conn
+
+    yield test_redis_conn
+
+    await test_redis_conn.aclose()
+    app.dependency_overrides.pop(get_redis, None)
 
 
 @pytest.fixture
