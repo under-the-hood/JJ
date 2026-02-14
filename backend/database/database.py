@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from typing import Annotated
 from fastapi import Depends
 
-from backend.database.config import settings
+from backend.config import settings
 
 
 engine = create_async_engine(settings.database, future=True, echo=False, poolclass=NullPool)

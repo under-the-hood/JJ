@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, func
-from fastapi_cache.decorator import cache
 
 from backend.database.database import session_dep
 from backend.dependencies import check_admin, check_vacancy, check_resume, check_user_for_edit_by_admin
-from backend.models.models import UserModel, Role, VacancyModel, ResumeModel, ResponseModel
-from backend.schemas.admin_schema import EditUserNameByAdmin, UpdateUserRoleByAdmin
-from backend.schemas.vacancy_schema import EditVacancySchema
-from backend.schemas.resume_schema import EditResumeSchema
+from backend.models.response import Response
+from backend.models.user import User, Role
+from backend.models.vacancy import Vacancy
+from backend.models.resume import Resume
+from backend.schemas.admin import EditUserNameByAdmin, UpdateUserRoleByAdmin
+from backend.schemas.vacancy import EditVacancy
+from backend.schemas.resume import EditResume
 
 
 router = APIRouter()
@@ -17,10 +19,10 @@ router = APIRouter()
 @router.get('/admin/get_users', tags=['Admin'])
 async def get_users(session: session_dep, limit: int = 10, offset: int = 0, admin: int = Depends(check_admin)):
 
-    query = await session.execute(select(UserModel).limit(limit).offset(offset))
+    query = await session.execute(select(User).limit(limit).offset(offset))
     users = query.scalars().all()
 
-    quantity = await session.scalar(select(func.count(UserModel.id)))
+    quantity = await session.scalar(select(func.count(User.id)))
 
     return {
         'quantity of all users': quantity,
@@ -29,7 +31,7 @@ async def get_users(session: session_dep, limit: int = 10, offset: int = 0, admi
 
 
 @router.put('/admin/edit_user_name/{user_id}', tags=['Admin'])
-async def edit_user_name(data: EditUserNameByAdmin, session: session_dep, current_user: UserModel = Depends(check_user_for_edit_by_admin), admin: int = Depends(check_admin)):
+async def edit_user_name(data: EditUserNameByAdmin, session: session_dep, current_user: User = Depends(check_user_for_edit_by_admin), admin: int = Depends(check_admin)):
 
     if current_user.id == admin.id:
         raise HTTPException(status_code=403, detail='You can not edit your own admin account')
@@ -46,7 +48,7 @@ async def edit_user_name(data: EditUserNameByAdmin, session: session_dep, curren
 
 
 @router.put('/admin/update_user_role/{user_id}', tags=['Admin'])
-async def update_user_role(session: session_dep, data: UpdateUserRoleByAdmin, current_user: UserModel = Depends(check_user_for_edit_by_admin), admin: int = Depends(check_admin)):
+async def update_user_role(session: session_dep, data: UpdateUserRoleByAdmin, current_user: User = Depends(check_user_for_edit_by_admin), admin: int = Depends(check_admin)):
 
     if current_user.id == admin.id:
         raise HTTPException(status_code=403, detail='You can not update your own role')
@@ -60,7 +62,7 @@ async def update_user_role(session: session_dep, data: UpdateUserRoleByAdmin, cu
 
 
 @router.delete('/admin/delete_user/{user_id}', tags=['Admin'])
-async def delete_user(session: session_dep, current_user: UserModel = Depends(check_user_for_edit_by_admin), admin: int = Depends(check_admin)):
+async def delete_user(session: session_dep, current_user: User = Depends(check_user_for_edit_by_admin), admin: int = Depends(check_admin)):
 
     if current_user.id == admin.id:
         raise HTTPException(status_code=403, detail='You can not delete your own admin account')
@@ -76,7 +78,7 @@ async def delete_user(session: session_dep, current_user: UserModel = Depends(ch
 
 #-------------Work with vacancy-------------
 @router.put('/admin/edit_vacancy/{vacancy_id}', tags=['Admin'])
-async def edit_vacancy(session: session_dep, current_vacancy: VacancyModel = Depends(check_vacancy), data: EditVacancySchema = Depends(), admin: int = Depends(check_admin)):
+async def edit_vacancy(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy), data: EditVacancy = Depends(), admin: int = Depends(check_admin)):
 
     if data.new_title:
         current_vacancy.title = data.new_title
@@ -96,10 +98,10 @@ async def edit_vacancy(session: session_dep, current_vacancy: VacancyModel = Dep
 @router.get('/admin/get_vacancies', tags=['Admin'])
 async def get_vacancies(session: session_dep, limit: int = 10, offset: int = 0, admin: int = Depends(check_admin)):
 
-    query = await session.execute(select(VacancyModel).limit(limit).offset(offset))
+    query = await session.execute(select(Vacancy).limit(limit).offset(offset))
     vacancies = query.scalars().all()
 
-    quantity = await session.scalar(select(func.count(VacancyModel.id)))
+    quantity = await session.scalar(select(func.count(Vacancy.id)))
 
     return {
         'quantity of all vacancies': quantity,
@@ -108,7 +110,7 @@ async def get_vacancies(session: session_dep, limit: int = 10, offset: int = 0, 
 
 
 @router.delete('/admin/delete_vacancy/{vacancy_id}', tags=['Admin'])
-async def delete_vacancy(session: session_dep, current_vacancy: VacancyModel = Depends(check_vacancy), admin: int = Depends(check_admin)):
+async def delete_vacancy(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy), admin: int = Depends(check_admin)):
 
     await session.delete(current_vacancy)
     await session.commit()
@@ -118,7 +120,7 @@ async def delete_vacancy(session: session_dep, current_vacancy: VacancyModel = D
 
 #-------------Work with resume-------------
 @router.put('/admin/edit_resume/{resume_id}', tags=['Admin'])
-async def edit_resume(session: session_dep, current_resume: ResumeModel = Depends(check_resume), data: EditResumeSchema = Depends(), admin: int = Depends(check_admin)):
+async def edit_resume(session: session_dep, current_resume: Resume = Depends(check_resume), data: EditResume = Depends(), admin: int = Depends(check_admin)):
 
     if data.new_title:
         current_resume.title = data.new_title
@@ -141,10 +143,10 @@ async def edit_resume(session: session_dep, current_resume: ResumeModel = Depend
 @router.get('/admin/get_resumes', tags=['Admin'])
 async def get_resumes(session: session_dep, limit: int = 10, offset: int = 0, admin: int = Depends(check_admin)):
 
-    query = await session.execute(select(ResumeModel).limit(limit).offset(offset))
+    query = await session.execute(select(Resume).limit(limit).offset(offset))
     resumes = query.scalars().all()
 
-    quantity = await session.scalar(select(func.count(ResumeModel.id)))
+    quantity = await session.scalar(select(func.count(Resume.id)))
 
     return {
         'quantity of all resumes': quantity,
@@ -153,7 +155,7 @@ async def get_resumes(session: session_dep, limit: int = 10, offset: int = 0, ad
 
 
 @router.delete('/admin/delete_resume/{resume_id}', tags=['Admin'])
-async def delete_resume(session: session_dep, current_resume: ResumeModel = Depends(check_resume), admin: int = Depends(check_admin)):
+async def delete_resume(session: session_dep, current_resume: Resume = Depends(check_resume), admin: int = Depends(check_admin)):
 
     await session.delete(current_resume)
     await session.commit()
@@ -165,9 +167,9 @@ async def delete_resume(session: session_dep, current_resume: ResumeModel = Depe
 @router.get('/admin/get_responses', tags=['Admin'])
 async def get_responses(session: session_dep, limit: int = 10, offset: int = 0, admin: int = Depends(check_admin)):
 
-    query = await session.execute(select(ResponseModel).limit(limit).offset(offset))    
+    query = await session.execute(select(Response).limit(limit).offset(offset))    
     responses = query.scalars().all()
-    quantity = await session.scalar(select(func.count(ResponseModel.id)))
+    quantity = await session.scalar(select(func.count(Response.id)))
 
     return {
         'quantity of all responses': quantity,
@@ -178,7 +180,7 @@ async def get_responses(session: session_dep, limit: int = 10, offset: int = 0, 
 @router.delete('/admin/delete_response/{response_id}', tags=['Admin'])
 async def delete_response(response_id: int, session: session_dep, admin: int = Depends(check_admin)):
 
-    query = await session.execute(select(ResponseModel).where(ResponseModel.id == response_id))
+    query = await session.execute(select(Response).where(Response.id == response_id))
     current_response = query.scalar_one_or_none()
 
     if not current_response:

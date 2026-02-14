@@ -4,9 +4,12 @@ from sqlalchemy.orm import joinedload
 
 from backend.database.database import session_dep
 from backend.dependencies import check_user, check_vacancy, check_resume
-from backend.models.models import UserModel, VacancyModel, ResumeModel, ResponseModel, Role
-from backend.schemas.response_schema import ResponseSchema, ResponseReadSchema, SetStatusSchema
-from backend.database.limiter import rate_limiter_factory
+from backend.models.response import Response
+from backend.models.user import User, Role
+from backend.models.vacancy import Vacancy
+from backend.models.resume import Resume
+from backend.schemas.response import ResponseSchema, ResponseRead, SetStatus
+from backend.utils.limiter import rate_limiter_factory
 
 
 router = APIRouter()
@@ -15,7 +18,7 @@ router = APIRouter()
 response_limiter = rate_limiter_factory("/response/apply_to_vacancy/{vacancy_id}", 5, 60)
 
 @router.post('/response/apply_to_vacancy/{vacancy_id}', tags=['Response'], dependencies=[Depends(response_limiter)])
-async def apply_to_vacancy(data: ResponseSchema, session: session_dep, current_vacancy: VacancyModel = Depends(check_vacancy), current_resume: ResumeModel = Depends(check_resume), current_user: UserModel = Depends(check_user)):
+async def apply_to_vacancy(data: ResponseSchema, session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy), current_resume: Resume = Depends(check_resume), current_user: User = Depends(check_user)):
 
     if current_user.id != current_resume.applicant_id:
         raise HTTPException(status_code=403, detail="It's not your resume")
@@ -23,12 +26,12 @@ async def apply_to_vacancy(data: ResponseSchema, session: session_dep, current_v
     if current_user.role != Role.applicant:
         raise HTTPException(status_code=403, detail='Only applicant can apply to vacancy')
 
-    query_check = await session.execute(select(ResponseModel).where(ResponseModel.resume_id == current_resume.id, ResponseModel.vacancy_id == current_vacancy.id))
+    query_check = await session.execute(select(Response).where(Response.resume_id == current_resume.id, Response.vacancy_id == current_vacancy.id))
 
     if query_check.scalar_one_or_none():
         raise HTTPException(status_code=400, detail='You have already applied to this vacancy with this resume')
 
-    response = ResponseModel(**data.model_dump())
+    response = Response(**data.model_dump())
 
     response.applicant_id = current_user.id
     response.resume_id = current_resume.id
@@ -40,8 +43,8 @@ async def apply_to_vacancy(data: ResponseSchema, session: session_dep, current_v
     return {'success': True, 'message': 'You responded to vacancy', "Response": response}
 
 
-@router.get('/response/{vacancy_id}/get_responses', response_model=list[ResponseReadSchema], tags=['Response'])
-async def get_responses(session: session_dep, current_vacancy: VacancyModel = Depends(check_vacancy), current_user: UserModel = Depends(check_user)):
+@router.get('/response/{vacancy_id}/get_responses', response_model=list[ResponseRead], tags=['Response'])
+async def get_responses(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy), current_user: User = Depends(check_user)):
 
     if current_user.role != Role.tenant:
         raise HTTPException(status_code=403, detail='You are not a tenant')
@@ -50,12 +53,12 @@ async def get_responses(session: session_dep, current_vacancy: VacancyModel = De
         raise HTTPException(status_code=403, detail="It's not your vacancy")
 
     query_responses = await session.execute(
-        select(ResponseModel)
+        select(Response)
         .options(
-            joinedload(ResponseModel.resume),
-            joinedload(ResponseModel.user)
+            joinedload(Response.resume),
+            joinedload(Response.user)
         )
-        .where(ResponseModel.vacancy_id == current_vacancy.id)
+        .where(Response.vacancy_id == current_vacancy.id)
     )
 
     all_resumes = query_responses.scalars().all()
@@ -66,12 +69,12 @@ async def get_responses(session: session_dep, current_vacancy: VacancyModel = De
 set_status_limiter = rate_limiter_factory("/response/set_status/{response_id}", 5, 60)
 
 @router.put('/response/set_status/{response_id}', tags=['Response'], dependencies=[Depends(set_status_limiter)])
-async def set_status(response_id: int, data: SetStatusSchema, session: session_dep, current_user: int = Depends(check_user)):
+async def set_status(response_id: int, data: SetStatus, session: session_dep, current_user: int = Depends(check_user)):
 
     if current_user.role != Role.tenant:
         raise HTTPException(status_code=403, detail='Only tenatns can set status to responses')
 
-    query_response = await session.execute(select(ResponseModel).options(joinedload(ResponseModel.vacancy)).where(ResponseModel.id == response_id))
+    query_response = await session.execute(select(Response).options(joinedload(Response.vacancy)).where(Response.id == response_id))
     current_response = query_response.scalar_one_or_none()
 
     if not current_response:

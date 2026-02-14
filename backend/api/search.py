@@ -5,9 +5,11 @@ import json
 
 from backend.dependencies import get_user_token
 from backend.database.database import session_dep
-from backend.models.models import ResumeModel, UserModel, Role, VacancyModel
-from backend.schemas.search_schema import SearchResumesSchema, SearchVacancySchema
-from backend.database.limiter import rate_limiter_factory
+from backend.models.user import User, Role
+from backend.models.vacancy import Vacancy
+from backend.models.resume import Resume
+from backend.schemas.search import SearchResumes, SearchVacancies
+from backend.utils.limiter import rate_limiter_factory
 from backend.database.redis_database import get_redis
 
 
@@ -17,9 +19,9 @@ router = APIRouter()
 search_resumes_limiter = rate_limiter_factory("/search/search_resumes", 5, 60)
 
 @router.get('/search/search_resumes', tags=['Search'], dependencies=[Depends(search_resumes_limiter)])
-async def search_resumes(session: session_dep, data: SearchResumesSchema = Depends(), user_id: int = Depends(get_user_token), redis: Redis = Depends(get_redis)):
+async def search_resumes(session: session_dep, data: SearchResumes = Depends(), user_id: int = Depends(get_user_token), redis: Redis = Depends(get_redis)):
 
-    query_user = await session.execute(select(UserModel).where(UserModel.id == user_id))
+    query_user = await session.execute(select(User).where(User.id == user_id))
     current_user = query_user.scalar_one_or_none()
 
     if not current_user:
@@ -36,16 +38,16 @@ async def search_resumes(session: session_dep, data: SearchResumesSchema = Depen
     if cached_resumes:
         return {"resumes": json.loads(cached_resumes), "source": "cache"}
 
-    query = select(ResumeModel)
+    query = select(Resume)
 
     if data.city:
-        query = query.where(ResumeModel.city.ilike(f"%{data.city}%"))
+        query = query.where(Resume.city.ilike(f"%{data.city}%"))
 
     if data.stack:
-        query = query.where(ResumeModel.stack.ilike(f'%{data.stack}'))
+        query = query.where(Resume.stack.ilike(f'%{data.stack}'))
 
     if data.title:
-        query = query.where(ResumeModel.title.ilike(f'%{data.title}'))
+        query = query.where(Resume.title.ilike(f'%{data.title}'))
 
     query = query.limit(data.limit).offset(data.offset)
 
@@ -61,9 +63,9 @@ async def search_resumes(session: session_dep, data: SearchResumesSchema = Depen
 search_vacancy_limiter = rate_limiter_factory("/search/search_vacancies", 5, 60)
 
 @router.get('/search/search_vacancies', tags=['Search'], dependencies=[Depends(search_vacancy_limiter)])
-async def search_vacancies(session: session_dep, data: SearchVacancySchema = Depends(), user_id: int = Depends(get_user_token), redis: Redis = Depends(get_redis)):
+async def search_vacancies(session: session_dep, data: SearchVacancies = Depends(), user_id: int = Depends(get_user_token), redis: Redis = Depends(get_redis)):
 
-    query_user = await session.execute(select(UserModel).where(UserModel.id == user_id))
+    query_user = await session.execute(select(User).where(User.id == user_id))
     current_user = query_user.scalar_one_or_none()
 
     if not current_user:
@@ -80,16 +82,16 @@ async def search_vacancies(session: session_dep, data: SearchVacancySchema = Dep
     if cached_vacancies:
         return {"vacancies": json.loads(cached_vacancies), "source": "cache"}
 
-    query = select(VacancyModel)
+    query = select(Vacancy)
 
     if data.city:
-        query = query.where(VacancyModel.city.ilike(f"%{data.city}%"))
+        query = query.where(Vacancy.city.ilike(f"%{data.city}%"))
 
     if data.compensation:
-        query = query.where(VacancyModel.compensation >= int(data.compensation))
+        query = query.where(Vacancy.compensation >= int(data.compensation))
 
     if data.title:
-        query = query.where(VacancyModel.title.ilike(f'%{data.title}'))
+        query = query.where(Vacancy.title.ilike(f'%{data.title}'))
 
     query = query.limit(data.limit).offset(data.offset)
 

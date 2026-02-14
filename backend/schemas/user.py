@@ -7,25 +7,25 @@ class Role(str, Enum):
     applicant = 'applicant'
 
 
-class CreateUserSchema(BaseModel):
+class CreateUser(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
     repeat_password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
     role: Role
     name: str = Field(min_length=3, max_length=15, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
 
-class LoginUserSchema(BaseModel):
+class Login(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
 
-class EditUserPasswordSchema(BaseModel):
+class EditPassword(BaseModel):
     old_password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
     new_password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
     repeat_new_password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
 
-class EditUserNameSchema(BaseModel):
+class EditName(BaseModel):
     new_name: str = Field(min_length=3, max_length=15, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
     password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
 
-class DeleteUserSchema(BaseModel):
+class Delete(BaseModel):
     password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')

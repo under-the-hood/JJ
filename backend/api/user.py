@@ -4,11 +4,12 @@ from redis.asyncio import Redis
 import json
 
 from backend.database.database import session_dep
-from backend.database.hash import hashing_password, pwd_context, security
-from backend.models.models import UserModel, ResumeModel
-from backend.schemas.user_schema import CreateUserSchema, LoginUserSchema, EditUserPasswordSchema, EditUserNameSchema, DeleteUserSchema
+from backend.utils.hash import hashing_password, pwd_context
+from backend.utils.auth import security
+from backend.models.user import User
+from backend.schemas.user import CreateUser, Login, EditPassword, EditName, Delete
 from backend.dependencies import check_user, get_cache_key
-from backend.database.limiter import rate_limiter_factory, rate_limiter_factory_by_ip
+from backend.utils.limiter import rate_limiter_factory, rate_limiter_factory_by_ip
 from backend.database.redis_database import get_redis
 
 
@@ -17,12 +18,12 @@ router = APIRouter()
 
 
 @router.post('/user/sign_up', tags=['Users'])
-async def sign_up(data: CreateUserSchema, session: session_dep):
+async def sign_up(data: CreateUser, session: session_dep):
     
     if data.password != data.repeat_password:
         raise HTTPException(status_code=400, detail="Passwords don't match")
 
-    exiting_user = await session.execute(select(UserModel).where(UserModel.email == data.email))
+    exiting_user = await session.execute(select(User).where(User.email == data.email))
 
     if exiting_user.scalar_one_or_none():
         raise HTTPException(status_code=409, detail='This email already exists in database')
@@ -30,7 +31,7 @@ async def sign_up(data: CreateUserSchema, session: session_dep):
     if data.role not in ["tenant", "applicant"]:
         raise HTTPException(status_code=400, detail="Role must be either 'tenant' or 'applicant'")
 
-    new_user = UserModel(
+    new_user = User(
         email = data.email,
         role = data.role,
         name = data.name,
@@ -46,9 +47,9 @@ async def sign_up(data: CreateUserSchema, session: session_dep):
 login_limit = rate_limiter_factory_by_ip("/user/sign_in", 5, 60)
 
 @router.post('/user/sign_in', tags=['Users'], dependencies=[Depends(login_limit)])
-async def sign_in(data: LoginUserSchema, session: session_dep, response: Response):
+async def sign_in(data: Login, session: session_dep, response: Response):
 
-    query = await session.execute(select(UserModel).where(UserModel.email == data.email))
+    query = await session.execute(select(User).where(User.email == data.email))
     current_user = query.scalar_one_or_none()
 
     error = HTTPException(status_code=401, detail="Incorrect email or password")
@@ -66,7 +67,7 @@ async def sign_in(data: LoginUserSchema, session: session_dep, response: Respons
 
 
 @router.get('/user/get_info', tags=['Users'])
-async def get_info(current_user: UserModel = Depends(check_user), redis: Redis = Depends(get_redis)):
+async def get_info(current_user: User = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     key = get_cache_key("user", current_user.id, "profile")
     cached_info = await redis.get(key)
@@ -89,7 +90,7 @@ async def get_info(current_user: UserModel = Depends(check_user), redis: Redis =
 password_limit = rate_limiter_factory("/user/edit_password", 5, 60)
 
 @router.put('/user/edit_password', tags=['Users'], dependencies=[Depends(password_limit)])
-async def edit_password(data: EditUserPasswordSchema, session: session_dep, current_user: UserModel = Depends(check_user)):
+async def edit_password(data: EditPassword, session: session_dep, current_user: User = Depends(check_user)):
 
     if not pwd_context.verify(data.old_password, current_user.password):
         raise HTTPException(status_code=400, detail='Incorrect password')
@@ -106,7 +107,7 @@ async def edit_password(data: EditUserPasswordSchema, session: session_dep, curr
 
 
 @router.put('/user/edit_name', tags=['Users'])
-async def edit_name(data: EditUserNameSchema, session: session_dep, current_user: UserModel = Depends(check_user), redis: Redis = Depends(get_redis)):
+async def edit_name(data: EditName, session: session_dep, current_user: User = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     if not pwd_context.verify(data.password, current_user.password):
         raise HTTPException(status_code=400, detail='Incorrect password')
@@ -126,7 +127,7 @@ async def edit_name(data: EditUserNameSchema, session: session_dep, current_user
 delete_limit = rate_limiter_factory("/user/delete_user", 5, 60)
 
 @router.delete('/user/delete_user', tags=['Users'])
-async def delete_user(data: DeleteUserSchema, session: session_dep, current_user: UserModel = Depends(check_user), redis: Redis = Depends(get_redis)):
+async def delete_user(data: Delete, session: session_dep, current_user = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     if not pwd_context.verify(data.password, current_user.password):
         raise HTTPException(status_code=400, detail='Incorrect password')

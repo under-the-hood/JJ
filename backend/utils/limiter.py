@@ -5,7 +5,7 @@ from time import time
 from fastapi import HTTPException, Depends, Request
 
 from backend.dependencies import get_user_token
-from backend.models.models import UserModel
+from backend.models.user import User
 from backend.database.redis_database import get_redis
 
 
@@ -41,7 +41,7 @@ def get_rate_limiter(redis: Annotated[Redis, Depends(get_redis)]):
 
 
 def rate_limiter_factory(endpoint: str, max_requests: int, window_seconds: int):
-    async def dependency(rate_limiter: Annotated[RateLimiter, Depends(get_rate_limiter)], user_id: UserModel = Depends(get_user_token)):
+    async def dependency(rate_limiter: Annotated[RateLimiter, Depends(get_rate_limiter)], user_id: User = Depends(get_user_token)):
 
         limited = await rate_limiter.is_limited(
             key_suffix=user_id,

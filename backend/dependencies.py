@@ -1,13 +1,11 @@
 from fastapi import Depends, Cookie, HTTPException
 from sqlalchemy import select
-import hashlib
-from typing import Any, Callable, Dict, Optional, Tuple
-from starlette.requests import Request
-from starlette.responses import Response
 
-from backend.database.hash import security
+from backend.utils.auth import security
 from backend.database.database import session_dep
-from backend.models.models import UserModel, Role, VacancyModel, ResumeModel
+from backend.models.user import User, Role
+from backend.models.vacancy import Vacancy
+from backend.models.resume import Resume
 
 
 async def get_user_token(token: str = Cookie()):
@@ -22,7 +20,7 @@ async def get_user_token(token: str = Cookie()):
 
 async def check_admin(session: session_dep, admin_id: int = Depends(get_user_token)):
 
-    query = await session.execute(select(UserModel).where(UserModel.id == admin_id))
+    query = await session.execute(select(User).where(User.id == admin_id))
     current_admin = query.scalar_one_or_none()
 
     if not current_admin:
@@ -36,7 +34,7 @@ async def check_admin(session: session_dep, admin_id: int = Depends(get_user_tok
 
 async def check_user(session: session_dep, user_id: int = Depends(get_user_token)):
 
-    query = await session.execute(select(UserModel).where(UserModel.id == user_id))
+    query = await session.execute(select(User).where(User.id == user_id))
     current_user = query.scalar_one_or_none()
 
     if not current_user:
@@ -47,7 +45,7 @@ async def check_user(session: session_dep, user_id: int = Depends(get_user_token
 
 async def check_user_for_edit_by_admin(session: session_dep, user_id: int):
 
-    query = await session.execute(select(UserModel).where(UserModel.id == user_id))
+    query = await session.execute(select(User).where(User.id == user_id))
     current_user = query.scalar_one_or_none()
 
     if not current_user:
@@ -58,7 +56,7 @@ async def check_user_for_edit_by_admin(session: session_dep, user_id: int):
 
 async def check_vacancy(session: session_dep, vacancy_id: int):
 
-    query = await session.execute(select(VacancyModel).where(VacancyModel.id == vacancy_id))
+    query = await session.execute(select(Vacancy).where(Vacancy.id == vacancy_id))
     current_vacancy = query.scalar_one_or_none()
 
     if not current_vacancy:
@@ -69,7 +67,7 @@ async def check_vacancy(session: session_dep, vacancy_id: int):
 
 async def check_resume(session: session_dep, resume_id: int):
 
-    query = await session.execute(select(ResumeModel).where(ResumeModel.id == resume_id))
+    query = await session.execute(select(Resume).where(Resume.id == resume_id))
     current_resume = query.scalar_one_or_none()
 
     if not current_resume:

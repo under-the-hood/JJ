@@ -6,11 +6,11 @@ import fakeredis.aioredis
 
 from main import app
 from backend.database.database import Base, engine, get_session
-from backend.database.config import settings
-from backend.database.hash import config
-from backend.api.response_api import set_status_limiter, response_limiter
-from backend.api.user_api import password_limit, delete_limit, login_limit
-from backend.api.search_api import search_vacancy_limiter
+from backend.config import settings
+from backend.utils.auth import config
+from backend.api.response import set_status_limiter, response_limiter
+from backend.api.user import password_limit, delete_limit, login_limit
+from backend.api.search import search_vacancy_limiter
 from backend.database.redis_database import get_redis
 
 

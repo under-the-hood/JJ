@@ -1,7 +1,4 @@
 import pytest
-from sqlalchemy import select
-
-from backend.models.models import ResumeModel
 
 
 @pytest.mark.anyio

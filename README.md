@@ -1,3 +1,3 @@
 JJ - Just Job is a full-featured recruitment ecosystem that supports multi-level access control (administrator, employer, and applicant). It includes a robust filtering system for both job postings and resumes, ensuring seamless matching between candidates and opportunities.
-To start service in docker container rename .env.example to .env and fill out fields, in DB_HOST enter db than enter in terminal: docker compose -p jj-web up --build
+To start service in docker container rename .prod.env.example to .prod.env and fill out fields, in DB_HOST enter db than enter in terminal: docker compose -p jj-web up --build
 If you want to appoint someone as an admin use this commands in terminal: 1) docker exec -it hh_db psql -U postgres -d name_of_db 2) UPDATE users SET role = 'admin' WHERE email = 'email@example.com';

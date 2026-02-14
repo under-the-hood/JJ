@@ -1,6 +1,6 @@
 from redis.asyncio import Redis
 
-from backend.database.config import settings
+from backend.config import settings
 
 redis_conn = Redis(
     host=settings.REDIS_HOST,

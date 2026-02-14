@@ -12,21 +12,21 @@ class Status(str, Enum):
 class ResponseSchema(BaseModel):
     cover_letter: str = Field(min_length=0, max_length=100, pattern=r'^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;]+$')
 
-class ApplicantReadSchema(BaseModel):
+class ApplicantRead(BaseModel):
     id: int
     name: str
     email: EmailStr
 
-class ResumeReadSchema(BaseModel):
+class ResumeRead(BaseModel):
     id: int
     title: str
     stack: str
 
-class ResponseReadSchema(BaseModel):
+class ResponseRead(BaseModel):
     id: int
     cover_letter: str
-    resume: ResumeReadSchema
-    user: ApplicantReadSchema
+    resume: ResumeRead
+    user: ApplicantRead
 
-class SetStatusSchema(BaseModel):
+class SetStatus(BaseModel):
     status: Status

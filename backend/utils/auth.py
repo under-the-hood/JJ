@@ -1,15 +1,7 @@
 from authx import AuthXConfig, AuthX
-from passlib.context import CryptContext
 from datetime import timedelta
 
-from backend.database.config import settings
-
-
-pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
-
-def hashing_password(password: str):
-    return pwd_context.hash(password)
-
+from backend.config import settings
 
 config = AuthXConfig()
 config.JWT_SECRET_KEY = settings.KEY_FOR_JWT

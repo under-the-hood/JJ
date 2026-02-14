@@ -1,11 +1,11 @@
 from fastapi import APIRouter
 
-from backend.api.user_api import router as user_router
-from backend.api.vacancy_api import router as vacancy_router
-from backend.api.resume_api import router as resume_router
-from backend.api.response_api import router as response_router
-from backend.api.search_api import router as search_router
-from backend.api.admin_api import router as admin_router
+from backend.api.user import router as user_router
+from backend.api.vacancy import router as vacancy_router
+from backend.api.resume import router as resume_router
+from backend.api.response import router as response_router
+from backend.api.search import router as search_router
+from backend.api.admin import router as admin_router
 
 
 main_router = APIRouter()
