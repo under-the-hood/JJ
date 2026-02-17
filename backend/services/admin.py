@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import HTTPException
 from sqlalchemy import select, func
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.dependencies import check_admin, check_vacancy, check_resume, check_user_for_edit_by_admin
 from backend.models.response import Response
 from backend.models.user import User, Role
 from backend.models.vacancy import Vacancy
