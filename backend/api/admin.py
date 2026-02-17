@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, func
+from redis.asyncio import Redis
 
 from backend.database.database import session_dep
 from backend.dependencies import check_admin, check_vacancy, check_resume, check_user_for_edit_by_admin
@@ -10,183 +11,96 @@ from backend.models.resume import Resume
 from backend.schemas.admin import EditUserNameByAdmin, UpdateUserRoleByAdmin
 from backend.schemas.vacancy import EditVacancy
 from backend.schemas.resume import EditResume
+from backend.services.admin import get_all_users, edit_user_name, update_user_role, delete_user_by_admin, edit_vacancy_by_admin, get_all_vacancies, delete_vacancy_by_admin, edit_resume_by_admin, get_all_resumes, delete_resume_by_admin, get_all_responses, delete_response_by_admin
+from backend.database.redis_database import get_redis
 
 
 router = APIRouter()
 
 
-#-------------Work with user-------------
+#-------------Work with users-------------
 @router.get('/admin/get_users', tags=['Admin'])
-async def get_users(session: session_dep, limit: int = 10, offset: int = 0, admin: int = Depends(check_admin)):
-
-    query = await session.execute(select(User).limit(limit).offset(offset))
-    users = query.scalars().all()
-
-    quantity = await session.scalar(select(func.count(User.id)))
-
-    return {
-        'quantity of all users': quantity,
-        'users': users
-    }
+async def get_users(session: session_dep, limit: int = 10, offset: int = 0, admin: User = Depends(check_admin)):
+    
+    users_info = await get_all_users(session=session, limit=limit, offset=offset, admin=admin)
+    return {**users_info}
 
 
 @router.put('/admin/edit_user_name/{user_id}', tags=['Admin'])
-async def edit_user_name(data: EditUserNameByAdmin, session: session_dep, current_user: User = Depends(check_user_for_edit_by_admin), admin: int = Depends(check_admin)):
+async def edit_name(data: EditUserNameByAdmin, session: session_dep, current_user: User = Depends(check_user_for_edit_by_admin), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
-    if current_user.id == admin.id:
-        raise HTTPException(status_code=403, detail='You can not edit your own admin account')
-
-    if current_user.role == Role.admin:
-        raise HTTPException(status_code=403, detail='You can not edit accounts of other admins')
-
-    current_user.name = data.new_name
-
-    await session.commit()
-    await session.refresh(current_user)
-
+    await edit_user_name(data, session, current_user, admin, redis)
     return {'success': True, 'message': 'Users name was edited'}
 
 
 @router.put('/admin/update_user_role/{user_id}', tags=['Admin'])
-async def update_user_role(session: session_dep, data: UpdateUserRoleByAdmin, current_user: User = Depends(check_user_for_edit_by_admin), admin: int = Depends(check_admin)):
+async def update_role(session: session_dep, data: UpdateUserRoleByAdmin, current_user: User = Depends(check_user_for_edit_by_admin), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
-    if current_user.id == admin.id:
-        raise HTTPException(status_code=403, detail='You can not update your own role')
-
-    current_user.role = data.new_role
-
-    await session.commit()
-    await session.refresh(current_user)
-
+    await update_user_role(session, data, current_user, admin, redis)
     return {'success': True, 'message': 'Role was updated'}    
 
 
 @router.delete('/admin/delete_user/{user_id}', tags=['Admin'])
-async def delete_user(session: session_dep, current_user: User = Depends(check_user_for_edit_by_admin), admin: int = Depends(check_admin)):
+async def delete_user(session: session_dep, current_user: User = Depends(check_user_for_edit_by_admin), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
-    if current_user.id == admin.id:
-        raise HTTPException(status_code=403, detail='You can not delete your own admin account')
-
-    if current_user.role == Role.admin:
-        raise HTTPException(status_code=403, detail='You can not delete other admins')
-
-    await session.delete(current_user)
-    await session.commit()
-
+    await delete_user_by_admin(session, current_user, admin, redis)
     return {'success': True, 'message': 'User was deleted'}
 
 
-#-------------Work with vacancy-------------
+#-------------Work with vacancies-------------
 @router.put('/admin/edit_vacancy/{vacancy_id}', tags=['Admin'])
-async def edit_vacancy(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy), data: EditVacancy = Depends(), admin: int = Depends(check_admin)):
+async def edit_vacancy(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy), data: EditVacancy = Depends(), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
-    if data.new_title:
-        current_vacancy.title = data.new_title
-
-    if data.new_city:
-        current_vacancy.city = data.new_city
-
-    if data.new_compensation:
-        current_vacancy.compensation = data.new_compensation
-
-    await session.commit()
-    await session.refresh(current_vacancy)
-
+    await edit_vacancy_by_admin(session, current_vacancy, data, admin, redis)
     return {'success': True, 'message': 'Vacancy was edited'}
 
 
 @router.get('/admin/get_vacancies', tags=['Admin'])
-async def get_vacancies(session: session_dep, limit: int = 10, offset: int = 0, admin: int = Depends(check_admin)):
+async def get_vacancies(session: session_dep, limit: int = 10, offset: int = 0, admin: User = Depends(check_admin)):
 
-    query = await session.execute(select(Vacancy).limit(limit).offset(offset))
-    vacancies = query.scalars().all()
-
-    quantity = await session.scalar(select(func.count(Vacancy.id)))
-
-    return {
-        'quantity of all vacancies': quantity,
-        'vacancies': vacancies
-    }
+    vacancies_info = await get_all_vacancies(session=session, limit=limit, offset=offset, admin=admin)
+    return {**vacancies_info}
 
 
 @router.delete('/admin/delete_vacancy/{vacancy_id}', tags=['Admin'])
-async def delete_vacancy(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy), admin: int = Depends(check_admin)):
+async def delete_vacancy(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
-    await session.delete(current_vacancy)
-    await session.commit()
-
+    await delete_vacancy_by_admin(session, current_vacancy, admin, redis)
     return {'success': True, 'message': 'Vacancy was deleted'}
 
 
-#-------------Work with resume-------------
+#-------------Work with resumes-------------
 @router.put('/admin/edit_resume/{resume_id}', tags=['Admin'])
-async def edit_resume(session: session_dep, current_resume: Resume = Depends(check_resume), data: EditResume = Depends(), admin: int = Depends(check_admin)):
+async def edit_resume(session: session_dep, current_resume: Resume = Depends(check_resume), data: EditResume = Depends(), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
-    if data.new_title:
-        current_resume.title = data.new_title
-
-    if data.new_about:
-        current_resume.about = data.new_about
-
-    if data.new_city:
-        current_resume.city = data.new_city
-
-    if data.new_stack:
-        current_resume.stack = data.new_stack
-
-    await session.commit()
-    await session.refresh(current_resume)
-
+    await edit_resume_by_admin(session, current_resume, data, admin, redis)
     return {'success': True, 'message': 'Resume was edited'}
 
 
 @router.get('/admin/get_resumes', tags=['Admin'])
-async def get_resumes(session: session_dep, limit: int = 10, offset: int = 0, admin: int = Depends(check_admin)):
+async def get_resumes(session: session_dep, limit: int = 10, offset: int = 0, admin: User = Depends(check_admin)):
 
-    query = await session.execute(select(Resume).limit(limit).offset(offset))
-    resumes = query.scalars().all()
-
-    quantity = await session.scalar(select(func.count(Resume.id)))
-
-    return {
-        'quantity of all resumes': quantity,
-        'resumes': resumes
-    }
+    resumes_info = await get_all_resumes(session=session, limit=limit, offset=offset, admin=admin)
+    return {**resumes_info}
 
 
 @router.delete('/admin/delete_resume/{resume_id}', tags=['Admin'])
-async def delete_resume(session: session_dep, current_resume: Resume = Depends(check_resume), admin: int = Depends(check_admin)):
+async def delete_resume(session: session_dep, current_resume: Resume = Depends(check_resume), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
-    await session.delete(current_resume)
-    await session.commit()
-
+    await delete_resume_by_admin(session, current_resume, admin, redis)
     return {'success': True, 'message': 'Resume was deleted'}
 
 
 #-------------Work with responses-------------
 @router.get('/admin/get_responses', tags=['Admin'])
-async def get_responses(session: session_dep, limit: int = 10, offset: int = 0, admin: int = Depends(check_admin)):
+async def get_responses(session: session_dep, limit: int = 10, offset: int = 0, admin: User = Depends(check_admin)):
 
-    query = await session.execute(select(Response).limit(limit).offset(offset))    
-    responses = query.scalars().all()
-    quantity = await session.scalar(select(func.count(Response.id)))
-
-    return {
-        'quantity of all responses': quantity,
-        'responses': responses
-        }
+    responses_info = await get_all_responses(session=session, limit=limit, offset=offset, admin=admin)    
+    return {**responses_info}
 
 
 @router.delete('/admin/delete_response/{response_id}', tags=['Admin'])
-async def delete_response(response_id: int, session: session_dep, admin: int = Depends(check_admin)):
+async def delete_response(response_id: int, session: session_dep, admin: User = Depends(check_admin)):
 
-    query = await session.execute(select(Response).where(Response.id == response_id))
-    current_response = query.scalar_one_or_none()
-
-    if not current_response:
-        raise HTTPException(status_code=404, detail='Response not found')
-
-    await session.delete(current_response)
-    await session.commit()
-
+    await delete_response_by_admin(response_id, session, admin)
     return {'success': True, 'message': 'Response was deleted'}
