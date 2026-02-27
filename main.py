@@ -4,7 +4,7 @@ import uvicorn
 from backend.router import main_router
 
 
-app = FastAPI()
+app = FastAPI(root_path="/api")
 
 app.include_router(main_router)
 

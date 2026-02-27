@@ -7,8 +7,6 @@ services:
     restart: always
     env_file:
       - backend/.prod.env
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,8 +24,6 @@ services:
       depends_on:
         db:
           condition: service_healthy
-      ports:
-        - "8000:8000"
       env_file:
         - backend/.prod.env
       command: >
@@ -36,8 +32,6 @@ services:
   redis:
     container_name: redis
     image: redis:7
-    ports:
-      - 6379:6379
       
   nginx:
     container_name: nginx
@@ -47,6 +41,7 @@ services:
       - 80:80
     volumes:
       - ./backend/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend:/usr/share/nginx/html:ro
     depends_on:
       - backend
 
