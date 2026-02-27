@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Just Job</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #ffffff; }
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-8">
+
+    <div class="max-w-2xl w-full text-left">
+        
+        <div class="mb-10 inline-flex items-center gap-4">
+            <div class="bg-indigo-600 p-4 rounded-[20px] text-white shadow-xl shadow-indigo-100 border-4 border-indigo-700">
+                <i data-lucide="briefcase" class="w-8 h-8 stroke-[2.5]"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-2xl font-extrabold tracking-tight text-slate-950">JJ</span>
+                <span class="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Just Job</span>
+            </div>
+        </div>
+
+        <h1 class="text-3xl md:text-4xl font-extrabold text-slate-950 mb-5 tracking-tighter leading-tight">
+            Hello, you are on the home page of the JJ job search site.
+        </h1>
+        
+        <p class="text-xl md:text-2xl text-slate-600 font-medium leading-normal tracking-tight">
+            If you want to test the service, add <code class="bg-slate-100 text-slate-900 px-3 py-1 rounded-xl font-mono text-lg border border-slate-200">/docs</code> to the URL string.
+        </p>
+
+        <div class="mt-16 pt-10 border-t border-slate-100">
+            <span class="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">JJ HR Tech Solutions / 2026</span>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
