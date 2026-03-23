@@ -21,3 +21,4 @@ class User(Base):
     vacancy = relationship('Vacancy', back_populates='user', cascade="all, delete-orphan", passive_deletes=True)
     resume = relationship('Resume', back_populates='user', cascade="all, delete-orphan", passive_deletes=True)
     responses = relationship('Response', back_populates='user', cascade="all, delete-orphan", passive_deletes=True)
+    mails = relationship("Mails", back_populates="user", cascade="all, delete-orphan", passive_deletes=True)

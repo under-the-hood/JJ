@@ -1,3 +1,4 @@
+import httpx
 import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -33,11 +34,18 @@ async def setup_db():
 
 new_session = async_sessionmaker(autoflush=False, expire_on_commit=False, bind=engine)
 
+
 @pytest.fixture
 async def get_test_session():
     async with new_session() as session:
         app.dependency_overrides[get_session] = lambda: session
         yield session
+
+@pytest.fixture
+async def get_latest_emails():
+    async with httpx.AsyncClient() as client:
+        response = await client.get("http://localhost:8080/email")
+        return response.json()
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -50,7 +58,6 @@ async def disable_all_limits():
         app.dependency_overrides[lim] = skip
 
     yield
-
 
 @pytest.fixture(scope="session")
 async def test_redis_server():
@@ -140,7 +147,6 @@ async def get_token(client, role, email):
 
     return client
 
-
 @pytest.fixture
 async def get_token_as_tenant(client_tenant):
 
@@ -151,7 +157,6 @@ async def get_token_as_tenant(client_tenant):
     )
 
     return new_user
-
 
 @pytest.fixture
 async def get_token_as_applicant(client_applicant):
@@ -192,7 +197,6 @@ async def create_vacancy(get_token_as_tenant):
     vacancy_id = data["Vacancy"]["id"]    
 
     return vacancy_id
-
 
 @pytest.fixture
 async def create_resume(get_token_as_applicant):

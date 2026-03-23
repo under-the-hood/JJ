@@ -1,3 +1,4 @@
+import traceback
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
@@ -7,7 +8,9 @@ from backend.models.response import Response
 from backend.models.user import User, Role
 from backend.models.vacancy import Vacancy
 from backend.models.resume import Resume
+from backend.models.mails import Mails
 from backend.schemas.response import ResponseSchema, SetStatus
+from backend.utils.celery_tasks import send_mail_task
 
 
 async def send_response_to_vacancy(data: ResponseSchema, session: AsyncSession, current_vacancy: Vacancy, current_resume: Resume, current_user: User):
@@ -30,7 +33,17 @@ async def send_response_to_vacancy(data: ResponseSchema, session: AsyncSession, 
     response.vacancy_id = current_vacancy.id
 
     session.add(response)
+
+    mail = Mails(
+        recipient_id = current_vacancy.tenant_id,
+        subject = "New response to your vacncy!",
+        body = f"User {current_user.name} has responsed to your vacancy! His resume:\ntitle: {current_resume.title}\nstack: {current_resume.stack}\ncity: {current_resume.city}"
+    )
+
+    session.add(mail)
     await session.commit()
+
+    send_mail_task.delay(mail.id)
 
     return response
 

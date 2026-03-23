@@ -18,6 +18,8 @@ class Settings(BaseSettings):
 
     KEY_FOR_JWT: str
 
+    RABBITMQ: str
+
     @property
     def database(self):
         return f'postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.POSTGRES_DB}'

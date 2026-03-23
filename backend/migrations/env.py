@@ -1,10 +1,13 @@
+import sys
+from os.path import abspath, dirname
+sys.path.insert(0, dirname(dirname(abspath(__file__))))
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -15,13 +18,13 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-#import sys
-#from os.path import abspath, dirname
-#sys.path.insert(0, dirname(dirname(abspath(__file__))))
-
-from backend.config import settings
-from backend.database.database import Base
-from backend.models.user import User
+from database.database import Base
+from models.mails import Mails
+from models.response import Response
+from models.resume import Resume
+from models.user import User
+from models.vacancy import Vacancy
+from config import settings
 
 config.set_main_option('sqlalchemy.url', f"{settings.database}?async_fallback=True")
 
