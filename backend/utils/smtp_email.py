@@ -46,7 +46,7 @@ class SmtpEmailBackend:
             )
 
 email_backend = SmtpEmailBackend(
-    smtp_server="maildev",
+    smtp_server="localhost",
     smtp_port=1025,
     from_email="info@jj.com",
 )

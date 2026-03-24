@@ -10,6 +10,6 @@ from backend.models.vacancy import Vacancy
 celery = Celery(
     "jj_project",
     broker=settings.RABBITMQ,
-    backend="redis://redis:6379/0",
+    backend="redis://localhost:6379/0",
     include=["backend.utils.celery_tasks"]
 )

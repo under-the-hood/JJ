@@ -73,7 +73,7 @@ async def get_responses_to_vacancy(session: AsyncSession, current_vacancy: Vacan
 async def set_status_to_response(response_id: int, data: SetStatus, session: AsyncSession, current_user: User):
     
     if current_user.role != Role.tenant:
-        raise HTTPException(status_code=403, detail='Only tenatns can set status to responses')
+        raise HTTPException(status_code=403, detail='Only tenants can set status to responses')
 
     query_response = await session.execute(select(Response).options(joinedload(Response.vacancy)).where(Response.id == response_id))
     current_response = query_response.scalar_one_or_none()
@@ -86,5 +86,16 @@ async def set_status_to_response(response_id: int, data: SetStatus, session: Asy
 
     current_response.status = data.status
 
+    mail = Mails(
+        recipient_id = current_response.applicant_id,
+        subject = "Application Status Updated",
+        body = f"Hello!\nYour application status for {current_response.vacancy.title} has been updated to {current_response.status}."
+    )
+
+    session.add(mail)
     await session.commit()
     await session.refresh(current_response)
+
+    send_mail_task.delay(mail.id)
+
+    return current_response

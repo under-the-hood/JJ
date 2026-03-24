@@ -10,6 +10,8 @@ from backend.utils.auth import security
 from backend.models.user import User
 from backend.schemas.user import CreateUser, Login, EditPassword, EditName, Delete
 from backend.dependencies import get_cache_key
+from backend.models.mails import Mails
+from backend.utils.celery_tasks import send_mail_task
 
 
 async def create_user(data: CreateUser, session: AsyncSession):
@@ -32,8 +34,25 @@ async def create_user(data: CreateUser, session: AsyncSession):
         password = hashing_password(data.password)
     )
 
+    if data.role == "tenant":
+        message_body = f"Hello, {data.name}!\n Thank you for joining us. Now you can find the best candidates for your vacancies. Start by creating your first vacancy!"
+    else:
+        message_body = f"Hello, {data.name}!\n Thank you for joining us. Now you can find your dream job. Start by creating your resume!"
+
     session.add(new_user)
+    await session.flush()
+
+    mail = Mails(
+        recipient_id = new_user.id,
+        subject = "Welcome to JJ!",
+        body = message_body
+    )
+
+    session.add(mail)
     await session.commit()
+    send_mail_task.delay(mail.id)
+
+    return new_user
 
 
 async def login(data: Login, session: AsyncSession, response: Response):
