@@ -72,5 +72,24 @@ services:
       options:
         max-size: "1m"
 
+  celery_worker:
+    build: .
+    container_name: celery_worker
+    environment:
+      - PYTHONPATH=/app
+      - MODE=PROD
+    command: celery -A backend.utils.celery worker --loglevel=INFO --pool=threads
+    env_file:
+      - backend/.prod.env
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      backend:
+        condition: service_started
+    volumes:
+      - .:/app
+
 volumes:
   postgres_data:
