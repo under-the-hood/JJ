@@ -104,9 +104,17 @@ async def update_password(data: EditPassword, session: AsyncSession, current_use
 
     current_user.password = hashing_password(data.new_password)
 
+
+    mail = Mails(
+        recipient_id = current_user.id,
+        subject = "Your password has been changed",
+        body = f"Hello {current_user.name}!\nThis is a confirmation that the password for your account was recently changed. If you did not make this change, please contact our support team immediately to secure your account."
+    )
+
+    session.add(mail)
     await session.commit()
     await session.refresh(current_user)
-
+    send_mail_task.delay(mail.id)
 
 async def update_name(data: EditName, session: AsyncSession, current_user: User, redis: Redis):
 
