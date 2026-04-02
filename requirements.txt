@@ -19,3 +19,5 @@ tortoise-orm
 email-validator>=2.0.0
 redis
 redis_om
+pytest
+pytest-asyncio

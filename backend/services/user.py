@@ -79,7 +79,7 @@ async def get_user_info(current_user: User, redis: Redis):
     key = get_cache_key("user", current_user.id, "profile")
     cached_info = await redis.get(key)
 
-    #If info about info have in redis, return cached info
+    #If info about user have in redis, return cached info
     if cached_info:
         return {"success": True, "info": json.loads(cached_info), "source": "cache"}
 
