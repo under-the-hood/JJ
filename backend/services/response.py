@@ -36,7 +36,7 @@ async def send_response_to_vacancy(data: ResponseSchema, session: AsyncSession, 
 
     mail = Mails(
         recipient_id = current_vacancy.tenant_id,
-        subject = "New response to your vacncy!",
+        subject = "New response to your vacancy!",
         body = f"User {current_user.name} has responsed to your vacancy! His resume:\ntitle: {current_resume.title}\nstack: {current_resume.stack}\ncity: {current_resume.city}"
     )
 

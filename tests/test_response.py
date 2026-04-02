@@ -1,18 +1,16 @@
 import pytest
 import asyncio
-import httpx
 
 
 @pytest.mark.anyio
 async def test_apply_to_vacancy(apply_to_vacancy, get_latest_emails):
     assert apply_to_vacancy is not None
 
-    print("\nDEBUG: FIXTURE apply_to_vacancy TRIGGERED")
-    await asyncio.sleep(0.1)
     emails = get_latest_emails
+    await asyncio.sleep(0.5)
     
     assert len(emails) > 0
-    assert emails[-1]["subject"] == "New response to your vacncy!"
+    assert emails[-1]["subject"] == "New response to your vacancy!"
     assert "city: Almaty" in emails[-1]["text"]
 
 

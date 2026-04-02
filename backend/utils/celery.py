@@ -13,3 +13,5 @@ celery = Celery(
     backend="redis://localhost:6379/0",
     include=["backend.utils.celery_tasks"]
 )
+
+celery.conf.task_always_eager = True
