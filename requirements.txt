@@ -21,3 +21,4 @@ redis
 redis_om
 pytest
 pytest-asyncio
+psycopg2-binary
