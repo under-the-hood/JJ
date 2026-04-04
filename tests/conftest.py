@@ -17,8 +17,7 @@ from backend.database.redis_database import get_redis
 
 @pytest.fixture(scope='session', autouse=True)
 async def setup_db():
-    print(f'{settings.database=}')
-    
+
     assert settings.MODE == 'TEST'
     
     async with engine.begin() as conn:

@@ -53,4 +53,5 @@ jobs:
         env:
           DATABASE_URL: postgresql+asyncpg://postgres:jjpassword@localhost:5432/jj
           SECRET_KEY: test_secret_key
+          MODE: TEST
         run: pytest

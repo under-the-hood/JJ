@@ -35,7 +35,10 @@ class Settings(BaseSettings):
         else:
             env_file = ".dev.env"
             
-        return cls(_env_file=os.path.join(current_dir, env_file))
+        #return cls(_env_file=os.path.join(current_dir, env_file))
+        if os.path.exists(os.path.join(current_dir, env_file)):
+            return cls(_env_file=os.path.join(current_dir, env_file))
+        return cls()
 
 
 settings = Settings.load_settings()
