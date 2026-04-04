@@ -14,9 +14,15 @@ jobs:
       postgres:
         image: postgres:15
         env:
+          DB_HOST: localhost
+          DB_PORT: 5432
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: jjpassword
           POSTGRES_DB: jj
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          KEY_FOR_JWT: SECRET_KEY
+          RABBITMQ: amqp://guest:guest@localhost:5672//
         ports:
           - 5432:5432
         options: >-
@@ -28,7 +34,7 @@ jobs:
       redis:
         image: redis:7
         ports:
-          - 6379:6379
+          - 6380:6379
 
     steps:
       - name: Check out repository
@@ -51,7 +57,16 @@ jobs:
 
       - name: Run Tests
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres:jjpassword@localhost:5432/jj
           SECRET_KEY: test_secret_key
           MODE: TEST
+          DB_HOST: localhost
+          DB_PORT: 5432
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: jjpassword
+          POSTGRES_DB: jj
+          REDIS_HOST: localhost
+          REDIS_PORT: 6380
+          KEY_FOR_JWT: SECRET_KEY
+          RABBITMQ: amqp://guest:guest@localhost:5672//
+          DATABASE_URL: postgresql+asyncpg://postgres:jjpassword@localhost:5432/jj
         run: pytest
