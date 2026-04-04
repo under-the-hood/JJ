@@ -14,7 +14,7 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: postgres_user
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: jjpassword
           POSTGRES_DB: jj
         ports:
@@ -46,11 +46,11 @@ jobs:
 
       - name: Run migrations (Alembic)
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres_user:jjpassword@localhost:5432/jj
-        run: alembic -c backend/alembic.ini upgrade head
+          DATABASE_URL: postgresql+psycopg2://postgres:jjpassword@localhost:5432/jj
+        run: alembic -c backend/alembic.ini -x db_url="$DATABASE_URL" upgrade head
 
       - name: Run Tests
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres_user:jjpassword@localhost:5432/jj
+          DATABASE_URL: postgresql+asyncpg://postgres:jjpassword@localhost:5432/jj
           SECRET_KEY: test_secret_key
         run: pytest
