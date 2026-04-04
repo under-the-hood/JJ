@@ -47,7 +47,7 @@ jobs:
       - name: Run migrations (Alembic)
         env:
           DATABASE_URL: postgresql+asyncpg://postgres_user:jjpassword@localhost:5432/jj
-        run: alembic upgrade head
+        run: alembic -c backend/alembic.ini upgrade head
 
       - name: Run Tests
         env:
