@@ -1,24 +1,25 @@
 services:
-  redis_container:
+
+  redis:
     image: redis:7
+    container_name: redis-local
     ports:
       - 6379:6379
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
     hostname: rabbitmq
-    container_name: rabbitmq
+    container_name: rabbitmq-local
     ports:
       - "5672:5672"
       - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: "guest"
       RABBITMQ_DEFAULT_PASS: "guest"
-    volumes:
-      - "rabbitmq-data:/var/lib/rabbitmq"
 
   maildev:
     image: maildev/maildev
+    container_name: maildev-local
     environment:
       - TZ=Europe/Moscow
       - MAILDEV_WEB_PORT=1080
@@ -32,4 +33,4 @@ services:
         max-size: "1m"
 
 volumes:
-  rabbitmq-data:
+  rabbitmq_data:

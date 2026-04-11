@@ -55,11 +55,15 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: "guest"
       RABBITMQ_DEFAULT_PASS: "guest"
-    volumes:
-      - "rabbitmq-data:/var/lib/rabbitmq"
+    healthcheck:
+      test: rabbitmq-diagnostics -q check_running
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   maildev:
     image: maildev/maildev
+    container_name: maildev
     environment:
       - TZ=Europe/Moscow
       - MAILDEV_WEB_PORT=1080
@@ -72,11 +76,10 @@ services:
       options:
         max-size: "1m"
 
-  celery_worker:
+  celery:
     build: .
-    container_name: celery_worker
+    container_name: celery
     environment:
-      - PYTHONPATH=/app
       - MODE=PROD
     command: celery -A backend.utils.celery worker --loglevel=INFO --pool=threads
     env_file:
@@ -85,11 +88,25 @@ services:
       db:
         condition: service_healthy
       rabbitmq:
-        condition: service_started
+        condition: service_healthy
       backend:
         condition: service_started
     volumes:
       - .:/app
+
+#  flower:
+#    build: .
+#    container_name: flower
+#    command: celery --app backend.utils.celery flower --port=5555
+#    ports:
+#      - 5555:5555
+#    depends_on:
+#      rabbitmq:
+#        condition: service_healthy
+#      celery:
+#        condition: service_started
+#      redis:
+#        condition: service_started
 
 volumes:
   postgres_data:

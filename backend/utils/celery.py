@@ -9,9 +9,7 @@ from backend.models.vacancy import Vacancy
 
 celery = Celery(
     "jj_project",
-    broker=settings.RABBITMQ,
-    backend="redis://localhost:6379/0",
+    broker=f"{settings.RABBITMQ}",
+    backend=f"redis://{settings.REDIS_HOST}:6379/0",
     include=["backend.utils.celery_tasks"]
 )
-
-celery.conf.task_always_eager = True

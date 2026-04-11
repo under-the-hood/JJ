@@ -18,7 +18,7 @@ async def test_get_users(get_token_as_admin):
 
 
 @pytest.mark.order(after="tests/test_user.py::test_get_info_about_user")
-async def test_edit_user_name(get_token_as_admin):
+async def test_edit_user_name(get_token_as_admin, get_token_as_tenant):
 
     users_query = await get_token_as_admin.get("/admin/get_users")
     users = users_query.json()["users"]

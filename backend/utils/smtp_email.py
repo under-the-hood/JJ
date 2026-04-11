@@ -1,6 +1,7 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import os
 
 
 class SmtpEmailBackend:
@@ -46,7 +47,7 @@ class SmtpEmailBackend:
             )
 
 email_backend = SmtpEmailBackend(
-    smtp_server="localhost",
+    smtp_server="maildev" if os.getenv("MODE") == "PROD" else "localhost",
     smtp_port=1025,
     from_email="info@jj.com",
 )

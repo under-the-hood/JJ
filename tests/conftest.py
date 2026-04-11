@@ -13,11 +13,13 @@ from backend.api.response import set_status_limiter, response_limiter
 from backend.api.user import password_limit, delete_limit, login_limit
 from backend.api.search import search_vacancy_limiter
 from backend.database.redis_database import get_redis
+from backend.utils.celery import celery
 
 
 @pytest.fixture(scope='session', autouse=True)
 async def setup_db():
 
+    celery.conf.task_always_eager = True
     assert settings.MODE == 'TEST'
     
     async with engine.begin() as conn:
@@ -33,6 +35,9 @@ async def setup_db():
 
 new_session = async_sessionmaker(autoflush=False, expire_on_commit=False, bind=engine)
 
+@pytest.fixture
+async def anyio_backend():
+    return 'asyncio'
 
 @pytest.fixture
 async def get_test_session():
@@ -45,7 +50,6 @@ async def get_latest_emails():
     async with httpx.AsyncClient() as client:
         response = await client.get("http://localhost:8080/email")
         return response.json()
-
 
 @pytest.fixture(scope='session', autouse=True)
 async def disable_all_limits():

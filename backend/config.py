@@ -34,11 +34,19 @@ class Settings(BaseSettings):
             env_file = ".prod.env"
         else:
             env_file = ".dev.env"
-            
-        #return cls(_env_file=os.path.join(current_dir, env_file))
+
+#        full_path = os.path.join(current_dir, env_file)
+
+#        if os.path.exists(full_path):
+#            instance = cls(_env_file=full_path)
+#            print(f"DEBUG: Loaded {env_file}, RabbitMQ: {instance.RABBITMQ}")
+#            return instance
+#        
+#        print(f"DEBUG: {env_file} not found, using environment variables")
+#        return cls()
+
         if os.path.exists(os.path.join(current_dir, env_file)):
             return cls(_env_file=os.path.join(current_dir, env_file))
         return cls()
-
 
 settings = Settings.load_settings()
