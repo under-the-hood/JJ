@@ -94,19 +94,16 @@ services:
     volumes:
       - .:/app
 
-#  flower:
-#    build: .
-#    container_name: flower
-#    command: celery --app backend.utils.celery flower --port=5555
-#    ports:
-#      - 5555:5555
-#    depends_on:
-#      rabbitmq:
-#        condition: service_healthy
-#      celery:
-#        condition: service_started
-#      redis:
-#        condition: service_started
+  flower:
+    build: .
+    container_name: flower
+    command: celery --app backend.utils.celery --broker=amqp://guest:guest@rabbitmq:5672// flower --port=5555
+    ports:
+      - 5555:5555
+    depends_on:
+      - rabbitmq
+      - celery
+      - redis
 
 volumes:
   postgres_data:
