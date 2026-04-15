@@ -1,7 +1,7 @@
 import pytest
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_user_info_cache_invalidation(get_token_as_tenant):
 
     await get_token_as_tenant.get("/user/get_info")
@@ -23,7 +23,7 @@ async def test_user_info_cache_invalidation(get_token_as_tenant):
     assert data["source"] == "db"
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_vacancy_search_invalidation(get_token_as_applicant, get_token_as_tenant):
 
     first_response = await get_token_as_applicant.get("/search/search_vacancies")

@@ -2,7 +2,7 @@ import pytest
 
 
 #Test admin role for work with users
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_get_users(get_token_as_admin):
 
     response = await get_token_as_admin.get("/admin/get_users")
@@ -51,7 +51,7 @@ async def test_update_user_role(get_token_as_admin):
     assert response.status_code == 200
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_delete_user_as_admin(get_token_as_admin, get_token_as_applicant):
 
     user_for_delete = {
@@ -75,7 +75,7 @@ async def test_delete_user_as_admin(get_token_as_admin, get_token_as_applicant):
 
 
 #Test admin role for work with vacancy
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_edit_vacancy_as_admin(get_token_as_admin, create_vacancy):
 
     vacancy_id = create_vacancy
@@ -92,7 +92,7 @@ async def test_edit_vacancy_as_admin(get_token_as_admin, create_vacancy):
     assert response.status_code == 200
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_get_vacancies(get_token_as_admin):
 
     response = await get_token_as_admin.get("/admin/get_vacancies")
@@ -107,7 +107,7 @@ async def test_get_vacancies(get_token_as_admin):
     assert "Python developer" in vacancies
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_delete_vacancy_as_admin(get_token_as_admin, create_vacancy):
 
     vacancy_id = create_vacancy
@@ -118,7 +118,7 @@ async def test_delete_vacancy_as_admin(get_token_as_admin, create_vacancy):
 
 
 #Test admin role for work with resume
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_edit_resume_as_admin(get_token_as_admin, create_resume):
 
     resume_id = create_resume
@@ -136,7 +136,7 @@ async def test_edit_resume_as_admin(get_token_as_admin, create_resume):
     assert response.status_code == 200
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_get_resumes(get_token_as_admin):
 
     response = await get_token_as_admin.get("/admin/get_resumes")
@@ -151,7 +151,7 @@ async def test_get_resumes(get_token_as_admin):
     assert "FastAPI Developer" in resumes
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_delete_resume_as_admin(get_token_as_admin, create_resume):
 
     resume_id = create_resume
@@ -162,7 +162,7 @@ async def test_delete_resume_as_admin(get_token_as_admin, create_resume):
 
 
 #Test admin role for work with response
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_get_responses_as_admin(get_token_as_admin, apply_to_vacancy):
 
     response = await get_token_as_admin.get("/admin/get_responses")
@@ -177,7 +177,7 @@ async def test_get_responses_as_admin(get_token_as_admin, apply_to_vacancy):
     assert "Hello! I want work in your company!" in responses
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_delete_response(get_token_as_admin, apply_to_vacancy):
 
     response_id = apply_to_vacancy

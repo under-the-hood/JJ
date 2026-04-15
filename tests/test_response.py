@@ -2,7 +2,7 @@ import pytest
 import asyncio
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_apply_to_vacancy(apply_to_vacancy, get_latest_emails):
     assert apply_to_vacancy is not None
 
@@ -14,7 +14,7 @@ async def test_apply_to_vacancy(apply_to_vacancy, get_latest_emails):
     assert "city: Almaty" in emails[-1]["text"]
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_get_responses(get_token_as_tenant, create_vacancy, apply_to_vacancy):
 
     vacancy_id = create_vacancy
@@ -33,7 +33,7 @@ async def test_get_responses(get_token_as_tenant, create_vacancy, apply_to_vacan
     assert "user" in first_response
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_set_status(get_token_as_tenant, apply_to_vacancy):
 
     response_id = apply_to_vacancy

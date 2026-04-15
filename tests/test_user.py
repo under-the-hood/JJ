@@ -1,12 +1,12 @@
 import pytest
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_create_user(get_token_as_tenant):
     assert get_token_as_tenant.headers.get("Authorization") is not None
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_get_info_about_user(get_token_as_tenant):
 
     response = await get_token_as_tenant.get("/user/get_info")
@@ -19,7 +19,7 @@ async def test_get_info_about_user(get_token_as_tenant):
     assert isinstance(data["info"]["id"], int)
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_edit_password(get_token_as_tenant):
 
     new_password = {
@@ -33,7 +33,7 @@ async def test_edit_password(get_token_as_tenant):
     assert response.status_code == 200
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_edit_name(get_token_as_tenant):
         
     new_name = {

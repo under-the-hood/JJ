@@ -1,7 +1,7 @@
 import pytest
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_search_resumes(get_token_as_tenant):
 
     response = await get_token_as_tenant.get("/search/search_resumes")
@@ -18,7 +18,7 @@ async def test_search_resumes(get_token_as_tenant):
     assert "FastAPI Developer" in titles
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_search_vacancies(get_token_as_applicant):
 
     response = await get_token_as_applicant.get("/search/search_vacancies")

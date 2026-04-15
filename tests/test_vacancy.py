@@ -1,12 +1,12 @@
 import pytest
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_create_vacancy(create_vacancy):
     assert create_vacancy is not None
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_get_all_my_vacancies(get_token_as_tenant):
 
     response = await get_token_as_tenant.get("/vacancy/get_all_my_vacancies")
@@ -20,7 +20,7 @@ async def test_get_all_my_vacancies(get_token_as_tenant):
     assert data["Your vacancies"][0]["title"] == "Python developer"
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_edit_vacancy(get_token_as_tenant, create_vacancy):
 
     vacancy_id = create_vacancy
@@ -37,7 +37,7 @@ async def test_edit_vacancy(get_token_as_tenant, create_vacancy):
     assert response.status_code == 200
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_delete_vacancy(get_token_as_tenant, create_vacancy):
 
     vacancy_id = create_vacancy

@@ -1,12 +1,12 @@
 import pytest
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_create_resume(create_resume):
     assert create_resume is not None
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_get_all_my_resumes(get_token_as_applicant):
 
     response = await get_token_as_applicant.get("/resume/get_all_my_resumes")
@@ -20,7 +20,7 @@ async def test_get_all_my_resumes(get_token_as_applicant):
     assert data["Your resumes"][0]["title"] == "FastAPI Developer"
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_edit_resume(get_token_as_applicant, create_resume):
 
     resume_id = create_resume
@@ -38,7 +38,7 @@ async def test_edit_resume(get_token_as_applicant, create_resume):
     assert response.status_code == 200
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_delete_resume(get_token_as_applicant, create_resume):
 
     resume_id = create_resume

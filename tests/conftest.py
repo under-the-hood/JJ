@@ -35,10 +35,6 @@ async def setup_db():
 
 new_session = async_sessionmaker(autoflush=False, expire_on_commit=False, bind=engine)
 
-@pytest.fixture(scope="session", params=["asyncio"])
-async def anyio_backend(request):
-    return request.param
-
 @pytest.fixture
 async def get_test_session():
     async with new_session() as session:
