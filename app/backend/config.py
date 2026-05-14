@@ -1,0 +1,46 @@
+import os
+from pydantic_settings import BaseSettings
+from pathlib import Path
+
+
+current_dir = Path(__file__).parent.parent.parent
+
+class Settings(BaseSettings):
+    MODE: str = "DEV"
+
+    DB_HOST: str
+    DB_PORT: int
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
+
+    REDIS_HOST: str
+    REDIS_PORT: int
+
+    KEY_FOR_JWT: str
+
+    RABBITMQ: str
+
+    GF_SECURITY_ADMIN_USER: str
+    GF_SECURITY_ADMIN_PASSWORD: str
+
+    @property
+    def database(self):
+        return f'postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.POSTGRES_DB}'
+
+    @classmethod
+    def load_settings(cls):
+        mode = os.getenv("MODE", "DEV").upper()
+        
+        if mode == "TEST":
+            env_file = ".test.env"
+        elif mode == "PROD":
+            env_file = ".prod.env"
+        else:
+            env_file = ".dev.env"
+
+        if os.path.exists(os.path.join(current_dir, env_file)):
+            return cls(_env_file=os.path.join(current_dir, env_file))
+        return cls()
+
+settings = Settings.load_settings()
