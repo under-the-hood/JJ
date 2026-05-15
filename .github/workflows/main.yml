@@ -79,4 +79,6 @@ jobs:
           KEY_FOR_JWT: SECRET_KEY
           RABBITMQ: amqp://guest:guest@localhost:5672//
           DATABASE_URL: postgresql+asyncpg://postgres:jjpassword@localhost:5432/jj
+          GF_SECURITY_ADMIN_USER: test_grafana_user
+          GF_SECURITY_ADMIN_PASSWORD: test_grafana_password
         run: pytest
