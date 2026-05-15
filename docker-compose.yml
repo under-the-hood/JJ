@@ -6,7 +6,7 @@ services:
     container_name: jj_db
     restart: always
     env_file:
-      - backend/.prod.env
+      - ./.prod.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -25,7 +25,7 @@ services:
         db:
           condition: service_healthy
       env_file:
-        - backend/.prod.env
+        - ./.prod.env
       command: >
         sh -c "alembic -c alembic.ini upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"
 
@@ -40,8 +40,8 @@ services:
     ports:
       - 80:80
     volumes:
-      - ./backend/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./frontend:/usr/share/nginx/html:ro
+      - ./app/backend/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./app/frontend:/usr/share/nginx/html:ro
     depends_on:
       - backend
 
@@ -81,7 +81,7 @@ services:
     container_name: celery
     environment:
       - MODE=PROD
-    command: celery -A backend.utils.celery worker --loglevel=INFO --pool=threads
+    command: celery -A app.backend.utils.celery worker --loglevel=INFO --pool=threads
     env_file:
       - backend/.prod.env
     depends_on:
@@ -97,7 +97,7 @@ services:
   flower:
     build: .
     container_name: flower
-    command: celery --app backend.utils.celery --broker=amqp://guest:guest@rabbitmq:5672// flower --port=5555
+    command: celery --app app.backend.utils.celery --broker=amqp://guest:guest@rabbitmq:5672// flower --port=5555
     ports:
       - 5555:5555
     depends_on:
