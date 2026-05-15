@@ -9,20 +9,25 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: test_secret_key
+      MODE: TEST
+      DB_HOST: localhost
+      DB_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: jjpassword
+      POSTGRES_DB: jj
+      REDIS_HOST: localhost
+      REDIS_PORT: 6380
+      KEY_FOR_JWT: SECRET_KEY
+      RABBITMQ: amqp://guest:guest@localhost:5672//
+      DATABASE_URL: postgresql+asyncpg://postgres:jjpassword@localhost:5432/jj
+      GF_SECURITY_ADMIN_USER: test_grafana_user
+      GF_SECURITY_ADMIN_PASSWORD: test_grafana_password
 
     services:
       postgres:
         image: postgres:15
-        env:
-          DB_HOST: localhost
-          DB_PORT: 5432
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: jjpassword
-          POSTGRES_DB: jj
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-          KEY_FOR_JWT: SECRET_KEY
-          RABBITMQ: amqp://guest:guest@localhost:5672//
         ports:
           - 5432:5432
         options: >-
@@ -66,19 +71,4 @@ jobs:
         run: alembic -c alembic.ini -x db_url="$DATABASE_URL" upgrade head
 
       - name: Run Tests
-        env:
-          SECRET_KEY: test_secret_key
-          MODE: TEST
-          DB_HOST: localhost
-          DB_PORT: 5432
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: jjpassword
-          POSTGRES_DB: jj
-          REDIS_HOST: localhost
-          REDIS_PORT: 6380
-          KEY_FOR_JWT: SECRET_KEY
-          RABBITMQ: amqp://guest:guest@localhost:5672//
-          DATABASE_URL: postgresql+asyncpg://postgres:jjpassword@localhost:5432/jj
-          GF_SECURITY_ADMIN_USER: test_grafana_user
-          GF_SECURITY_ADMIN_PASSWORD: test_grafana_password
         run: pytest
