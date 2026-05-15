@@ -6,28 +6,47 @@ on:
   pull_request:
     branches: ["main"]
 
+env:
+  SECRET_KEY: test_secret_key
+  MODE: TEST
+  DB_HOST: localhost
+  DB_PORT: 5432
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: jjpassword
+  POSTGRES_DB: jj
+  REDIS_HOST: localhost
+  REDIS_PORT: 6380
+  KEY_FOR_JWT: SECRET_KEY
+  RABBITMQ: amqp://guest:guest@localhost:5672//
+  DATABASE_URL: postgresql+asyncpg://postgres:jjpassword@localhost:5432/jj
+  GF_SECURITY_ADMIN_USER: test_grafana_user
+  GF_SECURITY_ADMIN_PASSWORD: test_grafana_password
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      SECRET_KEY: test_secret_key
-      MODE: TEST
-      DB_HOST: localhost
-      DB_PORT: 5432
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: jjpassword
-      POSTGRES_DB: jj
-      REDIS_HOST: localhost
-      REDIS_PORT: 6380
-      KEY_FOR_JWT: SECRET_KEY
-      RABBITMQ: amqp://guest:guest@localhost:5672//
-      DATABASE_URL: postgresql+asyncpg://postgres:jjpassword@localhost:5432/jj
-      GF_SECURITY_ADMIN_USER: test_grafana_user
-      GF_SECURITY_ADMIN_PASSWORD: test_grafana_password
+#    env:
+#      SECRET_KEY: ${{ env.SECRET_KEY }}
+#      MODE: ${{ env.MODE }}
+#      DB_HOST: ${{ env.DB_HOST }}
+#      DB_PORT: ${{ env.DB_PORT }}
+#      POSTGRES_USER: ${{ env.POSTGRES_USER }}
+#      POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+#      POSTGRES_DB: ${{ env.POSTGRES_DB }}
+#      REDIS_HOST: ${{ env.REDIS_HOST }}
+#      REDIS_PORT: ${{ env.REDIS_PORT }}
+#      KEY_FOR_JWT: ${{ env.SECRET_KEY }}
+#      RABBITMQ: ${{ env.RABBTTMQ }}
+#      DATABASE_URL: ${{ env.DATABASE_URL }}
+#      GF_SECURITY_ADMIN_USER: ${{ env.GF_SECURITY_ADMIN_USER }}
+#      GF_SECURITY_ADMIN_PASSWORD: ${{ env.GF_SECURITY_ADMIN_PASSWORD }}
 
     services:
       postgres:
         image: postgres:15
+        env:
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
         ports:
           - 5432:5432
         options: >-
@@ -67,7 +86,7 @@ jobs:
 
       - name: Run migrations (Alembic)
         env:
-          DATABASE_URL: postgresql+psycopg2://postgres:jjpassword@localhost:5432/jj
+          DATABASE_URL: postgresql+psycopg2://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@${{ env.DB_HOST }}:${{ env.DB_PORT }}/${{ env.POSTGRES_DB }}
         run: alembic -c alembic.ini -x db_url="$DATABASE_URL" upgrade head
 
       - name: Run Tests
