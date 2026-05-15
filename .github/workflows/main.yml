@@ -63,7 +63,7 @@ jobs:
       - name: Run migrations (Alembic)
         env:
           DATABASE_URL: postgresql+psycopg2://postgres:jjpassword@localhost:5432/jj
-        run: alembic -c backend/alembic.ini -x db_url="$DATABASE_URL" upgrade head
+        run: alembic -c alembic.ini -x db_url="$DATABASE_URL" upgrade head
 
       - name: Run Tests
         env:
