@@ -9,7 +9,7 @@ from app.backend.utils.hash import hashing_password, pwd_context
 from app.backend.utils.auth import security
 from app.backend.models.user import User
 from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, Delete
-from app.backend.dependencies import get_cache_key
+from app.backend.dependencies.redis_cache import get_cache_key
 from app.backend.models.mails import Mails
 from app.backend.utils.celery_tasks import send_mail_task
 
@@ -115,6 +115,7 @@ async def update_password(data: EditPassword, session: AsyncSession, current_use
     await session.commit()
     await session.refresh(current_user)
     send_mail_task.delay(mail.id)
+
 
 async def update_name(data: EditName, session: AsyncSession, current_user: User, redis: Redis):
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
 
-from app.backend.dependencies import check_user
+from app.backend.dependencies.user import check_user
 from app.backend.database.database import session_dep
 from app.backend.models.user import User
 from app.backend.schemas.search import SearchResumes, SearchVacancies

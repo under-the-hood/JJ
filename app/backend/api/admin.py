@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
 
 from app.backend.database.database import session_dep
-from app.backend.dependencies import check_admin, check_vacancy, check_resume, check_user_for_edit_by_admin
+from app.backend.dependencies.user import check_admin, check_user_by_id
+from app.backend.dependencies.resume import check_resume
+from app.backend.dependencies.vacancy import check_vacancy
 from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
 from app.backend.models.resume import Resume
@@ -25,21 +27,21 @@ async def get_users(session: session_dep, limit: int = 10, offset: int = 0, admi
 
 
 @router.put('/admin/edit_user_name/{user_id}', tags=['Admin'])
-async def edit_name(data: EditUserNameByAdmin, session: session_dep, current_user: User = Depends(check_user_for_edit_by_admin), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
+async def edit_name(data: EditUserNameByAdmin, session: session_dep, current_user: User = Depends(check_user_by_id), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
     await edit_user_name(data, session, current_user, admin, redis)
     return {'success': True, 'message': 'Users name was edited'}
 
 
 @router.put('/admin/update_user_role/{user_id}', tags=['Admin'])
-async def update_role(session: session_dep, data: UpdateUserRoleByAdmin, current_user: User = Depends(check_user_for_edit_by_admin), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
+async def update_role(session: session_dep, data: UpdateUserRoleByAdmin, current_user: User = Depends(check_user_by_id), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
     await update_user_role(session, data, current_user, admin, redis)
     return {'success': True, 'message': 'Role was updated'}    
 
 
 @router.delete('/admin/delete_user/{user_id}', tags=['Admin'])
-async def delete_user(session: session_dep, current_user: User = Depends(check_user_for_edit_by_admin), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
+async def delete_user(session: session_dep, current_user: User = Depends(check_user_by_id), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
     await delete_user_by_admin(session, current_user, admin, redis)
     return {'success': True, 'message': 'User was deleted'}

@@ -3,15 +3,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 
-from app.backend.models.user import Role, User
+from app.backend.models.user import User, Role
 from app.backend.models.vacancy import Vacancy
 from app.backend.schemas.vacancy import CreateVacancy, EditVacancy
 
 
 async def create_new_vacancy(data: CreateVacancy, session: AsyncSession, current_user: User, redis: Redis):
-
-    if current_user.role != Role.tenant:
-        raise HTTPException(status_code=403, detail='Only tenants can make vacancies')
 
     new_vacancy = Vacancy(**data.model_dump())
     new_vacancy.tenant_id = current_user.id
@@ -32,13 +29,7 @@ async def get_all_user_vacancies(session: AsyncSession, current_user: User):
     return all_vacancies
 
 
-async def edit_user_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: EditVacancy, current_user: User, redis: Redis):
-
-    if current_user.role != Role.tenant:
-        raise HTTPException(status_code=403, detail='Only applicant can edit vacancy')
-
-    if current_user.id != current_vacancy.tenant_id:
-        raise HTTPException(status_code=403, detail="It's not your vacancy")
+async def edit_user_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: EditVacancy, redis: Redis):
 
     if data.new_title:
         current_vacancy.title = data.new_title
@@ -55,13 +46,7 @@ async def edit_user_vacancy(session: AsyncSession, current_vacancy: Vacancy, dat
     await redis.incr("vacancy_version")
 
 
-async def delete_user_vacancy(session: AsyncSession, current_vacancy: Vacancy, current_user: User, redis: Redis):
-
-    if current_user.role != Role.tenant:
-        raise HTTPException(status_code=403, detail='Only tenants can delete vacancy')
-
-    if current_vacancy.tenant_id != current_user.id:
-        raise HTTPException(status_code=403, detail='This is not your vacancy')
+async def delete_user_vacancy(session: AsyncSession, current_vacancy: Vacancy, redis: Redis):
 
     await session.delete(current_vacancy)
     await session.commit()
