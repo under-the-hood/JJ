@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends
 
 from app.backend.database.database import session_dep
-from app.backend.dependencies import check_user, check_vacancy, check_resume
+from app.backend.dependencies.resume import check_resume
+from app.backend.dependencies.user import check_user
+from app.backend.dependencies.vacancy import check_vacancy
 from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
 from app.backend.models.resume import Resume
@@ -33,6 +35,6 @@ set_status_limiter = rate_limiter_factory("/response/set_status/{response_id}", 
 
 @router.put('/response/set_status/{response_id}', tags=['Response'], dependencies=[Depends(set_status_limiter)])
 async def set_status(response_id: int, data: SetStatus, session: session_dep, current_user: User = Depends(check_user)):
-
+    
     await set_status_to_response(response_id, data, session, current_user)
     return {'success': True, 'message': 'Status was updated'}

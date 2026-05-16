@@ -1,17 +1,13 @@
-from fastapi import HTTPException
 from sqlalchemy import select
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.backend.models.user import User, Role
+from app.backend.models.user import User
 from app.backend.models.resume import Resume
 from app.backend.schemas.resume import CreateResume, EditResume
 
 
 async def create_new_resume(data: CreateResume, session: AsyncSession, current_user: User, redis: Redis):
-
-    if current_user.role != Role.applicant:
-        raise HTTPException(status_code=403, detail='Only applicant can make resumes')
 
     new_resume = Resume(**data.model_dump())
 
@@ -33,13 +29,7 @@ async def get_all_user_resumes(session: AsyncSession, current_user: User):
     return all_resumes
 
 
-async def edit_user_resume(session: AsyncSession, current_resume: Resume, data: EditResume, current_user: User, redis: Redis):
-    
-    if current_user.role != Role.applicant:
-        raise HTTPException(status_code=403, detail='Only applicant can edit resume')
-
-    if current_user.id != current_resume.applicant_id:
-        raise HTTPException(status_code=403, detail="It's not your resume")
+async def edit_user_resume(session: AsyncSession, current_resume: Resume, data: EditResume, redis: Redis):
 
     if data.new_title:
         current_resume.title = data.new_title
@@ -59,13 +49,7 @@ async def edit_user_resume(session: AsyncSession, current_resume: Resume, data: 
     await redis.incr("resume_version")
 
 
-async def delete_user_resume(session: AsyncSession, current_resume: Resume, current_user: User, redis: Redis):
-
-    if current_user.role != Role.applicant:
-        raise HTTPException(status_code=403, detail='Only applicant can edit resumes')
-
-    if current_user.id != current_resume.applicant_id:
-        raise HTTPException(status_code=403, detail='This is not your resume')
+async def delete_user_resume(session: AsyncSession, current_resume: Resume, redis: Redis):
 
     await session.delete(current_resume)
     await session.commit()

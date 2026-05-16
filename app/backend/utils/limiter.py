@@ -4,7 +4,7 @@ import random
 from time import time
 from fastapi import HTTPException, Depends, Request
 
-from app.backend.dependencies import get_user_token
+from app.backend.dependencies.auth import get_user_token
 from app.backend.models.user import User
 from app.backend.database.redis_database import get_redis
 

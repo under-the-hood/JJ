@@ -10,7 +10,7 @@ from app.backend.models.resume import Resume
 from app.backend.schemas.admin import EditUserNameByAdmin, UpdateUserRoleByAdmin
 from app.backend.schemas.vacancy import EditVacancy
 from app.backend.schemas.resume import EditResume
-from app.backend.dependencies import get_cache_key
+from app.backend.dependencies.redis_cache import get_cache_key
 
 
 #-------------Service for work with users-------------
