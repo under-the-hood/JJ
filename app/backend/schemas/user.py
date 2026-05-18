@@ -25,7 +25,6 @@ class EditPassword(BaseModel):
 
 class EditName(BaseModel):
     new_name: str = Field(min_length=3, max_length=15, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
-    password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
 
 class Delete(BaseModel):
     password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')

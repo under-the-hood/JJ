@@ -4,7 +4,6 @@ from redis.asyncio import Redis
 import json
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.backend.database.database import session_dep
 from app.backend.utils.hash import hashing_password, pwd_context
 from app.backend.utils.auth import security
 from app.backend.models.user import User
@@ -12,20 +11,10 @@ from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, 
 from app.backend.dependencies.redis_cache import get_cache_key
 from app.backend.models.mails import Mails
 from app.backend.utils.celery_tasks import send_mail_task
+from app.backend.utils.helpers import clear_user_profile_cache
 
 
-async def create_user(data: CreateUser, session: AsyncSession):
-    
-    if data.password != data.repeat_password:
-        raise HTTPException(status_code=400, detail="Passwords don't match")
-
-    exiting_user = await session.execute(select(User).where(User.email == data.email))
-
-    if exiting_user.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail='This email already exists in database')
-
-    if data.role not in ["tenant", "applicant"]:
-        raise HTTPException(status_code=400, detail="Role must be either 'tenant' or 'applicant'")
+async def create_user(session: AsyncSession, data: CreateUser):
 
     new_user = User(
         email = data.email,
@@ -55,18 +44,13 @@ async def create_user(data: CreateUser, session: AsyncSession):
     return new_user
 
 
-async def login(data: Login, session: AsyncSession, response: Response):
+async def login(session: AsyncSession, data: Login, response: Response):
 
     query = await session.execute(select(User).where(User.email == data.email))
     current_user = query.scalar_one_or_none()
 
-    error = HTTPException(status_code=401, detail="Incorrect email or password")
-
-    if not current_user:
-        raise error
-
-    if not pwd_context.verify(data.password, current_user.password):
-        raise error
+    if not current_user or not pwd_context.verify(data.password, current_user.password):
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
 
     token = security.create_access_token(uid=str(current_user.id))
     security.set_access_cookies(token, response=response)
@@ -94,16 +78,9 @@ async def get_user_info(current_user: User, redis: Redis):
     return {"success": True, "info": user_info, "source": "db"}
 
 
-async def update_password(data: EditPassword, session: AsyncSession, current_user: User):
-
-    if not pwd_context.verify(data.old_password, current_user.password):
-        raise HTTPException(status_code=400, detail='Incorrect password')
-
-    if data.new_password != data.repeat_new_password:
-        raise HTTPException(status_code=400, detail="The passwords don't match")
+async def update_password(session: AsyncSession, data: EditPassword, current_user: User, redis: Redis):
 
     current_user.password = hashing_password(data.new_password)
-
 
     mail = Mails(
         recipient_id = current_user.id,
@@ -116,11 +93,10 @@ async def update_password(data: EditPassword, session: AsyncSession, current_use
     await session.refresh(current_user)
     send_mail_task.delay(mail.id)
 
+    await clear_user_profile_cache(redis, current_user.id)
 
-async def update_name(data: EditName, session: AsyncSession, current_user: User, redis: Redis):
 
-    if not pwd_context.verify(data.password, current_user.password):
-        raise HTTPException(status_code=400, detail='Incorrect password')
+async def update_name(session: AsyncSession, data: EditName, current_user: User, redis: Redis):
 
     current_user.name = data.new_name
 
@@ -128,17 +104,13 @@ async def update_name(data: EditName, session: AsyncSession, current_user: User,
     await session.refresh(current_user)
 
     #Delete cache
-    key = get_cache_key("user", current_user.id, "profile")
-    await redis.delete(key)
+    await clear_user_profile_cache(redis, current_user.id)
 
 
-async def delete_current_user(data: Delete, session: session_dep, current_user: User, redis: Redis):
 
-    if not pwd_context.verify(data.password, current_user.password):
-        raise HTTPException(status_code=400, detail='Incorrect password')
+async def delete_current_user(session: AsyncSession, data: Delete, current_user: User, redis: Redis):
 
     await session.delete(current_user)
     await session.commit()
 
-    key = get_cache_key("user", current_user.id, "profile")
-    await redis.delete(key)
+    await clear_user_profile_cache(redis, current_user.id)
