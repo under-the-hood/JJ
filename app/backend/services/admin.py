@@ -4,14 +4,14 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.backend.models.response import Response
-from app.backend.models.user import User, Role
+from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
 from app.backend.models.resume import Resume
 from app.backend.schemas.admin import EditUserNameByAdmin, UpdateUserRoleByAdmin
 from app.backend.schemas.vacancy import EditVacancy
 from app.backend.schemas.resume import EditResume
 from app.backend.dependencies.redis_cache import get_cache_key
-
+from app.backend.utils.helpers import clear_user_profile_cache, validate_admin_action
 
 #-------------Service for work with users-------------
 async def get_all_users(session: AsyncSession, admin: User, limit: int = 10, offset: int = 0):
@@ -26,13 +26,8 @@ async def get_all_users(session: AsyncSession, admin: User, limit: int = 10, off
     }
 
 
-async def edit_user_name(data: EditUserNameByAdmin, session: AsyncSession, current_user: User, admin: User, redis: Redis):
-
-    if current_user.id == admin.id:
-        raise HTTPException(status_code=403, detail='You can not edit your own admin account')
-
-    if current_user.role == Role.admin:
-        raise HTTPException(status_code=403, detail='You can not edit accounts of other admins')
+async def edit_user_name(session: AsyncSession, data: EditUserNameByAdmin, current_user: User, admin: User, redis: Redis):
+    validate_admin_action(current_user, admin)
 
     current_user.name = data.new_name
 
@@ -44,32 +39,23 @@ async def edit_user_name(data: EditUserNameByAdmin, session: AsyncSession, curre
 
 
 async def update_user_role(session: AsyncSession, data: UpdateUserRoleByAdmin, current_user: User, admin: User, redis: Redis):
-    
-    if current_user.id == admin.id:
-        raise HTTPException(status_code=403, detail='You can not update your own role')
+    validate_admin_action(current_user, admin)
 
     current_user.role = data.new_role
 
     await session.commit()
     await session.refresh(current_user)
 
-    key = get_cache_key("user", current_user.id, "profile")
-    await redis.delete(key)
+    await clear_user_profile_cache(redis, current_user.id)
 
 
 async def delete_user_by_admin(session: AsyncSession, current_user: User, admin: User, redis: Redis):
-
-    if current_user.id == admin.id:
-        raise HTTPException(status_code=403, detail='You can not delete your own admin account')
-
-    if current_user.role == Role.admin:
-        raise HTTPException(status_code=403, detail='You can not delete other admins')
+    validate_admin_action(current_user, admin)
 
     await session.delete(current_user)
     await session.commit()
 
-    key = get_cache_key("user", current_user.id, "profile")
-    await redis.delete(key)
+    await clear_user_profile_cache(redis, current_user.id)
 
 
 #-------------Service for work with vacancies-------------
@@ -167,7 +153,7 @@ async def get_all_responses(session: AsyncSession, admin: User, limit: int = 10,
         }
 
 
-async def delete_response_by_admin(response_id: int, session: AsyncSession, admin: User):
+async def delete_response_by_admin(session: AsyncSession, response_id: int, admin: User):
 
     query = await session.execute(select(Response).where(Response.id == response_id))
     current_response = query.scalar_one_or_none()

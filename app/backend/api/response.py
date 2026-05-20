@@ -18,9 +18,9 @@ router = APIRouter()
 response_limiter = rate_limiter_factory("/response/apply_to_vacancy/{vacancy_id}", 5, 60)
 
 @router.post('/response/apply_to_vacancy/{vacancy_id}', tags=['Response'], dependencies=[Depends(response_limiter)])
-async def apply_to_vacancy(data: ResponseSchema, session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy), current_resume: Resume = Depends(check_resume), current_user: User = Depends(check_user)):
+async def apply_to_vacancy(session: session_dep, data: ResponseSchema, current_vacancy: Vacancy = Depends(check_vacancy), current_resume: Resume = Depends(check_resume), current_user: User = Depends(check_user)):
 
-    response = await send_response_to_vacancy(data, session, current_vacancy, current_resume, current_user)
+    response = await send_response_to_vacancy(session, data, current_vacancy, current_resume, current_user)
     return {'success': True, 'message': 'You responded to vacancy', "Response": response}
 
 
@@ -34,7 +34,7 @@ async def get_responses(session: session_dep, current_vacancy: Vacancy = Depends
 set_status_limiter = rate_limiter_factory("/response/set_status/{response_id}", 5, 60)
 
 @router.put('/response/set_status/{response_id}', tags=['Response'], dependencies=[Depends(set_status_limiter)])
-async def set_status(response_id: int, data: SetStatus, session: session_dep, current_user: User = Depends(check_user)):
+async def set_status(session: session_dep, response_id: int, data: SetStatus, current_user: User = Depends(check_user)):
     
-    await set_status_to_response(response_id, data, session, current_user)
+    await set_status_to_response(session, response_id, data, current_user)
     return {'success': True, 'message': 'Status was updated'}

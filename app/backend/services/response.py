@@ -10,15 +10,15 @@ from app.backend.models.resume import Resume
 from app.backend.models.mails import Mails
 from app.backend.schemas.response import ResponseSchema, SetStatus
 from app.backend.utils.celery_tasks import send_mail_task
+from app.backend.utils.helpers import validate_user_role
 
 
-async def send_response_to_vacancy(data: ResponseSchema, session: AsyncSession, current_vacancy: Vacancy, current_resume: Resume, current_user: User):
+async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, current_vacancy: Vacancy, current_resume: Resume, current_user: User):
     
     if current_user.id != current_resume.applicant_id:
         raise HTTPException(status_code=403, detail="It's not your resume")
 
-    if current_user.role != Role.applicant:
-        raise HTTPException(status_code=403, detail='Only applicant can apply to vacancy')
+    validate_user_role(current_user, Role.applicant, "Only applicant can apply to vacancy")
 
     query_check = await session.execute(select(Response).where(Response.resume_id == current_resume.id, Response.vacancy_id == current_vacancy.id))
 
@@ -41,6 +41,7 @@ async def send_response_to_vacancy(data: ResponseSchema, session: AsyncSession, 
 
     session.add(mail)
     await session.commit()
+    await session.refresh(mail)
 
     send_mail_task.delay(mail.id)
 
@@ -49,8 +50,7 @@ async def send_response_to_vacancy(data: ResponseSchema, session: AsyncSession, 
 
 async def get_responses_to_vacancy(session: AsyncSession, current_vacancy: Vacancy, current_user: User):
     
-    if current_user.role != Role.tenant:
-        raise HTTPException(status_code=403, detail='You are not a tenant')
+    validate_user_role(current_user, Role.tenant, "You are not a tenant")
 
     if current_user.id != current_vacancy.tenant_id:
         raise HTTPException(status_code=403, detail="It's not your vacancy")
@@ -69,10 +69,9 @@ async def get_responses_to_vacancy(session: AsyncSession, current_vacancy: Vacan
     return all_resumes
 
 
-async def set_status_to_response(response_id: int, data: SetStatus, session: AsyncSession, current_user: User):
+async def set_status_to_response(session: AsyncSession, response_id: int, data: SetStatus, current_user: User):
     
-    if current_user.role != Role.tenant:
-        raise HTTPException(status_code=403, detail='Only tenants can set status to responses')
+    validate_user_role(current_user, Role.tenant, "Only tenants can set status to responses")
 
     query_response = await session.execute(select(Response).options(joinedload(Response.vacancy)).where(Response.id == response_id))
     current_response = query_response.scalar_one_or_none()
@@ -94,6 +93,7 @@ async def set_status_to_response(response_id: int, data: SetStatus, session: Asy
     session.add(mail)
     await session.commit()
     await session.refresh(current_response)
+    await session.refresh(mail)
 
     send_mail_task.delay(mail.id)
 

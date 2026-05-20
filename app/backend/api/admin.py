@@ -27,9 +27,9 @@ async def get_users(session: session_dep, limit: int = 10, offset: int = 0, admi
 
 
 @router.put('/admin/edit_user_name/{user_id}', tags=['Admin'])
-async def edit_name(data: EditUserNameByAdmin, session: session_dep, current_user: User = Depends(check_user_by_id), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
+async def edit_name(session: session_dep, data: EditUserNameByAdmin, current_user: User = Depends(check_user_by_id), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
-    await edit_user_name(data, session, current_user, admin, redis)
+    await edit_user_name(session, data, current_user, admin, redis)
     return {'success': True, 'message': 'Users name was edited'}
 
 
@@ -100,7 +100,7 @@ async def get_responses(session: session_dep, limit: int = 10, offset: int = 0, 
 
 
 @router.delete('/admin/delete_response/{response_id}', tags=['Admin'])
-async def delete_response(response_id: int, session: session_dep, admin: User = Depends(check_admin)):
+async def delete_response(session: session_dep, response_id: int, admin: User = Depends(check_admin)):
 
-    await delete_response_by_admin(response_id, session, admin)
+    await delete_response_by_admin(session, response_id, admin)
     return {'success': True, 'message': 'Response was deleted'}
