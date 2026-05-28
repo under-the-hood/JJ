@@ -107,7 +107,6 @@ async def update_name(session: AsyncSession, data: EditName, current_user: User,
     await clear_user_profile_cache(redis, current_user.id)
 
 
-
 async def delete_current_user(session: AsyncSession, data: Delete, current_user: User, redis: Redis):
 
     await session.delete(current_user)

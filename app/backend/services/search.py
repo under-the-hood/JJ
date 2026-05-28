@@ -12,9 +12,6 @@ from app.backend.schemas.search import SearchResumes, SearchVacancies
 
 async def search_resumes_service(session: AsyncSession, data: SearchResumes, current_user: User, redis: Redis):
 
-    if current_user.role != Role.tenant:
-        raise HTTPException(status_code=403, detail='Only tenants can search resumes')
-
     version = await redis.get("resume_version") or "0"
     search_params = f"version:{version}_q:{data.title or ''}_city:{data.city or ''}_stack:{data.stack or ''}_limit:{data.limit}_offset:{data.offset}"
     cache_key = f"search:resumes:{search_params}"
@@ -46,9 +43,6 @@ async def search_resumes_service(session: AsyncSession, data: SearchResumes, cur
 
 
 async def search_vacancies_service(session: AsyncSession, data: SearchVacancies, current_user: User, redis: Redis):
-    
-    if current_user.role != Role.applicant:
-        raise HTTPException(status_code=403, detail='Only applicants can search vacancies')
 
     version = await redis.get("vacancy_version") or "0"
     search_params = f"version:{version}_q:{data.title or ''}_city:{data.city or ''}_compensation:{data.compensation or ''}_limit:{data.limit}_offset:{data.offset}"
@@ -64,10 +58,10 @@ async def search_vacancies_service(session: AsyncSession, data: SearchVacancies,
         query = query.where(Vacancy.city.ilike(f"%{data.city}%"))
 
     if data.compensation:
-        query = query.where(Vacancy.compensation >= int(data.compensation))
+        query = query.where(Vacancy.compensation >= data.compensation)
 
     if data.title:
-        query = query.where(Vacancy.title.ilike(f'%{data.title}'))
+        query = query.where(Vacancy.title.ilike(f'%{data.title}%'))
 
     query = query.limit(data.limit).offset(data.offset)
 
