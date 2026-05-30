@@ -1,9 +1,8 @@
-from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 
-from app.backend.models.user import User, Role
+from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
 from app.backend.schemas.vacancy import CreateVacancy, EditVacancy
 
