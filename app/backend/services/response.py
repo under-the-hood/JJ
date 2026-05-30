@@ -14,9 +14,6 @@ from app.backend.utils.helpers import validate_user_role
 
 
 async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, current_vacancy: Vacancy, current_resume: Resume, current_user: User):
-    
-    if current_user.id != current_resume.applicant_id:
-        raise HTTPException(status_code=403, detail="It's not your resume")
 
     validate_user_role(current_user, Role.applicant, "Only applicant can apply to vacancy")
 
@@ -52,36 +49,16 @@ async def get_responses_to_vacancy(session: AsyncSession, current_vacancy: Vacan
     
     validate_user_role(current_user, Role.tenant, "You are not a tenant")
 
-    if current_user.id != current_vacancy.tenant_id:
-        raise HTTPException(status_code=403, detail="It's not your vacancy")
-
-    query_responses = await session.execute(
-        select(Response)
-        .options(
-            joinedload(Response.resume),
-            joinedload(Response.user)
-        )
-        .where(Response.vacancy_id == current_vacancy.id)
-    )
+    query_responses = await session.execute(select(Response).options(joinedload(Response.resume), joinedload(Response.user)).where(Response.vacancy_id == current_vacancy.id))
 
     all_resumes = query_responses.scalars().all()
 
     return all_resumes
 
 
-async def set_status_to_response(session: AsyncSession, response_id: int, data: SetStatus, current_user: User):
+async def set_status_to_response(session: AsyncSession, data: SetStatus, current_response: Response, current_user: User):
     
     validate_user_role(current_user, Role.tenant, "Only tenants can set status to responses")
-
-    query_response = await session.execute(select(Response).options(joinedload(Response.vacancy)).where(Response.id == response_id))
-    current_response = query_response.scalar_one_or_none()
-
-    if not current_response:
-        raise HTTPException(status_code=404, detail='Response not found')
-
-    if current_user.id != current_response.vacancy.tenant_id:
-        raise HTTPException(status_code=403, detail="It's not your vacancy")
-
     current_response.status = data.status
 
     mail = Mails(

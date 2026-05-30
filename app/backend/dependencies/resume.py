@@ -1,11 +1,12 @@
-from fastapi import Depends, Cookie, HTTPException
+from fastapi import Depends, HTTPException
 from sqlalchemy import select
 
 from app.backend.dependencies.user import check_user
 from app.backend.database.database import session_dep
 from app.backend.models.user import User, Role
 from app.backend.models.resume import Resume
-from app.backend.dependencies.auth import get_user_token
+from app.backend.dependencies.user import get_user_token
+
 
 async def check_applicant(current_user: User = Depends(check_user)):
     if current_user.role != Role.applicant:
