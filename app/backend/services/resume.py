@@ -7,7 +7,7 @@ from app.backend.models.resume import Resume
 from app.backend.schemas.resume import CreateResume, EditResume
 
 
-async def create_new_resume(data: CreateResume, session: AsyncSession, current_user: User, redis: Redis):
+async def create_new_resume(session: AsyncSession, data: CreateResume, current_user: User, redis: Redis):
 
     new_resume = Resume(**data.model_dump())
 
