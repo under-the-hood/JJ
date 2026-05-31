@@ -17,7 +17,7 @@ router = APIRouter()
 @router.post('/user/sign_up', tags=['Users'])
 async def sign_up(session: session_dep, data: CreateUser = Depends(validate_user_registration)):
     
-    await create_user(session, data)
+    await create_user(session=session, data=data)
     return {'success': True, 'message': 'Account was created'}
 
 
@@ -26,14 +26,14 @@ login_limit = rate_limiter_factory_by_ip("/user/sign_in", 5, 60)
 @router.post('/user/sign_in', tags=['Users'], dependencies=[Depends(login_limit)])
 async def sign_in(session: session_dep, data: Login, response: Response):
 
-    access_token = await login(session, data, response)
+    access_token = await login(session=session, data=data, response=response)
     return {'success': True, 'message': 'Login succesfull', 'token': access_token}
 
 
 @router.get('/user/get_info', tags=['Users'])
 async def get_info(current_user: User = Depends(check_user), redis: Redis = Depends(get_redis)):
 
-    user_info = await get_user_info(current_user, redis)
+    user_info = await get_user_info(current_user=current_user, redis=redis)
     return {**user_info}
 
 
@@ -42,14 +42,14 @@ password_limit = rate_limiter_factory("/user/edit_password", 5, 60)
 @router.put('/user/edit_password', tags=['Users'], dependencies=[Depends(password_limit)])
 async def edit_password(session: session_dep, data: EditPassword = Depends(validate_new_password), current_user: User = Depends(check_user), redis: Redis = Depends(get_redis)):
 
-    await update_password(session, data, current_user, redis)
+    await update_password(session=session, data=data, current_user=current_user, redis=redis)
     return {'success': True, 'message': 'Password was changed'}
 
 
 @router.put('/user/edit_name', tags=['Users'])
 async def edit_name(session: session_dep, data: EditName, current_user: User = Depends(check_user), redis: Redis = Depends(get_redis)):
 
-    await update_name(session, data, current_user, redis)
+    await update_name(session=session, data=data, current_user=current_user, redis=redis)
     return {'success': True, 'message': 'Name was changed'}
 
 
@@ -58,5 +58,5 @@ delete_limit = rate_limiter_factory("/user/delete_user", 5, 60)
 @router.delete('/user/delete_user', tags=['Users'])
 async def delete_user(session: session_dep, data: Delete = Depends(verify_password), current_user: User = Depends(check_user), redis: Redis = Depends(get_redis)):
 
-    await delete_current_user(session, data, current_user, redis)
+    await delete_current_user(session=session, data=data, current_user=current_user, redis=redis)
     return {'success': True, 'message': 'Account was deleted'}

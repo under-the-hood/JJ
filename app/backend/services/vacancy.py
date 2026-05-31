@@ -7,7 +7,7 @@ from app.backend.models.vacancy import Vacancy
 from app.backend.schemas.vacancy import CreateVacancy, EditVacancy
 
 
-async def create_new_vacancy(data: CreateVacancy, session: AsyncSession, current_user: User, redis: Redis):
+async def create_new_vacancy(session: AsyncSession, data: CreateVacancy, current_user: User, redis: Redis):
 
     new_vacancy = Vacancy(**data.model_dump())
     new_vacancy.tenant_id = current_user.id

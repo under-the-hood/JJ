@@ -153,13 +153,7 @@ async def get_all_responses(session: AsyncSession, admin: User, limit: int = 10,
         }
 
 
-async def delete_response_by_admin(session: AsyncSession, response_id: int, admin: User):
-
-    query = await session.execute(select(Response).where(Response.id == response_id))
-    current_response = query.scalar_one_or_none()
-
-    if not current_response:
-        raise HTTPException(status_code=404, detail='Response not found')
+async def delete_response_by_admin(session: AsyncSession, current_response: Response, admin: User):
 
     await session.delete(current_response)
     await session.commit()
