@@ -11,7 +11,9 @@ from app.backend.schemas.admin import EditUserNameByAdmin, UpdateUserRoleByAdmin
 from app.backend.schemas.vacancy import EditVacancy
 from app.backend.schemas.resume import EditResume
 from app.backend.dependencies.redis_cache import get_cache_key
-from app.backend.utils.helpers import clear_user_profile_cache, validate_admin_action
+from app.backend.utils.cache import clear_user_profile_cache
+from app.backend.utils.validator import validate_admin_action
+
 
 #-------------Service for work with users-------------
 async def get_all_users(session: AsyncSession, admin: User, limit: int = 10, offset: int = 0):
