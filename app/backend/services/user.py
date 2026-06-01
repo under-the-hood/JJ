@@ -11,7 +11,7 @@ from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, 
 from app.backend.dependencies.redis_cache import get_cache_key
 from app.backend.models.mails import Mails
 from app.backend.utils.celery_tasks import send_mail_task
-from app.backend.utils.helpers import clear_user_profile_cache
+from app.backend.utils.cache import clear_user_profile_cache
 
 
 async def create_user(session: AsyncSession, data: CreateUser):

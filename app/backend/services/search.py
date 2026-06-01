@@ -1,13 +1,13 @@
-from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from redis.asyncio import Redis
 import json
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.backend.models.user import User, Role
+from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
 from app.backend.models.resume import Resume
 from app.backend.schemas.search import SearchResumes, SearchVacancies
+from app.backend.utils.search import apply_words_filter
 
 
 async def search_resumes_service(session: AsyncSession, data: SearchResumes, current_user: User, redis: Redis):
@@ -23,13 +23,23 @@ async def search_resumes_service(session: AsyncSession, data: SearchResumes, cur
     query = select(Resume)
 
     if data.city:
-        query = query.where(Resume.city.ilike(f"%{data.city}%"))
-
-    if data.stack:
-        query = query.where(Resume.stack.ilike(f'%{data.stack}%'))
+        query = query.where(apply_words_filter(Resume.city, data.city))
 
     if data.title:
-        query = query.where(Resume.title.ilike(f'%{data.title}%'))
+        words = data.title.strip().split()
+        conditions = []
+        for word in words:
+            condition = Resume.title.ilike(f"%{word}%")
+            conditions.append(condition)
+        query = query.where(and_(*conditions))
+    
+    if data.stack:
+        words = data.stack.strip().split()
+        conditions = []
+        for word in words:
+            condition = Resume.stack.ilike(f"%{word}%")
+            conditions.append(condition)
+        query = query.where(and_(*conditions))
 
     query = query.limit(data.limit).offset(data.offset)
 
@@ -54,14 +64,29 @@ async def search_vacancies_service(session: AsyncSession, data: SearchVacancies,
 
     query = select(Vacancy)
 
-    if data.city:
-        query = query.where(Vacancy.city.ilike(f"%{data.city}%"))
+    if data.title:
+        words = data.title.strip().split()
+        conditions = []
+        for word in words:
+            condition = Vacancy.title.ilike(f"%{word}%")
+            conditions.append(condition)
+        query = query.where(and_(*conditions))
 
     if data.compensation:
-        query = query.where(Vacancy.compensation >= data.compensation)
-
-    if data.title:
-        query = query.where(Vacancy.title.ilike(f'%{data.title}%'))
+        words = data.compensation.strip().split()
+        conditions = []
+        for word in words:
+            condition = Vacancy.compensation.ilike(f"%{word}%")
+            conditions.append(condition)
+        query = query.where(and_(*conditions))
+    
+    if data.city:
+        words = data.city.strip().split()
+        conditions = []
+        for word in words:
+            condition = Vacancy.city.ilike(f"%{word}%")
+            conditions.append(condition)
+        query = query.where(and_(*conditions))
 
     query = query.limit(data.limit).offset(data.offset)
 
