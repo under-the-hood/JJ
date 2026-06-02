@@ -1,5 +1,5 @@
 from fastapi import Cookie, HTTPException
-from app.backend.utils.auth import security
+from app.backend.core.auth import security
 
 async def get_user_token(token: str = Cookie()):
 

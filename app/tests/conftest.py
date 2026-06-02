@@ -9,12 +9,12 @@ from app.main import app
 from app.backend.models.base import Base
 from app.backend.database.database import engine, get_session
 from app.backend.config import settings
-from app.backend.utils.auth import config
+from app.backend.core.auth import config
 from app.backend.api.response import set_status_limiter, response_limiter
 from app.backend.api.user import password_limit, delete_limit, login_limit
 from app.backend.api.search import search_vacancy_limiter
 from app.backend.database.redis_database import get_redis
-from app.backend.utils.celery import celery
+from app.backend.helpers.celery import celery
 
 
 @pytest.fixture(scope='session', autouse=True)

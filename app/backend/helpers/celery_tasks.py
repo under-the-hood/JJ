@@ -1,6 +1,6 @@
 from app.backend.utils.smtp_email import email_backend
 from app.backend.models.mails import Mails
-from app.backend.utils.celery import celery
+from app.backend.helpers.celery import celery
 from app.backend.models.user import User
 from app.backend.database.database import celery_session
 

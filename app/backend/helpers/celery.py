@@ -7,5 +7,5 @@ celery = Celery(
     "jj_project",
     broker=f"{settings.RABBITMQ}",
     backend=f"redis://{settings.REDIS_HOST}:6379/0",
-    include=["backend.utils.celery_tasks"]
+    include=["app.backend.helpers.celery_tasks"]
 )

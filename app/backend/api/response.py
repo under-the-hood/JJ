@@ -9,7 +9,7 @@ from app.backend.models.vacancy import Vacancy
 from app.backend.models.resume import Resume
 from app.backend.models.response import Response
 from app.backend.schemas.response import ResponseSchema, ResponseRead, SetStatus
-from app.backend.utils.limiter import rate_limiter_factory
+from app.backend.helpers.rate_limiter import rate_limiter_factory
 from app.backend.services.response import send_response_to_vacancy, get_responses_to_vacancy, set_status_to_response
 
 
