@@ -5,13 +5,13 @@ import json
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.backend.utils.hash import hashing_password, pwd_context
-from app.backend.utils.auth import security
+from app.backend.core.auth import security
 from app.backend.models.user import User
 from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, Delete
 from app.backend.dependencies.redis_cache import get_cache_key
 from app.backend.models.mails import Mails
-from app.backend.utils.celery_tasks import send_mail_task
-from app.backend.utils.cache import clear_user_profile_cache
+from app.backend.helpers.celery_tasks import send_mail_task
+from app.backend.helpers.cache import clear_user_profile_cache
 
 
 async def create_user(session: AsyncSession, data: CreateUser):

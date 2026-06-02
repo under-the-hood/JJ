@@ -6,7 +6,7 @@ from app.backend.models.user import User
 from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, Delete
 from app.backend.dependencies.user import check_user
 from app.backend.dependencies.password import validate_user_registration, verify_password, validate_new_password
-from app.backend.utils.limiter import rate_limiter_factory, rate_limiter_factory_by_ip
+from app.backend.helpers.rate_limiter import rate_limiter_factory, rate_limiter_factory_by_ip
 from app.backend.database.redis_database import get_redis
 from app.backend.services.user import create_user, login, get_user_info, update_password, update_name, delete_current_user
 

@@ -6,7 +6,7 @@ from app.backend.dependencies.resume import check_applicant
 from app.backend.database.database import session_dep
 from app.backend.models.user import User
 from app.backend.schemas.search import SearchResumes, SearchVacancies
-from app.backend.utils.limiter import rate_limiter_factory
+from app.backend.helpers.rate_limiter import rate_limiter_factory
 from app.backend.database.redis_database import get_redis
 from app.backend.services.search import search_resumes_service, search_vacancies_service
 

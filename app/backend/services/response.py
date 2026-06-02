@@ -9,8 +9,8 @@ from app.backend.models.vacancy import Vacancy
 from app.backend.models.resume import Resume
 from app.backend.models.mails import Mails
 from app.backend.schemas.response import ResponseSchema, SetStatus
-from app.backend.utils.celery_tasks import send_mail_task
-from app.backend.utils.validator import validate_user_role
+from app.backend.helpers.celery_tasks import send_mail_task
+from app.backend.helpers.validator import validate_user_role
 
 
 async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, current_vacancy: Vacancy, current_resume: Resume, current_user: User):
