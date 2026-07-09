@@ -42,11 +42,13 @@ async def get_test_session():
         app.dependency_overrides[get_session] = lambda: session
         yield session
 
+
 @pytest.fixture
 async def get_latest_emails():
     async with httpx.AsyncClient() as client:
         response = await client.get("http://localhost:8080/email")
         return response.json()
+
 
 @pytest.fixture(scope='session', autouse=True)
 async def disable_all_limits():
@@ -59,9 +61,11 @@ async def disable_all_limits():
 
     yield
 
+
 @pytest.fixture(scope="session")
 async def test_redis_server():
     return fakeredis.aioredis.FakeServer()
+
 
 @pytest.fixture(autouse=True)
 async def get_test_redis(test_redis_server):
@@ -146,6 +150,7 @@ async def get_token(client, role, email):
     client.cookies.set(config.JWT_ACCESS_COOKIE_NAME, token)
 
     return client
+
 
 @pytest.fixture
 async def get_token_as_tenant(client_tenant):
