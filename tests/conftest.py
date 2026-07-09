@@ -44,10 +44,12 @@ async def get_test_session():
 
 
 @pytest.fixture
-async def get_latest_emails():
-    async with httpx.AsyncClient() as client:
-        response = await client.get("http://localhost:8080/email")
-        return response.json()
+def get_latest_emails():
+    async def fetch():
+        async with httpx.AsyncClient() as client:
+            response = await client.get("http://localhost:8080/email")
+            return response.json()
+    return fetch
 
 
 @pytest.fixture(scope='session', autouse=True)
