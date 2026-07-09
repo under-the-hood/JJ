@@ -7,7 +7,7 @@ async def test_apply_to_vacancy(apply_to_vacancy, get_latest_emails):
     assert apply_to_vacancy is not None
 
     await asyncio.sleep(2)
-    emails = get_latest_emails()
+    emails = await get_latest_emails()
     
     assert len(emails) > 0
     assert emails[-1]["subject"] == "New response to your vacancy!"
