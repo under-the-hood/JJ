@@ -7,9 +7,9 @@ async def test_create_resume(create_resume):
 
 
 @pytest.mark.asyncio
-async def test_get_all_my_resumes(get_token_as_applicant):
+async def test_get_all_my_resumes(applicant_client):
 
-    response = await get_token_as_applicant.get("/resume/get_all_my_resumes")
+    response = await applicant_client.get("/resume/get_all_my_resumes")
 
     assert response.status_code == 200
 
@@ -21,7 +21,7 @@ async def test_get_all_my_resumes(get_token_as_applicant):
 
 
 @pytest.mark.asyncio
-async def test_edit_resume(get_token_as_applicant, create_resume):
+async def test_edit_resume(applicant_client, create_resume):
 
     resume_id = create_resume
 
@@ -33,16 +33,16 @@ async def test_edit_resume(get_token_as_applicant, create_resume):
         "stack": "FastAPI, PostgreSQL, Python, Docker"
     }
 
-    response = await get_token_as_applicant.put(f"/resume/edit_resume/{resume_id}", json=edited_resume)
+    response = await applicant_client.put(f"/resume/edit_resume/{resume_id}", json=edited_resume)
 
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
-async def test_delete_resume(get_token_as_applicant, create_resume):
+async def test_delete_resume(applicant_client, create_resume):
 
     resume_id = create_resume
 
-    response = await get_token_as_applicant.request("DELETE", f"/resume/delete_resume/{resume_id}")
+    response = await applicant_client.request("DELETE", f"/resume/delete_resume/{resume_id}")
 
     assert response.status_code == 200

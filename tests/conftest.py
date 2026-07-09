@@ -83,20 +83,18 @@ async def get_test_redis(test_redis_server):
 
 
 @pytest.fixture
-async def async_client():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        yield client
+async def admin_client():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        yield await get_token(ac, "admin", "admin_account@example.com")
 
 @pytest.fixture
-async def client_applicant():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+async def applicant_client():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield await get_token(ac, "applicant", "applicant_account@example.com")
 
 @pytest.fixture
-async def client_tenant():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+async def tenant_client():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield await get_token(ac, "tenant", "tenant_account@example.com")
 
 
@@ -153,41 +151,7 @@ async def get_token(client, role, email):
 
 
 @pytest.fixture
-async def get_token_as_tenant(client_tenant):
-
-    new_user = await get_token(
-        client=client_tenant,
-        email="tenant_account@example.com",
-        role="tenant"
-    )
-
-    return new_user
-
-@pytest.fixture
-async def get_token_as_applicant(client_applicant):
-
-    new_user = await get_token(
-        client=client_applicant,
-        email="applicant_account@example.com",
-        role="applicant"
-    )
-
-    return new_user
-
-@pytest.fixture
-async def get_token_as_admin(async_client):
-
-    new_user = await get_token(
-        client=async_client,
-        email="admin_account@example.com",
-        role="admin"
-    )
-
-    return new_user
-
-
-@pytest.fixture
-async def create_vacancy(get_token_as_tenant):
+async def create_vacancy(tenant_client):
 
     new_vacancy = {
         "title": "Python developer",
@@ -195,7 +159,7 @@ async def create_vacancy(get_token_as_tenant):
         "city": "Almaty"
     }
 
-    response = await get_token_as_tenant.post("/vacancy/create_vacancy", json=new_vacancy)
+    response = await tenant_client.post("/vacancy/create_vacancy", json=new_vacancy)
 
     data = response.json()
     assert "Vacancy" in data, data
@@ -204,7 +168,7 @@ async def create_vacancy(get_token_as_tenant):
     return vacancy_id
 
 @pytest.fixture
-async def create_resume(get_token_as_applicant):
+async def create_resume(applicant_client):
 
     new_resume = {
         "title": "FastAPI Developer",
@@ -213,7 +177,7 @@ async def create_resume(get_token_as_applicant):
         "stack": "FastAPI, PostgreSQL, Python"
     }
 
-    response = await get_token_as_applicant.post("/resume/create_resume", json=new_resume)
+    response = await applicant_client.post("/resume/create_resume", json=new_resume)
 
     data = response.json()
     assert "Resume" in data, data
@@ -223,9 +187,9 @@ async def create_resume(get_token_as_applicant):
 
 
 @pytest.fixture
-async def apply_to_vacancy(get_token_as_applicant, create_vacancy, create_resume):
+async def apply_to_vacancy(applicant_client, create_vacancy, create_resume):
         
-    query = await get_token_as_applicant.get("/user/get_info")
+    query = await applicant_client.get("/user/get_info")
     applicant_id = query.json()["info"]["id"]
 
     vacancy_id = create_vacancy
@@ -239,7 +203,7 @@ async def apply_to_vacancy(get_token_as_applicant, create_vacancy, create_resume
         "status": "send"
     }
 
-    response = await get_token_as_applicant.post(f"/response/apply_to_vacancy/{vacancy_id}", params={"resume_id": resume_id}, json=cover_letter)
+    response = await applicant_client.post(f"/response/apply_to_vacancy/{vacancy_id}", params={"resume_id": resume_id}, json=cover_letter)
 
     data = response.json()
     response_id = data["Response"]["id"]

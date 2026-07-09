@@ -7,7 +7,6 @@ async def test_apply_to_vacancy(apply_to_vacancy, get_latest_emails):
     assert apply_to_vacancy is not None
 
     emails = get_latest_emails
-    await asyncio.sleep(1)
     
     assert len(emails) > 0
     assert emails[-1]["subject"] == "New response to your vacancy!"
@@ -15,11 +14,11 @@ async def test_apply_to_vacancy(apply_to_vacancy, get_latest_emails):
 
 
 @pytest.mark.asyncio
-async def test_get_responses(get_token_as_tenant, create_vacancy, apply_to_vacancy):
+async def test_get_responses(tenant_client, create_vacancy, apply_to_vacancy):
 
     vacancy_id = create_vacancy
 
-    response = await get_token_as_tenant.get(f"/response/{vacancy_id}/get_responses")
+    response = await tenant_client.get(f"/response/{vacancy_id}/get_responses")
 
     assert response.status_code == 200
 
@@ -34,7 +33,7 @@ async def test_get_responses(get_token_as_tenant, create_vacancy, apply_to_vacan
 
 
 @pytest.mark.asyncio
-async def test_set_status(get_token_as_tenant, apply_to_vacancy):
+async def test_set_status(tenant_client, apply_to_vacancy):
 
     response_id = apply_to_vacancy
 
@@ -42,6 +41,6 @@ async def test_set_status(get_token_as_tenant, apply_to_vacancy):
         "status": "hired"
     }
 
-    response = await get_token_as_tenant.put(f"/response/set_status/{response_id}", json=status)
+    response = await tenant_client.put(f"/response/set_status/{response_id}", json=status)
 
     assert response.status_code == 200
