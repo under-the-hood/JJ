@@ -2,9 +2,9 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_search_resumes(get_token_as_tenant):
+async def test_search_resumes(tenant_client):
 
-    response = await get_token_as_tenant.get("/search/search_resumes")
+    response = await tenant_client.get("/search/search_resumes")
 
     assert response.status_code == 200
 
@@ -19,9 +19,9 @@ async def test_search_resumes(get_token_as_tenant):
 
 
 @pytest.mark.asyncio
-async def test_search_vacancies(get_token_as_applicant):
+async def test_search_vacancies(applicant_client):
 
-    response = await get_token_as_applicant.get("/search/search_vacancies")
+    response = await applicant_client.get("/search/search_vacancies")
 
     assert response.status_code == 200
 

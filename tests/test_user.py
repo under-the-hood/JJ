@@ -2,14 +2,14 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_create_user(get_token_as_tenant):
-    assert get_token_as_tenant.headers.get("Authorization") is not None
+async def test_create_user(tenant_client):
+    assert tenant_client.headers.get("Authorization") is not None
 
 
 @pytest.mark.asyncio
-async def test_get_info_about_user(get_token_as_tenant):
+async def test_get_info_about_user(tenant_client):
 
-    response = await get_token_as_tenant.get("/user/get_info")
+    response = await tenant_client.get("/user/get_info")
 
     assert response.status_code == 200
 
@@ -20,7 +20,7 @@ async def test_get_info_about_user(get_token_as_tenant):
 
 
 @pytest.mark.asyncio
-async def test_edit_password(get_token_as_tenant):
+async def test_edit_password(tenant_client):
 
     new_password = {
         "old_password": "12345678",
@@ -28,31 +28,31 @@ async def test_edit_password(get_token_as_tenant):
         "repeat_new_password": "12345678"
     }
 
-    response = await get_token_as_tenant.put("/user/edit_password", json=new_password)
+    response = await tenant_client.put("/user/edit_password", json=new_password)
 
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
-async def test_edit_name(get_token_as_tenant):
+async def test_edit_name(tenant_client):
         
     new_name = {
         "new_name": "Andrey",
         "password": "12345678"
     }
 
-    response = await get_token_as_tenant.put("/user/edit_name", json=new_name)
+    response = await tenant_client.put("/user/edit_name", json=new_name)
 
     assert response.status_code == 200
 
 
 @pytest.mark.order(-1)
-async def test_delete_user(get_token_as_tenant):
+async def test_delete_user(tenant_client):
 
     confirm_password = {
         "password": "12345678"
     }
 
-    response = await get_token_as_tenant.request("DELETE", "/user/delete_user", json=confirm_password)
+    response = await tenant_client.request("DELETE", "/user/delete_user", json=confirm_password)
 
     assert response.status_code == 200
