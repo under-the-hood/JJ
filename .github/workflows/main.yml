@@ -25,21 +25,6 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-#    env:
-#      SECRET_KEY: ${{ env.SECRET_KEY }}
-#      MODE: ${{ env.MODE }}
-#      DB_HOST: ${{ env.DB_HOST }}
-#      DB_PORT: ${{ env.DB_PORT }}
-#      POSTGRES_USER: ${{ env.POSTGRES_USER }}
-#      POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-#      POSTGRES_DB: ${{ env.POSTGRES_DB }}
-#      REDIS_HOST: ${{ env.REDIS_HOST }}
-#      REDIS_PORT: ${{ env.REDIS_PORT }}
-#      KEY_FOR_JWT: ${{ env.SECRET_KEY }}
-#      RABBITMQ: ${{ env.RABBTTMQ }}
-#      DATABASE_URL: ${{ env.DATABASE_URL }}
-#      GF_SECURITY_ADMIN_USER: ${{ env.GF_SECURITY_ADMIN_USER }}
-#      GF_SECURITY_ADMIN_PASSWORD: ${{ env.GF_SECURITY_ADMIN_PASSWORD }}
 
     services:
       postgres:
@@ -69,6 +54,9 @@ jobs:
         ports:
           - 8080:1080
           - 1025:1025
+        options: >-
+          --health-cmd "nc -z 127.0.0.1 1080 || exit 1"
+          --health-retries 5
 
     steps:
       - name: Check out repository
