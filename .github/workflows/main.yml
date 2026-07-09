@@ -47,16 +47,9 @@ jobs:
 
       maildev:
         image: maildev/maildev
-        env:
-          TZ: Europe/Moscow
-          MAILDEV_WEB_PORT: 1080
-          MAILDEV_SMTP_PORT: 1025
         ports:
           - 8080:1080
           - 1025:1025
-        options: >-
-          --health-cmd "nc -z 127.0.0.1 1080 || exit 1"
-          --health-retries 5
 
     steps:
       - name: Check out repository
@@ -69,7 +62,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Run migrations (Alembic)
