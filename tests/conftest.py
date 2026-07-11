@@ -4,6 +4,7 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy import update
 import fakeredis.aioredis
+import asyncio
 
 from app.main import app
 from app.backend.models.base import Base
@@ -15,7 +16,7 @@ from app.backend.api.user import password_limit, delete_limit, login_limit
 from app.backend.api.search import search_vacancy_limiter
 from app.backend.database.redis_database import get_redis
 from app.backend.helpers.celery import celery
-from app.backend.models.user import User, Role
+from app.backend.models.user import User
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -47,8 +48,22 @@ async def get_test_session():
 @pytest.fixture
 async def get_latest_emails():
     async with httpx.AsyncClient() as client:
-        response = await client.get("http://localhost:8080/email")
-        return response.json()
+        max_attempts = 5
+
+        for attempt in range(max_attempts):
+            try:
+                response = await client.get("http://localhost:8080/email")
+                if response.status_code == 200:
+                    data = response.json()
+                    if isinstance(data, list):
+                        return data
+            except httpx.RequestError:
+                pass
+
+            if attempt < max_attempts - 1:
+                await asyncio.sleep(0.5)
+
+        return []
 
 
 @pytest.fixture(scope='session', autouse=True)
