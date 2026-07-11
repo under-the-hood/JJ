@@ -48,22 +48,8 @@ async def get_test_session():
 @pytest.fixture
 async def get_latest_emails():
     async with httpx.AsyncClient() as client:
-        max_attempts = 5
-
-        for attempt in range(max_attempts):
-            try:
-                response = await client.get("http://localhost:8080/email")
-                if response.status_code == 200:
-                    data = response.json()
-                    if isinstance(data, list):
-                        return data
-            except httpx.RequestError:
-                pass
-
-            if attempt < max_attempts - 1:
-                await asyncio.sleep(0.5)
-
-        return []
+        response = await client.get("http://localhost:8080/email")
+        return response.json()
 
 
 @pytest.fixture(scope='session', autouse=True)
