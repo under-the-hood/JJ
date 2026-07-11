@@ -2,7 +2,7 @@ import httpx
 import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy import text
+from sqlalchemy import update
 import fakeredis.aioredis
 
 from app.main import app
@@ -15,6 +15,7 @@ from app.backend.api.user import password_limit, delete_limit, login_limit
 from app.backend.api.search import search_vacancy_limiter
 from app.backend.database.redis_database import get_redis
 from app.backend.helpers.celery import celery
+from app.backend.models.user import User, Role
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -130,7 +131,7 @@ async def get_token(client, role, email):
             #Change role in database for admin
             if role == "admin":
                 async with new_session() as session:
-                    await session.execute(text("UPDATE users SET role = 'admin' WHERE email = 'admin_account@example.com'"))
+                    await session.execute(update(User).where(User.email == email).values(role = "admin"))
                     await session.commit()
 
         login_response = await client.post('/user/sign_in', json={
