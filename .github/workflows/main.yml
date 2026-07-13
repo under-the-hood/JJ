@@ -54,6 +54,11 @@ jobs:
         ports:
           - 8080:1080
           - 1025:1025
+        options: >-
+          --health-cmd "wget --no-verbose --tries=1 --spider http://127.0.0.1:1080/ || exit 1"
+          --health-interval 3s
+          --health-timeout 2s
+          --health-retries 5
 
     steps:
       - name: Check out repository
