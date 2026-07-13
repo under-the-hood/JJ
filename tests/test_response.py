@@ -7,6 +7,7 @@ async def test_apply_to_vacancy(apply_to_vacancy, get_latest_emails):
     assert apply_to_vacancy is not None
 
     emails = get_latest_emails
+    print(emails)
     
     assert len(emails) > 0
     assert emails[-1]["subject"] == "New response to your vacancy!"
