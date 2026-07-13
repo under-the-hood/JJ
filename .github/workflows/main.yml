@@ -46,7 +46,7 @@ jobs:
           - 6380:6379
 
       maildev:
-        image: maildev/maildev
+        image: maildev/maildev:2.1.0
         env:
           TZ: Europe/Moscow
           MAILDEV_WEB_PORT: 1080
