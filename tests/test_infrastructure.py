@@ -11,7 +11,6 @@ async def test_user_info_cache_invalidation(tenant_client):
     assert data["source"] == "cache"
 
     new_name = {
-        "password": "12345678",
         "new_name": "Anton"
     }
 

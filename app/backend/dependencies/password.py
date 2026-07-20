@@ -21,7 +21,7 @@ async def validate_user_registration(data: CreateUser, session: session_dep):
 
 async def validate_edit_password(data: EditPassword, current_user: User = Depends(check_user)):
     verify_password(data.old_password, current_user.password)
-    verify_passwords_match(data.password, data.repeat_new_password)
+    verify_passwords_match(data.new_password, data.repeat_new_password)
 
     return data
 
