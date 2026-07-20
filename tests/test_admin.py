@@ -19,13 +19,10 @@ async def test_get_users(admin_client):
 
 @pytest.mark.order(after="tests/test_user.py::test_get_info_about_user")
 async def test_edit_user_name(admin_client, tenant_client):
-
-    users_query = await admin_client.get("/admin/get_users")
-    users = users_query.json()["users"]
-    user_id = next(u["id"] for u in users if u["role"] != "admin")
+    user_info = await tenant_client.get("/user/get_info")
+    user_id = user_info.json()["info"]["id"]
 
     new_name = {
-        "user_id": user_id,
         "new_name": "Artur"
     }
 
@@ -35,14 +32,11 @@ async def test_edit_user_name(admin_client, tenant_client):
 
 
 @pytest.mark.order(after="tests/test_user.py::test_get_info_about_user")
-async def test_update_user_role(admin_client):
-
-    users_query = await admin_client.get("/admin/get_users")
-    users = users_query.json()["users"]
-    user_id = next(u["id"] for u in users if u["role"] != "admin")
+async def test_update_user_role(admin_client, applicant_client):
+    user_info = await applicant_client.get("/user/get_info")
+    user_id = user_info.json()["info"]["id"]
 
     new_role = {
-        "user_id": user_id,
         "new_role": "tenant"
     }
 

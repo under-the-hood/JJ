@@ -190,22 +190,11 @@ async def create_resume(applicant_client):
 
 @pytest.fixture
 async def apply_to_vacancy(applicant_client, create_vacancy, create_resume):
-        
-    query = await applicant_client.get("/user/get_info")
-    applicant_id = query.json()["info"]["id"]
-
-    vacancy_id = create_vacancy
-    resume_id = create_resume
-
     cover_letter = {
-        "vacancy_id": vacancy_id,
-        "resume_id": resume_id,
-        "applicant_id": applicant_id,
         "cover_letter": "Hello! I want work in your company!",
-        "status": "send"
     }
 
-    response = await applicant_client.post(f"/response/apply_to_vacancy/{vacancy_id}", params={"resume_id": resume_id}, json=cover_letter)
+    response = await applicant_client.post(f"/response/apply_to_vacancy/{create_vacancy}", params={"resume_id": create_resume}, json=cover_letter)
 
     data = response.json()
     response_id = data["Response"]["id"]

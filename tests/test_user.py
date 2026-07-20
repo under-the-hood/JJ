@@ -37,8 +37,7 @@ async def test_edit_password(tenant_client):
 async def test_edit_name(tenant_client):
         
     new_name = {
-        "new_name": "Andrey",
-        "password": "12345678"
+        "new_name": "Andrey"
     }
 
     response = await tenant_client.put("/user/edit_name", json=new_name)
