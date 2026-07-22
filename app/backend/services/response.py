@@ -6,34 +6,34 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.backend.models.response import Response
 from app.backend.models.user import User, Role
 from app.backend.models.vacancy import Vacancy
-from app.backend.models.resume import Resume
+from app.backend.helpers.resume import check_resume_owner_helper
 from app.backend.models.mails import Mails
 from app.backend.schemas.response import ResponseSchema, SetStatus
 from app.backend.helpers.celery_tasks import send_mail_task
 from app.backend.helpers.validator import validate_user_role
 
 
-async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, current_vacancy: Vacancy, current_resume: Resume, current_user: User):
+async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, current_vacancy: Vacancy, current_user: User):
 
     validate_user_role(current_user, Role.applicant, "Only applicant can apply to vacancy")
 
-    query_check = await session.execute(select(Response).where(Response.resume_id == current_resume.id, Response.vacancy_id == current_vacancy.id))
+    query_check = await session.execute(select(Response).where(Response.resume_id == data.resume_id, Response.vacancy_id == current_vacancy.id))
 
     if query_check.scalar_one_or_none():
         raise HTTPException(status_code=400, detail='You have already applied to this vacancy with this resume')
 
     response = Response(**data.model_dump())
-
     response.applicant_id = current_user.id
-    response.resume_id = current_resume.id
     response.vacancy_id = current_vacancy.id
 
+    current_resume = await check_resume_owner_helper(session, data.resume_id, current_user.id)
+    
     session.add(response)
 
     mail = Mails(
         recipient_id = current_vacancy.tenant_id,
         subject = "New response to your vacancy!",
-        body = f"User {current_user.name} has responsed to your vacancy! His resume:\ntitle: {current_resume.title}\nstack: {current_resume.stack}\ncity: {current_resume.city}"
+        body = f"User {current_user.name} has responded to your vacancy!\n His resume:\ntitle: {current_resume.title}\nstack: {current_resume.stack}\ncity: {current_resume.city}"
     )
 
     session.add(mail)

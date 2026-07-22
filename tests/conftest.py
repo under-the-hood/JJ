@@ -191,6 +191,7 @@ async def create_resume(applicant_client):
 @pytest.fixture
 async def apply_to_vacancy(applicant_client, create_vacancy, create_resume):
     cover_letter = {
+        "resume_id": create_resume,
         "cover_letter": "Hello! I want work in your company!",
     }
 

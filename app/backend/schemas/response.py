@@ -12,6 +12,7 @@ class Status(str, Enum):
     hired = 'hired'
 
 class ResponseSchema(Base):
+    resume_id: int
     cover_letter: str = Field(min_length=0, max_length=100, pattern=r'^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;]+$')
 
 class ApplicantRead(Base):
