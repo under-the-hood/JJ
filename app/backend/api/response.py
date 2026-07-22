@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends
 
 from app.backend.database.database import session_dep
-from app.backend.dependencies.resume import check_resume_owner, check_applicant
+from app.backend.dependencies.resume import check_applicant
 from app.backend.dependencies.vacancy import check_vacancy_owner, check_tenant, check_vacancy
 from app.backend.dependencies.response import check_response_owner
 from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
-from app.backend.models.resume import Resume
 from app.backend.models.response import Response
 from app.backend.schemas.response import ResponseSchema, ResponseRead, SetStatus
 from app.backend.helpers.rate_limiter import rate_limiter_factory
@@ -19,9 +18,9 @@ router = APIRouter()
 response_limiter = rate_limiter_factory("/response/apply_to_vacancy/{vacancy_id}", 5, 60)
 
 @router.post('/response/apply_to_vacancy/{vacancy_id}', tags=['Response'], dependencies=[Depends(response_limiter)])
-async def apply_to_vacancy(session: session_dep, data: ResponseSchema, current_vacancy: Vacancy = Depends(check_vacancy), current_resume: Resume = Depends(check_resume_owner), current_user: User = Depends(check_applicant)):
+async def apply_to_vacancy(session: session_dep, data: ResponseSchema, current_vacancy: Vacancy = Depends(check_vacancy), current_user: User = Depends(check_applicant)):
 
-    response = await send_response_to_vacancy(session=session, data=data, current_vacancy=current_vacancy, current_resume=current_resume, current_user=current_user)
+    response = await send_response_to_vacancy(session=session, data=data, current_vacancy=current_vacancy, current_user=current_user)
     return {'success': True, 'message': 'You responded to vacancy', "Response": response}
 
 
