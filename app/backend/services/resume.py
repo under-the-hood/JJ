@@ -7,7 +7,7 @@ from app.backend.models.resume import Resume
 from app.backend.schemas.resume import CreateResume, EditResume
 
 
-async def create_new_resume(session: AsyncSession, data: CreateResume, current_user: User, redis: Redis):
+async def create_resume(session: AsyncSession, data: CreateResume, current_user: User, redis: Redis):
 
     new_resume = Resume(**data.model_dump())
 
@@ -21,7 +21,7 @@ async def create_new_resume(session: AsyncSession, data: CreateResume, current_u
     return new_resume
 
 
-async def get_all_user_resumes(session: AsyncSession, current_user: User):
+async def get_my_resumes(session: AsyncSession, current_user: User):
 
     resume_query = await session.execute(select(Resume).where(Resume.applicant_id == current_user.id))
     all_resumes = resume_query.scalars().all()
@@ -29,7 +29,7 @@ async def get_all_user_resumes(session: AsyncSession, current_user: User):
     return all_resumes
 
 
-async def edit_user_resume(session: AsyncSession, current_resume: Resume, data: EditResume, redis: Redis):
+async def edit_resume(session: AsyncSession, current_resume: Resume, data: EditResume, redis: Redis):
 
     if data.new_title:
         current_resume.title = data.new_title
@@ -49,7 +49,7 @@ async def edit_user_resume(session: AsyncSession, current_resume: Resume, data: 
     await redis.incr("resume_version")
 
 
-async def delete_user_resume(session: AsyncSession, current_resume: Resume, redis: Redis):
+async def delete_resume(session: AsyncSession, current_resume: Resume, redis: Redis):
 
     await session.delete(current_resume)
     await session.commit()

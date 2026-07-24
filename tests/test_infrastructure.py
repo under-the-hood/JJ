@@ -37,7 +37,7 @@ async def test_vacancy_search_invalidation(applicant_client, tenant_client):
         "compensation": 500000
     }
 
-    await tenant_client.post("/vacancy/create_vacancy", json=new_vacancy)
+    await tenant_client.post("/vacancies", json=new_vacancy)
 
     third_response = await applicant_client.get("/search/search_vacancies")
     assert third_response.json()["source"] == "db"

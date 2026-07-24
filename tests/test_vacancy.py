@@ -7,9 +7,9 @@ async def test_create_vacancy(create_vacancy):
 
 
 @pytest.mark.asyncio
-async def test_get_all_my_vacancies(tenant_client):
+async def test_my_vacancies(tenant_client):
 
-    response = await tenant_client.get("/vacancy/get_all_my_vacancies")
+    response = await tenant_client.get("/vacancies/my")
 
     assert response.status_code == 200
 
@@ -32,7 +32,7 @@ async def test_edit_vacancy(tenant_client, create_vacancy):
         "new_city": "Astana"
     }
 
-    response = await tenant_client.put(f"/vacancy/edit_vacancy/{vacancy_id}", params=edited_vacancy)
+    response = await tenant_client.put(f"/vacancies/{vacancy_id}", params=edited_vacancy)
 
     assert response.status_code == 200
 
@@ -42,6 +42,6 @@ async def test_delete_vacancy(tenant_client, create_vacancy):
 
     vacancy_id = create_vacancy
 
-    response = await tenant_client.request("DELETE", f"/vacancy/delete_vacancy/{vacancy_id}")
+    response = await tenant_client.request("DELETE", f"/vacancies/{vacancy_id}")
 
     assert response.status_code == 200

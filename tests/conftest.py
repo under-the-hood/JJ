@@ -161,7 +161,7 @@ async def create_vacancy(tenant_client):
         "city": "Almaty"
     }
 
-    response = await tenant_client.post("/vacancy/create_vacancy", json=new_vacancy)
+    response = await tenant_client.post("/vacancies", json=new_vacancy)
 
     data = response.json()
     assert "Vacancy" in data, data
@@ -179,7 +179,7 @@ async def create_resume(applicant_client):
         "stack": "FastAPI, PostgreSQL, Python"
     }
 
-    response = await applicant_client.post("/resume/create_resume", json=new_resume)
+    response = await applicant_client.post("/resumes", json=new_resume)
 
     data = response.json()
     assert "Resume" in data, data
