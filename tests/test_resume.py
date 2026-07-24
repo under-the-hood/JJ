@@ -7,9 +7,9 @@ async def test_create_resume(create_resume):
 
 
 @pytest.mark.asyncio
-async def test_get_all_my_resumes(applicant_client):
+async def test_get_my_resumes(applicant_client):
 
-    response = await applicant_client.get("/resume/get_all_my_resumes")
+    response = await applicant_client.get("/resumes/my")
 
     assert response.status_code == 200
 
@@ -22,7 +22,6 @@ async def test_get_all_my_resumes(applicant_client):
 
 @pytest.mark.asyncio
 async def test_edit_resume(applicant_client, create_resume):
-
     resume_id = create_resume
 
     edited_resume = {
@@ -33,16 +32,15 @@ async def test_edit_resume(applicant_client, create_resume):
         "stack": "FastAPI, PostgreSQL, Python, Docker"
     }
 
-    response = await applicant_client.put(f"/resume/edit_resume/{resume_id}", json=edited_resume)
+    response = await applicant_client.put(f"/resumes/{resume_id}", json=edited_resume)
 
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_delete_resume(applicant_client, create_resume):
-
     resume_id = create_resume
 
-    response = await applicant_client.request("DELETE", f"/resume/delete_resume/{resume_id}")
+    response = await applicant_client.request("DELETE", f"/resumes/{resume_id}")
 
     assert response.status_code == 200
