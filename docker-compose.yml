@@ -16,18 +16,25 @@ services:
       retries: 5
 
   backend:
-      build: .
+      build:
+        context: .
+        dockerfile: dockerfile
       container_name: backend
       restart: always
       environment:
-        - PYTHONPATH=/backend
+        - PYTHONPATH=/app
       depends_on:
         db:
           condition: service_healthy
       env_file:
         - .prod.env
       command: >
-        sh -c "alembic -c alembic.ini upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"
+        sh -c "alembic -c alembic.ini upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+      logging:
+        driver: "json-file"
+        options:
+          max-size: "10m"
+          tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
 
   redis:
     container_name: redis
@@ -52,9 +59,8 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: "guest"
-      RABBITMQ_DEFAULT_PASS: "guest"
+    env_file:
+      - .prod.env
     healthcheck:
       test: rabbitmq-diagnostics -q check_running
       interval: 5s
@@ -77,11 +83,14 @@ services:
         max-size: "1m"
 
   celery:
-    build: .
+    build:
+      context: .
+      dockerfile: dockerfile
     container_name: celery
     environment:
+      - PYTHONPATH=/app
       - MODE=PROD
-    command: celery -A app.backend.utils.celery worker --loglevel=INFO --pool=threads
+    command: celery -A app.backend.helpers.celery worker --loglevel=INFO --pool=threads
     env_file:
       - .prod.env
     depends_on:
@@ -91,13 +100,15 @@ services:
         condition: service_healthy
       backend:
         condition: service_started
-    volumes:
-      - .:/app
 
   flower:
-    build: .
+    build:
+      context: .
+      dockerfile: dockerfile
     container_name: flower
-    command: celery --app app.backend.utils.celery --broker=amqp://guest:guest@rabbitmq:5672// flower --port=5555
+    env_file:
+      - .prod.env
+    command: celery --app app.backend.helpers.celery flower --port=5555
     ports:
       - 5555:5555
     depends_on:
@@ -116,6 +127,10 @@ services:
       - ./monitoring/promtail.yml:/etc/promtail/config.yml
     command: -config.file=/etc/promtail/config.yml
     privileged: true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
 
   loki:
     image: grafana/loki:latest
