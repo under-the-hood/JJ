@@ -4,8 +4,8 @@ import pytest
 @pytest.mark.asyncio
 async def test_user_info_cache_invalidation(tenant_client):
 
-    await tenant_client.get("/user/get_info")
-    first_response = await tenant_client.get("/user/get_info")
+    await tenant_client.get("/users/me")
+    first_response = await tenant_client.get("/users/me")
 
     data = first_response.json()
     assert data["source"] == "cache"
@@ -14,9 +14,9 @@ async def test_user_info_cache_invalidation(tenant_client):
         "new_name": "Anton"
     }
 
-    await tenant_client.put("/user/edit_name", json=new_name)
+    await tenant_client.put("/users/me/name", json=new_name)
 
-    second_response = await tenant_client.get("/user/get_info")
+    second_response = await tenant_client.get("/users/me")
     
     data = second_response.json()
     assert data["source"] == "db"

@@ -121,13 +121,13 @@ async def get_token(client, role, email):
     }
 
     if not token:
-        login_response = await client.post('/user/sign_in', json={
+        login_response = await client.post('/users/sign_in', json={
             'email': email,
             'password': new_user["password"]
         })
 
         if login_response.status_code != 200:
-            await client.post("/user/sign_up", json=new_user)
+            await client.post("/users/sign_up", json=new_user)
             
             #Change role in database for admin
             if role == "admin":
@@ -135,7 +135,7 @@ async def get_token(client, role, email):
                     await session.execute(update(User).where(User.email == email).values(role = "admin"))
                     await session.commit()
 
-        login_response = await client.post('/user/sign_in', json={
+        login_response = await client.post('/users/sign_in', json={
             'email': email,
             'password': "12345678"
         })
@@ -189,13 +189,13 @@ async def create_resume(applicant_client):
 
 
 @pytest.fixture
-async def apply_to_vacancy(applicant_client, create_vacancy, create_resume):
+async def send_response_to_vacancy(applicant_client, create_vacancy, create_resume):
     cover_letter = {
         "resume_id": create_resume,
         "cover_letter": "Hello! I want work in your company!",
     }
 
-    response = await applicant_client.post(f"/response/apply_to_vacancy/{create_vacancy}", params={"resume_id": create_resume}, json=cover_letter)
+    response = await applicant_client.post(f"/responses/vacancies/{create_vacancy}", params={"resume_id": create_resume}, json=cover_letter)
 
     data = response.json()
     response_id = data["Response"]["id"]

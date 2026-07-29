@@ -29,9 +29,9 @@ async def get_my_resumes(session: session_dep, current_user: User = Depends(chec
 
 
 @router.put('/resumes/{resume_id}', tags=['Resume'])
-async def edit_resume(session: session_dep, current_resume: Resume = Depends(check_resume_owner), data: EditResume = Depends(), redis: Redis = Depends(get_redis)):
+async def update_resume(session: session_dep, current_resume: Resume = Depends(check_resume_owner), data: EditResume = Depends(), redis: Redis = Depends(get_redis)):
 
-    await resume_service.edit_resume(session=session, current_resume=current_resume, data=data, redis=redis)
+    await resume_service.update_resume(session=session, current_resume=current_resume, data=data, redis=redis)
     return {'success': True, 'message': 'Resume was edited'}
 
 

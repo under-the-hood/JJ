@@ -21,7 +21,7 @@ async def test_get_my_resumes(applicant_client):
 
 
 @pytest.mark.asyncio
-async def test_edit_resume(applicant_client, create_resume):
+async def test_update_resume(applicant_client, create_resume):
     resume_id = create_resume
 
     edited_resume = {

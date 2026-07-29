@@ -18,8 +18,8 @@ async def test_get_users(admin_client):
 
 
 @pytest.mark.order(after="tests/test_user.py::test_get_info_about_user")
-async def test_edit_user_name(admin_client, tenant_client):
-    user_info = await tenant_client.get("/user/get_info")
+async def test_update_user_name(admin_client, tenant_client):
+    user_info = await tenant_client.get("/users/me")
     user_id = user_info.json()["info"]["id"]
 
     new_name = {
@@ -33,7 +33,7 @@ async def test_edit_user_name(admin_client, tenant_client):
 
 @pytest.mark.order(after="tests/test_user.py::test_get_info_about_user")
 async def test_update_user_role(admin_client, applicant_client):
-    user_info = await applicant_client.get("/user/get_info")
+    user_info = await applicant_client.get("/users/me")
     user_id = user_info.json()["info"]["id"]
 
     new_role = {
@@ -56,7 +56,7 @@ async def test_delete_user_as_admin(admin_client, applicant_client):
         "name": "DeleteMe"
     }
 
-    user_response = await applicant_client.post("/user/sign_up", json=user_for_delete)
+    user_response = await applicant_client.post("/users/sign_up", json=user_for_delete)
     assert user_response.status_code == 200
 
     users_query = await admin_client.get("/admin/get_users")
@@ -157,7 +157,7 @@ async def test_delete_resume_as_admin(admin_client, create_resume):
 
 #Test admin role for work with response
 @pytest.mark.asyncio
-async def test_get_responses_as_admin(admin_client, apply_to_vacancy):
+async def test_get_responses_as_admin(admin_client, send_response_to_vacancy):
 
     response = await admin_client.get("/admin/get_responses")
 
@@ -172,9 +172,9 @@ async def test_get_responses_as_admin(admin_client, apply_to_vacancy):
 
 
 @pytest.mark.asyncio
-async def test_delete_response(admin_client, apply_to_vacancy):
+async def test_delete_response(admin_client, send_response_to_vacancy):
 
-    response_id = apply_to_vacancy
+    response_id = send_response_to_vacancy
 
     response = await admin_client.request("DELETE", f"/admin/delete_response/{response_id}")
 

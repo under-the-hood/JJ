@@ -29,7 +29,7 @@ async def get_my_resumes(session: AsyncSession, current_user: User):
     return all_resumes
 
 
-async def edit_resume(session: AsyncSession, current_resume: Resume, data: EditResume, redis: Redis):
+async def update_resume(session: AsyncSession, current_resume: Resume, data: EditResume, redis: Redis):
 
     if data.new_title:
         current_resume.title = data.new_title

@@ -58,7 +58,7 @@ async def login(session: AsyncSession, data: Login, response: Response):
     return token
 
 
-async def get_user_info(current_user: User, redis: Redis):
+async def get_info(current_user: User, redis: Redis):
 
     key = get_cache_key("user", current_user.id, "profile")
     cached_info = await redis.get(key)
@@ -107,7 +107,7 @@ async def update_name(session: AsyncSession, data: EditName, current_user: User,
     await clear_user_profile_cache(redis, current_user.id)
 
 
-async def delete_current_user(session: AsyncSession, data: Delete, current_user: User, redis: Redis):
+async def delete_user(session: AsyncSession, data: Delete, current_user: User, redis: Redis):
 
     await session.delete(current_user)
     await session.commit()

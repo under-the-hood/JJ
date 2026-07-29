@@ -21,7 +21,7 @@ async def test_my_vacancies(tenant_client):
 
 
 @pytest.mark.asyncio
-async def test_edit_vacancy(tenant_client, create_vacancy):
+async def test_update_vacancy(tenant_client, create_vacancy):
 
     vacancy_id = create_vacancy
 

@@ -45,7 +45,7 @@ async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, 
     return response
 
 
-async def get_responses_to_vacancy(session: AsyncSession, current_vacancy: Vacancy, current_user: User):
+async def get_responses(session: AsyncSession, current_vacancy: Vacancy, current_user: User):
     
     validate_user_role(current_user, Role.tenant, "You are not a tenant")
 
@@ -56,7 +56,7 @@ async def get_responses_to_vacancy(session: AsyncSession, current_vacancy: Vacan
     return all_resumes
 
 
-async def set_status_to_response(session: AsyncSession, data: SetStatus, current_response: Response, current_user: User):
+async def set_response(session: AsyncSession, data: SetStatus, current_response: Response, current_user: User):
     
     validate_user_role(current_user, Role.tenant, "Only tenants can set status to responses")
     current_response.status = data.status

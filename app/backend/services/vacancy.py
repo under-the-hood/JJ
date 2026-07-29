@@ -28,7 +28,7 @@ async def get_my_vacancies(session: AsyncSession, current_user: User):
     return all_vacancies
 
 
-async def edit_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: EditVacancy, redis: Redis):
+async def update_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: EditVacancy, redis: Redis):
 
     if data.new_title:
         current_vacancy.title = data.new_title
