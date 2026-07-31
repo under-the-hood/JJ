@@ -28,7 +28,7 @@ async def test_update_password(tenant_client):
         "repeat_new_password": "12345678"
     }
 
-    response = await tenant_client.put("/users/me/password", json=new_password)
+    response = await tenant_client.patch("/users/me/password", json=new_password)
 
     assert response.status_code == 200
 
@@ -40,7 +40,7 @@ async def test_update_name(tenant_client):
         "new_name": "Andrey"
     }
 
-    response = await tenant_client.put("/users/me/name", json=new_name)
+    response = await tenant_client.patch("/users/me/name", json=new_name)
 
     assert response.status_code == 200
 

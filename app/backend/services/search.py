@@ -10,7 +10,7 @@ from app.backend.schemas.search import SearchResumes, SearchVacancies
 from app.backend.utils.search import apply_words_filter
 
 
-async def search_resumes_service(session: AsyncSession, data: SearchResumes, current_user: User, redis: Redis):
+async def search_resumes(session: AsyncSession, data: SearchResumes, current_user: User, redis: Redis):
 
     version = await redis.get("resume_version") or "0"
     search_params = f"version:{version}_q:{data.title or ''}_city:{data.city or ''}_stack:{data.stack or ''}_limit:{data.limit}_offset:{data.offset}"
@@ -52,7 +52,7 @@ async def search_resumes_service(session: AsyncSession, data: SearchResumes, cur
     return {"resumes": resumes_json, "source": "db"}
 
 
-async def search_vacancies_service(session: AsyncSession, data: SearchVacancies, current_user: User, redis: Redis):
+async def search_vacancies(session: AsyncSession, data: SearchVacancies, current_user: User, redis: Redis):
 
     version = await redis.get("vacancy_version") or "0"
     search_params = f"version:{version}_q:{data.title or ''}_city:{data.city or ''}_compensation:{data.compensation or ''}_limit:{data.limit}_offset:{data.offset}"

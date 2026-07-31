@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 
 
 @pytest.mark.asyncio
@@ -41,6 +40,6 @@ async def test_set_status(tenant_client, send_response_to_vacancy):
         "status": "hired"
     }
 
-    response = await tenant_client.put(f"/responses/{response_id}/status", json=status)
+    response = await tenant_client.patch(f"/responses/{response_id}/status", json=status)
 
     assert response.status_code == 200

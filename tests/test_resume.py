@@ -32,7 +32,7 @@ async def test_update_resume(applicant_client, create_resume):
         "stack": "FastAPI, PostgreSQL, Python, Docker"
     }
 
-    response = await applicant_client.put(f"/resumes/{resume_id}", json=edited_resume)
+    response = await applicant_client.patch(f"/resumes/{resume_id}", json=edited_resume)
 
     assert response.status_code == 200
 

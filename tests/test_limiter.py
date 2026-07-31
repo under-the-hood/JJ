@@ -6,7 +6,7 @@ async def test_limiter_on_search_resumes(tenant_client):
     status_codes = []
 
     for i in range(7):
-        response = await tenant_client.get("/search/search_resumes")
+        response = await tenant_client.get("/search/resumes")
         status_codes.append(response.status_code)
 
     assert status_codes[0] == 200

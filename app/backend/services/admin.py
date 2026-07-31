@@ -15,7 +15,7 @@ from app.backend.helpers.validator import validate_admin_action
 
 
 #-------------Service for work with users-------------
-async def get_all_users(session: AsyncSession, admin: User, limit: int = 10, offset: int = 0):
+async def get_users(session: AsyncSession, admin: User, limit: int = 10, offset: int = 0):
     query = await session.execute(select(User).limit(limit).offset(offset))
     users = query.scalars().all()
 
@@ -27,7 +27,7 @@ async def get_all_users(session: AsyncSession, admin: User, limit: int = 10, off
     }
 
 
-async def edit_user_name(session: AsyncSession, data: EditUserNameByAdmin, current_user: User, admin: User, redis: Redis):
+async def update_name(session: AsyncSession, data: EditUserNameByAdmin, current_user: User, admin: User, redis: Redis):
     validate_admin_action(current_user, admin)
 
     current_user.name = data.new_name
@@ -39,7 +39,7 @@ async def edit_user_name(session: AsyncSession, data: EditUserNameByAdmin, curre
     await redis.delete(key)
 
 
-async def update_user_role(session: AsyncSession, data: UpdateUserRoleByAdmin, current_user: User, admin: User, redis: Redis):
+async def update_role(session: AsyncSession, data: UpdateUserRoleByAdmin, current_user: User, admin: User, redis: Redis):
     validate_admin_action(current_user, admin)
 
     current_user.role = data.new_role
@@ -50,7 +50,7 @@ async def update_user_role(session: AsyncSession, data: UpdateUserRoleByAdmin, c
     await clear_user_profile_cache(redis, current_user.id)
 
 
-async def delete_user_by_admin(session: AsyncSession, current_user: User, admin: User, redis: Redis):
+async def delete_user(session: AsyncSession, current_user: User, admin: User, redis: Redis):
     validate_admin_action(current_user, admin)
 
     await session.delete(current_user)
@@ -60,7 +60,20 @@ async def delete_user_by_admin(session: AsyncSession, current_user: User, admin:
 
 
 #-------------Service for work with vacancies-------------
-async def edit_vacancy_by_admin(session: AsyncSession, current_vacancy: Vacancy, data: EditVacancy, admin: User, redis: Redis):
+async def get_vacancies(session: AsyncSession, admin: User, limit: int = 10, offset: int = 0):
+    
+    query = await session.execute(select(Vacancy).limit(limit).offset(offset))
+    vacancies = query.scalars().all()
+
+    quantity = await session.scalar(select(func.count(Vacancy.id)))
+
+    return {
+        'quantity of all vacancies': quantity,
+        'vacancies': vacancies
+    }
+
+
+async def update_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: EditVacancy, admin: User, redis: Redis):
     
     if data.new_title:
         current_vacancy.title = data.new_title
@@ -77,20 +90,7 @@ async def edit_vacancy_by_admin(session: AsyncSession, current_vacancy: Vacancy,
     await redis.incr("vacancy_version")
 
 
-async def get_all_vacancies(session: AsyncSession, admin: User, limit: int = 10, offset: int = 0):
-    
-    query = await session.execute(select(Vacancy).limit(limit).offset(offset))
-    vacancies = query.scalars().all()
-
-    quantity = await session.scalar(select(func.count(Vacancy.id)))
-
-    return {
-        'quantity of all vacancies': quantity,
-        'vacancies': vacancies
-    }
-
-
-async def delete_vacancy_by_admin(session: AsyncSession, current_vacancy: Vacancy, admin: User, redis: Redis):
+async def delete_vacancy(session: AsyncSession, current_vacancy: Vacancy, admin: User, redis: Redis):
     
     await session.delete(current_vacancy)
     await session.commit()
@@ -98,9 +98,21 @@ async def delete_vacancy_by_admin(session: AsyncSession, current_vacancy: Vacanc
     await redis.incr("vacancy_version")
 
 
-
 #-------------Service for work with resumes-------------
-async def edit_resume_by_admin(session: AsyncSession, current_resume: Resume, data: EditResume, admin: User, redis: Redis):
+async def get_resumes(session: AsyncSession, admin: User, limit: int = 10, offset: int = 0):
+
+    query = await session.execute(select(Resume).limit(limit).offset(offset))
+    resumes = query.scalars().all()
+
+    quantity = await session.scalar(select(func.count(Resume.id)))
+
+    return {
+        'quantity of all resumes': quantity,
+        'resumes': resumes
+    }
+
+
+async def update_resume(session: AsyncSession, current_resume: Resume, data: EditResume, admin: User, redis: Redis):
     
     if data.new_title:
         current_resume.title = data.new_title
@@ -120,20 +132,7 @@ async def edit_resume_by_admin(session: AsyncSession, current_resume: Resume, da
     await redis.incr("resume_version")
 
 
-async def get_all_resumes(session: AsyncSession, admin: User, limit: int = 10, offset: int = 0):
-
-    query = await session.execute(select(Resume).limit(limit).offset(offset))
-    resumes = query.scalars().all()
-
-    quantity = await session.scalar(select(func.count(Resume.id)))
-
-    return {
-        'quantity of all resumes': quantity,
-        'resumes': resumes
-    }
-
-
-async def delete_resume_by_admin(session: AsyncSession, current_resume: Resume, admin: User, redis: Redis):
+async def delete_resume(session: AsyncSession, current_resume: Resume, admin: User, redis: Redis):
 
     await session.delete(current_resume)
     await session.commit()
@@ -142,7 +141,7 @@ async def delete_resume_by_admin(session: AsyncSession, current_resume: Resume, 
 
 
 #-------------Service for work with responses-------------
-async def get_all_responses(session: AsyncSession, admin: User, limit: int = 10, offset: int = 0):
+async def get_responses(session: AsyncSession, admin: User, limit: int = 10, offset: int = 0):
     
     query = await session.execute(select(Response).limit(limit).offset(offset))    
     responses = query.scalars().all()
@@ -154,7 +153,7 @@ async def get_all_responses(session: AsyncSession, admin: User, limit: int = 10,
         }
 
 
-async def delete_response_by_admin(session: AsyncSession, current_response: Response, admin: User):
+async def delete_response(session: AsyncSession, current_response: Response, admin: User):
 
     await session.delete(current_response)
     await session.commit()

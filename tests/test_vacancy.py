@@ -32,7 +32,7 @@ async def test_update_vacancy(tenant_client, create_vacancy):
         "new_city": "Astana"
     }
 
-    response = await tenant_client.put(f"/vacancies/{vacancy_id}", params=edited_vacancy)
+    response = await tenant_client.patch(f"/vacancies/{vacancy_id}", params=edited_vacancy)
 
     assert response.status_code == 200
 

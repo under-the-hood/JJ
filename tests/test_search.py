@@ -4,7 +4,7 @@ import pytest
 @pytest.mark.asyncio
 async def test_search_resumes(tenant_client):
 
-    response = await tenant_client.get("/search/search_resumes")
+    response = await tenant_client.get("/search/resumes")
 
     assert response.status_code == 200
 
@@ -21,7 +21,7 @@ async def test_search_resumes(tenant_client):
 @pytest.mark.asyncio
 async def test_search_vacancies(applicant_client):
 
-    response = await applicant_client.get("/search/search_vacancies")
+    response = await applicant_client.get("/search/vacancies")
 
     assert response.status_code == 200
 
