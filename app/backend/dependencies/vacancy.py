@@ -10,7 +10,7 @@ from app.backend.dependencies.auth import get_user_token
 
 async def check_tenant(current_user: User = Depends(check_user)):
     if current_user.role != Role.tenant:
-        raise HTTPException(status_code=403, detail='Only tenants can make/edit vacancies')
+        raise HTTPException(status_code=403, detail='Only tenants can make/update vacancies')
 
     return current_user
 

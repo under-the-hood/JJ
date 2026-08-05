@@ -8,7 +8,7 @@ from app.backend.models.user import User, Role
 
 async def check_applicant(current_user: User = Depends(check_user)):
     if current_user.role != Role.applicant:
-        raise HTTPException(status_code=403, detail='Only applicants can make/edit resumes')
+        raise HTTPException(status_code=403, detail='Only applicants can make/update resumes')
 
     return current_user
 

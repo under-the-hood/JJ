@@ -8,13 +8,15 @@ from app.backend.database.database import session_dep
 from app.backend.dependencies.user import check_user
 from app.backend.dependencies.vacancy import check_vacancy_owner, check_tenant
 from app.backend.database.redis_database import get_redis
-import app.backend.services.vacancy as vacancy_service
+import app.backend.services.vacancies as vacancy_service
+from app.backend.helpers.rate_limiter import rate_limiter_factory
 
 
 router = APIRouter(prefix="/vacancies", tags=["Vacancy"])
 
+create_vacancy_limit = rate_limiter_factory("/vacancies", 5, 60)
 
-@router.post("")
+@router.post("", dependencies=[Depends(create_vacancy_limit)])
 async def create_vacancy(session: session_dep, data: CreateVacancy, current_user: User = Depends(check_tenant), redis: Redis = Depends(get_redis)):
 
     new_vacancy = await vacancy_service.create_vacancy(session=session, data=data, current_user=current_user, redis=redis)

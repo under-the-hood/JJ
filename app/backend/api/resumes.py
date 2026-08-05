@@ -8,13 +8,15 @@ from app.backend.schemas.resume import CreateResume, EditResume
 from app.backend.dependencies.resume import check_applicant, check_resume_owner
 from app.backend.dependencies.user import check_user
 from app.backend.database.redis_database import get_redis
-import app.backend.services.resume as resume_service
+import app.backend.services.resumes as resume_service
+from app.backend.helpers.rate_limiter import rate_limiter_factory
 
 
 router = APIRouter(prefix="/resumes", tags=["Resume"])
 
+create_resume_limit = rate_limiter_factory("/resumes", 5, 60)
 
-@router.post("")
+@router.post("", dependencies=[Depends(create_resume_limit)])
 async def create_resume(session: session_dep, data: CreateResume, current_user: User = Depends(check_applicant), redis: Redis = Depends(get_redis)):
 
     new_resume = await resume_service.create_resume(session=session, data=data, current_user=current_user, redis=redis)

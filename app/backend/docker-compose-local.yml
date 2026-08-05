@@ -1,5 +1,4 @@
 services:
-
   redis:
     image: redis:7
     container_name: redis-local

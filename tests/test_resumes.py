@@ -7,7 +7,7 @@ async def test_create_resume(create_resume):
 
 
 @pytest.mark.asyncio
-async def test_get_my_resumes(applicant_client):
+async def test_get_my_resumes(applicant_client, create_resume):
 
     response = await applicant_client.get("/resumes/my")
 

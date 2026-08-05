@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     KEY_FOR_JWT: str
 
     RABBITMQ: str
+    RABBITMQ_DEFAULT_USER: str
+    RABBITMQ_DEFAULT_PASS: str
 
     GF_SECURITY_ADMIN_USER: str
     GF_SECURITY_ADMIN_PASSWORD: str

@@ -9,7 +9,7 @@ from app.backend.models.vacancy import Vacancy
 from app.backend.models.response import Response
 from app.backend.schemas.response import ResponseSchema, ResponseRead, SetStatus
 from app.backend.helpers.rate_limiter import rate_limiter_factory
-import app.backend.services.response as response_service
+import app.backend.services.responses as response_service
 
 
 router = APIRouter(prefix="/responses", tags=["Response"])

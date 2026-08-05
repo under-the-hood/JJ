@@ -7,7 +7,7 @@ async def test_create_vacancy(create_vacancy):
 
 
 @pytest.mark.asyncio
-async def test_my_vacancies(tenant_client):
+async def test_my_vacancies(tenant_client, create_vacancy):
 
     response = await tenant_client.get("/vacancies/my")
 

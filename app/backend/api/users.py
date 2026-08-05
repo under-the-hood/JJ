@@ -8,22 +8,24 @@ from app.backend.dependencies.user import check_user
 from app.backend.dependencies.password import validate_user_registration, validate_edit_password, validate_delete_user
 from app.backend.helpers.rate_limiter import rate_limiter_factory, rate_limiter_factory_by_ip
 from app.backend.database.redis_database import get_redis
-import app.backend.services.user as user_service
+import app.backend.services.users as user_service
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-@router.post('/sign_up')
+sign_up_limit = rate_limiter_factory_by_ip("/users/sign_up", 5, 60)
+
+@router.post('/sign_up', dependencies=[Depends(sign_up_limit)])
 async def sign_up(session: session_dep, data: CreateUser = Depends(validate_user_registration)):
     
     await user_service.create_user(session=session, data=data)
     return {'success': True, 'message': 'Account was created'}
 
 
-login_limit = rate_limiter_factory_by_ip("/users/sign_in", 5, 60)
+sign_in_limit = rate_limiter_factory_by_ip("/users/sign_in", 5, 60)
 
-@router.post('/sign_in', dependencies=[Depends(login_limit)])
+@router.post('/sign_in', dependencies=[Depends(sign_in_limit)])
 async def sign_in(session: session_dep, data: Login, response: Response):
 
     access_token = await user_service.login(session=session, data=data, response=response)
@@ -52,8 +54,6 @@ async def update_name(session: session_dep, data: EditName, current_user: User =
     await user_service.update_name(session=session, data=data, current_user=current_user, redis=redis)
     return {'success': True, 'message': 'Name was changed'}
 
-
-delete_limit = rate_limiter_factory("/users/me", 5, 60)
 
 @router.delete('/me')
 async def delete_user(session: session_dep, data: Delete = Depends(validate_delete_user), current_user: User = Depends(check_user), redis: Redis = Depends(get_redis)):

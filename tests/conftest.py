@@ -4,16 +4,16 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy import update
 import fakeredis.aioredis
-import asyncio
 
 from app.main import app
 from app.backend.models.base import Base
 from app.backend.database.database import engine, get_session
 from app.backend.config import settings
-from app.backend.core.auth import config
-from app.backend.api.response import set_status_limiter, response_limiter
-from app.backend.api.user import password_limit, delete_limit, login_limit
+from app.backend.api.responses import set_status_limiter, response_limiter
+from app.backend.api.users import password_limit, sign_in_limit, sign_up_limit
 from app.backend.api.search import search_vacancy_limiter
+from app.backend.api.resumes import create_resume_limit
+from app.backend.api.vacancies import create_vacancy_limit
 from app.backend.database.redis_database import get_redis
 from app.backend.helpers.celery import celery
 from app.backend.models.user import User
@@ -22,7 +22,7 @@ from app.backend.models.user import User
 @pytest.fixture(scope='session', autouse=True)
 async def setup_db():
 
-    celery.conf.task_always_eager = True
+    celery.conf.update(task_always_eager=True, task_eager_propagates=True)
     assert settings.MODE == 'TEST'
     
     async with engine.begin() as conn:
@@ -36,27 +36,40 @@ async def setup_db():
     await engine.dispose()
 
 
-new_session = async_sessionmaker(autoflush=False, expire_on_commit=False, bind=engine)
-
-@pytest.fixture
+@pytest.fixture(autouse=True)
 async def get_test_session():
-    async with new_session() as session:
-        app.dependency_overrides[get_session] = lambda: session
-        yield session
+    async with engine.connect() as conn:
+        transaction = await conn.begin()
+        async_session = async_sessionmaker(autoflush=False, expire_on_commit=False, bind=conn)
+        
+        async with async_session() as session:
+            app.dependency_overrides[get_session] = lambda: session
+            yield session
+
+        await transaction.rollback()
+
+    app.dependency_overrides.clear()
 
 
-@pytest.fixture
-async def get_latest_emails():
-    async with httpx.AsyncClient() as client:
-        response = await client.get("http://localhost:8080/email")
-        return response.json()
+@pytest.fixture(scope="function")
+def mock_celery(mocker):
+    return mocker.patch("app.backend.helpers.celery_tasks.send_mail_task.delay")
 
 
 @pytest.fixture(scope='session', autouse=True)
 async def disable_all_limits():
     skip = lambda: None
 
-    limiters = [login_limit, password_limit, delete_limit, set_status_limiter, response_limiter, search_vacancy_limiter]
+    limiters = [
+        sign_up_limit,
+        sign_in_limit, 
+        password_limit, 
+        set_status_limiter, 
+        response_limiter, 
+        search_vacancy_limiter, 
+        create_vacancy_limit, 
+        create_resume_limit
+        ]
 
     for lim in limiters:
         app.dependency_overrides[lim] = skip
@@ -80,36 +93,12 @@ async def get_test_redis(test_redis_server):
 
     yield test_redis_conn
 
+    await test_redis_conn.flushall()
     await test_redis_conn.aclose()
     app.dependency_overrides.pop(get_redis, None)
 
 
-@pytest.fixture
-async def admin_client():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        yield await get_token(ac, "admin", "admin_account@example.com")
-
-@pytest.fixture
-async def applicant_client():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        yield await get_token(ac, "applicant", "applicant_account@example.com")
-
-@pytest.fixture
-async def tenant_client():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        yield await get_token(ac, "tenant", "tenant_account@example.com")
-
-
-tokens = {
-    "tenant_token": None,
-    "applicant_token": None,
-    "admin_token": None
-}
-
-async def get_token(client, role, email):
-
-    token = tokens.get(role)
-
+async def get_token(client, role, email, session):
     reg_role = "tenant" if role == "admin" else role
 
     new_user = {
@@ -120,36 +109,46 @@ async def get_token(client, role, email):
         "role": reg_role
     }
 
-    if not token:
-        login_response = await client.post('/users/sign_in', json={
-            'email': email,
-            'password': new_user["password"]
-        })
-
-        if login_response.status_code != 200:
-            await client.post("/users/sign_up", json=new_user)
+    await client.post("/users/sign_up", json=new_user)
             
-            #Change role in database for admin
-            if role == "admin":
-                async with new_session() as session:
-                    await session.execute(update(User).where(User.email == email).values(role = "admin"))
-                    await session.commit()
+    #Change role in database for admin
+    if role == "admin":
+        await session.execute(update(User).where(User.email == email).values(role = "admin"))
+        await session.flush()
 
-        login_response = await client.post('/users/sign_in', json={
-            'email': email,
-            'password': "12345678"
-        })
+    login_response = await client.post('/users/sign_in', json={
+        'email': email,
+        'password': new_user["password"]
+    })
 
-        token = login_response.json().get("token")
-        tokens[role] = token
+    return login_response.json().get("token")
 
-        if not token:
-            pytest.fail('No token')
 
-    client.headers.update({"Authorization": f"Bearer {token}"})
-    client.cookies.set(config.JWT_ACCESS_COOKIE_NAME, token)
+async def create_client(client, role, email, session):
+    transport = ASGITransport(app=app)
+    ac = AsyncClient(transport=transport, base_url="http://test")
 
-    return client
+    token = await get_token(ac, role, email, session)
+    ac.headers["Authorization"] = f"Bearer {token}"
+    return ac
+
+@pytest.fixture
+async def client():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+
+@pytest.fixture
+async def admin_client(client, get_test_session):
+    return await create_client(client, "admin", "admin_account@example.com", get_test_session)
+
+@pytest.fixture
+async def applicant_client(client, get_test_session):
+    return await create_client(client, "applicant", "applicant_account@example.com", get_test_session)
+
+@pytest.fixture
+async def tenant_client(client, get_test_session):
+    return await create_client(client, "tenant", "tenant_account@example.com", get_test_session)
 
 
 @pytest.fixture
@@ -189,15 +188,17 @@ async def create_resume(applicant_client):
 
 
 @pytest.fixture
-async def send_response_to_vacancy(applicant_client, create_vacancy, create_resume):
-    cover_letter = {
-        "resume_id": create_resume,
-        "cover_letter": "Hello! I want work in your company!",
-    }
+def send_response_to_vacancy(applicant_client, create_vacancy, create_resume):
+    async def create_response():
+        cover_letter = {
+            "resume_id": create_resume,
+            "cover_letter": "Hello! I want work in your company!",
+        }
 
-    response = await applicant_client.post(f"/responses/vacancies/{create_vacancy}", params={"resume_id": create_resume}, json=cover_letter)
+        response = await applicant_client.post(f"/responses/vacancies/{create_vacancy}", params={"resume_id": create_resume}, json=cover_letter)
 
-    data = response.json()
-    response_id = data["Response"]["id"]
+        data = response.json()
+        response_id = data["Response"]["id"]
 
-    return response_id
+        return response_id
+    return create_response

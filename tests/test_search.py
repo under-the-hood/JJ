@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_search_resumes(tenant_client):
+async def test_search_resumes(tenant_client, create_resume):
 
     response = await tenant_client.get("/search/resumes")
 
@@ -19,7 +19,7 @@ async def test_search_resumes(tenant_client):
 
 
 @pytest.mark.asyncio
-async def test_search_vacancies(applicant_client):
+async def test_search_vacancies(applicant_client, create_vacancy):
 
     response = await applicant_client.get("/search/vacancies")
 
