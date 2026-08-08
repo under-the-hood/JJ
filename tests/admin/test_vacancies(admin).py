@@ -21,14 +21,13 @@ async def test_update_vacancy(admin_client, create_vacancy):
 
     vacancy_id = create_vacancy
 
-    edited_vacancy = {
-        "vacancy_id": vacancy_id,
+    updated_vacancy = {
         "new_title": "FastAPI Developer",
         "new_compensation": 550000,
         "new_city": "Astana"
     }
     
-    response = await admin_client.patch(f"/admin/vacancies/{vacancy_id}", json=edited_vacancy)
+    response = await admin_client.patch(f"/admin/vacancies/{vacancy_id}", json=updated_vacancy)
 
     assert response.status_code == 200
 

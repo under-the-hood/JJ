@@ -56,7 +56,7 @@ async def get_responses(session: AsyncSession, current_vacancy: Vacancy, current
     return all_resumes
 
 
-async def set_response(session: AsyncSession, data: SetStatus, current_response: Response, current_user: User):
+async def set_status(session: AsyncSession, data: SetStatus, current_response: Response, current_user: User):
     
     validate_user_role(current_user, Role.tenant, "Only tenants can set status to responses")
     current_response.status = data.status

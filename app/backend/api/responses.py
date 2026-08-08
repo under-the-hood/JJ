@@ -36,5 +36,5 @@ set_status_limiter = rate_limiter_factory("/responses/{response_id}/status", 5, 
 @router.patch('/{response_id}/status', dependencies=[Depends(set_status_limiter)])
 async def set_status(session: session_dep, data: SetStatus, current_response: Response = Depends(check_response_owner), current_user: User = Depends(check_tenant)):
     
-    await response_service.set_response(session=session, data=data, current_response=current_response, current_user=current_user)
+    await response_service.set_status(session=session, data=data, current_response=current_response, current_user=current_user)
     return {'success': True, 'message': 'Status was updated'}

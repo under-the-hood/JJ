@@ -31,9 +31,9 @@ async def get_my_vacancies(session: session_dep, current_user: User = Depends(ch
 
 
 @router.patch('/{vacancy_id}')
-async def update_vacancy(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy_owner), data: EditVacancy = Depends(), redis: Redis = Depends(get_redis)):
+async def update_vacancy(session: session_dep, data: EditVacancy, current_vacancy: Vacancy = Depends(check_vacancy_owner), redis: Redis = Depends(get_redis)):
 
-    await vacancy_service.update_vacancy(session=session, current_vacancy=current_vacancy, data=data, redis=redis)
+    await vacancy_service.update_vacancy(session=session, data=data, current_vacancy=current_vacancy, redis=redis)
     return {'success': True, 'message': 'Vacancy was edited'}
 
 

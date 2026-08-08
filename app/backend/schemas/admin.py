@@ -1,5 +1,6 @@
 from pydantic import Field
 from enum import Enum
+from typing import Optional
 
 from app.backend.schemas.base import Base
 
@@ -8,8 +9,6 @@ class Role(str, Enum):
     applicant = 'applicant' 
     admin = "admin"   
 
-class EditUserNameByAdmin(Base):
-    new_name: str = Field(min_length=3, max_length=15, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
-
-class UpdateUserRoleByAdmin(Base):
-    new_role: Role
+class UpdateUser(Base):
+    new_name: str | None = Field(default=None, min_length=3, max_length=15, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
+    new_role: Role | None
