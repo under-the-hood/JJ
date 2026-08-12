@@ -4,7 +4,7 @@ from app.backend.models.mails import Mails
 
 
 @pytest.mark.asyncio
-async def test_send_response_to_vacancy(send_response_to_vacancy, mock_celery, get_test_session):
+async def test_send_response_to_vacancy(send_response_to_vacancy, mock_celery, test_session):
     response = await send_response_to_vacancy()
     assert response is not None
 
@@ -13,7 +13,7 @@ async def test_send_response_to_vacancy(send_response_to_vacancy, mock_celery, g
     args, _ = mock_celery.call_args
     mail_id = args[0]
 
-    mail = await get_test_session.get(Mails, mail_id)
+    mail = await test_session.get(Mails, mail_id)
     assert mail.subject == "New response to your vacancy!"
     assert "city: Almaty" in mail.body
 

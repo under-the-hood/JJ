@@ -28,7 +28,6 @@ async def test_update_resume(admin_client, create_resume):
     }
 
     response = await admin_client.patch(f"/admin/resumes/{resume_id}", json=updated_resume)
-    print(response.json())
 
     assert response.status_code == 200
 
