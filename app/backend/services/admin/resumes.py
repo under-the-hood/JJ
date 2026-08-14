@@ -12,12 +12,9 @@ async def get_resumes(session: AsyncSession, admin: User, limit: int = 10, offse
     query = await session.execute(select(Resume).limit(limit).offset(offset))
     resumes = query.scalars().all()
 
-    quantity = await session.scalar(select(func.count(Resume.id)))
+    total = await session.scalar(select(func.count(Resume.id)))
 
-    return {
-        'quantity of all resumes': quantity,
-        'resumes': resumes
-    }
+    return total, resumes
 
 
 async def update_resume(session: AsyncSession, current_resume: Resume, data: EditResume, admin: User, redis: Redis):

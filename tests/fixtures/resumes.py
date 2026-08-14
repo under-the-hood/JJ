@@ -13,7 +13,7 @@ async def create_resume(applicant_client):
     response = await applicant_client.post("/resumes", json=new_resume)
 
     data = response.json()
-    assert "Resume" in data, data
-    resume_id = data["Resume"]["id"]
+    assert "resume" in data, data
+    resume_id = data["resume"]["id"]
 
     return resume_id

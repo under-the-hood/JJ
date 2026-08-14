@@ -15,9 +15,9 @@ async def test_my_vacancies(tenant_client, create_vacancy):
 
     data = response.json()
 
-    assert isinstance(data["Your vacancies"], list)
-    assert len(data["Your vacancies"]) > 0
-    assert data["Your vacancies"][0]["title"] == "Python developer"
+    assert isinstance(data["vacancies"], list)
+    assert len(data["vacancies"]) > 0
+    assert data["vacancies"][0]["title"] == "Python developer"
 
 
 @pytest.mark.asyncio

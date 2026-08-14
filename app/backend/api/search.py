@@ -17,11 +17,13 @@ search_resumes_limiter = rate_limiter_factory("/search/resumes", 5, 60)
 
 @router.get('/resumes', dependencies=[Depends(search_resumes_limiter)])
 async def search_resumes(session: session_dep, data: SearchResumes = Depends(), current_user: User = Depends(check_tenant), redis: Redis = Depends(get_redis)):
-    return await search_service.search_resumes(session=session, data=data, current_user=current_user, redis=redis)
+    all_resumes, source  = await search_service.search_resumes(session=session, data=data, current_user=current_user, redis=redis)
+    return {"resumes": all_resumes, "source": source}
 
 
 search_vacancy_limiter = rate_limiter_factory("/search/vacancies", 5, 60)
 
 @router.get('/vacancies', dependencies=[Depends(search_vacancy_limiter)])
 async def search_vacancies(session: session_dep, data: SearchVacancies = Depends(), current_user: User = Depends(check_applicant), redis: Redis = Depends(get_redis)):
-    return await search_service.search_vacancies(session=session, data=data, current_user=current_user, redis=redis)
+    all_vacancies, source = await search_service.search_vacancies(session=session, data=data, current_user=current_user, redis=redis)
+    return {"vacancies": all_vacancies, "source": source}

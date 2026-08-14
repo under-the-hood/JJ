@@ -11,7 +11,7 @@ def send_response_to_vacancy(applicant_client, create_vacancy, create_resume):
         response = await applicant_client.post(f"/responses/vacancies/{create_vacancy}", params={"resume_id": create_resume}, json=cover_letter)
 
         data = response.json()
-        response_id = data["Response"]["id"]
+        response_id = data["response"]["id"]
 
         return response_id
     return create_response

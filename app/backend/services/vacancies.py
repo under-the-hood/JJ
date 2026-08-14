@@ -22,10 +22,10 @@ async def create_vacancy(session: AsyncSession, data: CreateVacancy, current_use
 
 async def get_my_vacancies(session: AsyncSession, current_user: User):
 
-    vacancy_query = await session.execute(select(Vacancy).where(Vacancy.tenant_id == current_user.id))
-    all_vacancies = vacancy_query.scalars().all()
+    query = await session.execute(select(Vacancy).where(Vacancy.tenant_id == current_user.id))
+    vacancies = query.scalars().all()
 
-    return all_vacancies
+    return vacancies
 
 
 async def update_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: EditVacancy, redis: Redis):

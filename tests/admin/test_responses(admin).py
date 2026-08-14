@@ -11,7 +11,7 @@ async def test_get_responses(admin_client, send_response_to_vacancy):
 
     data = response.json()
 
-    assert data["quantity of all responses"] > 0
+    assert data["total"] > 0
 
     responses = [response["cover_letter"] for response in data["responses"]]
     assert "Hello! I want work in your company!" in responses

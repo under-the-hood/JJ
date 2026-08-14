@@ -25,11 +25,20 @@ class ResumeRead(Base):
     title: str
     stack: str
 
+class ResponseStatus(str, Enum):
+    send = "send"
+    viewed = 'viewed'
+    shortlisted = 'shortlisted'
+    interview = 'interview'
+    rejected = 'rejected'
+    hired = 'hired'
+
 class ResponseRead(Base):
     id: int
     cover_letter: str
-    resume: ResumeRead
+    status: ResponseStatus
     user: ApplicantRead
+    resume: ResumeRead
 
 class SetStatus(Base):
     status: Status

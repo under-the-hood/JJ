@@ -21,14 +21,14 @@ response_limiter = rate_limiter_factory("/responses/vacancies/{vacancy_id}", 5, 
 async def send_response_to_vacancy(session: session_dep, data: ResponseSchema, current_vacancy: Vacancy = Depends(check_vacancy), current_user: User = Depends(check_applicant)):
 
     response = await response_service.send_response_to_vacancy(session=session, data=data, current_vacancy=current_vacancy, current_user=current_user)
-    return {'success': True, 'message': 'You responded to vacancy', "Response": response}
+    return {'message': 'You responded to vacancy', "response": response}
 
 
 @router.get('/vacancies/{vacancy_id}', response_model=list[ResponseRead])
 async def get_responses(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy_owner), current_user: User = Depends(check_tenant)):
 
-    all_resumes = await response_service.get_responses(session=session, current_vacancy=current_vacancy, current_user=current_user)
-    return all_resumes
+    responses = await response_service.get_responses(session=session, current_vacancy=current_vacancy, current_user=current_user)
+    return responses
 
 
 set_status_limiter = rate_limiter_factory("/responses/{response_id}/status", 5, 60)
@@ -37,4 +37,4 @@ set_status_limiter = rate_limiter_factory("/responses/{response_id}/status", 5, 
 async def set_status(session: session_dep, data: SetStatus, current_response: Response = Depends(check_response_owner), current_user: User = Depends(check_tenant)):
     
     await response_service.set_status(session=session, data=data, current_response=current_response, current_user=current_user)
-    return {'success': True, 'message': 'Status was updated'}
+    return {'message': 'Status was updated', "response_id": current_response.id}

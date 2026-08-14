@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.backend.utils.hash import hashing_password, pwd_context
 from app.backend.core.auth import security
-from app.backend.models.user import User
+from app.backend.models.user import User, Role
 from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, Delete
 from app.backend.dependencies.redis_cache import get_cache_key
 from app.backend.models.mails import Mails
@@ -18,7 +18,7 @@ async def create_user(session: AsyncSession, data: CreateUser):
 
     new_user = User(
         email = data.email,
-        role = data.role,
+        role = Role(data.role.value),
         name = data.name,
         password = hashing_password(data.password)
     )
@@ -39,6 +39,7 @@ async def create_user(session: AsyncSession, data: CreateUser):
 
     session.add(mail)
     await session.commit()
+    #await session.refresh(new_user)
     send_mail_task.delay(mail.id)
 
     return new_user
@@ -63,19 +64,19 @@ async def get_info(current_user: User, redis: Redis):
     key = get_cache_key("user", current_user.id, "profile")
     cached_info = await redis.get(key)
 
-    #If info about user have in redis, return cached info
+    #If info about user have in cache, return cached info
     if cached_info:
-        return {"success": True, "info": json.loads(cached_info), "source": "cache"}
+        return json.loads(cached_info), "cache"
 
-    user_info = {'id': current_user.id,
+    info = {'id': current_user.id,
                     'email': current_user.email,
                     'name': current_user.name,
                     'role': str(current_user.role)}
     
     #Else save info about user in cache on 1 hour
-    await redis.set(key, json.dumps(user_info), ex=3600)
+    await redis.set(key, json.dumps(info), ex=3600)
 
-    return {"success": True, "info": user_info, "source": "db"}
+    return info, "db"
 
 
 async def update_password(session: AsyncSession, data: EditPassword, current_user: User, redis: Redis):

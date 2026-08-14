@@ -12,12 +12,9 @@ async def get_vacancies(session: AsyncSession, admin: User, limit: int = 10, off
     query = await session.execute(select(Vacancy).limit(limit).offset(offset))
     vacancies = query.scalars().all()
 
-    quantity = await session.scalar(select(func.count(Vacancy.id)))
+    total = await session.scalar(select(func.count(Vacancy.id)))
 
-    return {
-        'quantity of all vacancies': quantity,
-        'vacancies': vacancies
-    }
+    return total, vacancies
 
 
 async def update_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: EditVacancy, admin: User, redis: Redis):

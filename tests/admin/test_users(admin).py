@@ -10,7 +10,7 @@ async def test_get_users(admin_client):
 
     data = response.json()
 
-    assert data["quantity of all users"] > 0
+    assert data["total"] > 0
 
     emails = [user["email"] for user in data["users"]]
     assert "admin_account@example.com" in emails

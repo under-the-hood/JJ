@@ -13,12 +13,12 @@ router = APIRouter(prefix="/responses", tags=['Admin | Responses'])
 @router.get('')
 async def get_responses(session: session_dep, limit: int = 10, offset: int = 0, admin: User = Depends(check_admin)):
 
-    responses_info = await admin_responses.get_responses(session=session, limit=limit, offset=offset, admin=admin)    
-    return {**responses_info}
+    total, responses = await admin_responses.get_responses(session=session, limit=limit, offset=offset, admin=admin)    
+    return {"total": total, "responses": responses}
 
 
 @router.delete('/{response_id}')
 async def delete_response(session: session_dep, current_response: Response = Depends(check_response), admin: User = Depends(check_admin)):
 
     await admin_responses.delete_response(session=session, current_response=current_response, admin=admin)
-    return {'success': True, 'message': 'Response was deleted'}
+    return {'message': 'Response was deleted', "response_id": current_response.id}

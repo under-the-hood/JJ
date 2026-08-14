@@ -15,9 +15,9 @@ async def test_get_my_resumes(applicant_client, create_resume):
 
     data = response.json()
 
-    assert isinstance(data["Your resumes"], list)
-    assert len(data["Your resumes"]) > 0
-    assert data["Your resumes"][0]["title"] == "FastAPI Developer"
+    assert isinstance(data["resumes"], list)
+    assert len(data["resumes"]) > 0
+    assert data["resumes"][0]["title"] == "FastAPI Developer"
 
 
 @pytest.mark.asyncio

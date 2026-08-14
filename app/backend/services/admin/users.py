@@ -12,12 +12,9 @@ async def get_users(session: AsyncSession, admin: User, limit: int = 10, offset:
     query = await session.execute(select(User).limit(limit).offset(offset))
     users = query.scalars().all()
 
-    quantity = await session.scalar(select(func.count(User.id)))
+    total = await session.scalar(select(func.count(User.id)))
 
-    return {
-        'quantity of all users': quantity,
-        'users': users
-    }
+    return total, users
 
 
 async def update_user(session: AsyncSession, data: UpdateUser, current_user: User, admin: User, redis: Redis):

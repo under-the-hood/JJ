@@ -10,7 +10,7 @@ async def test_get_vacancies(admin_client, create_vacancy):
 
     data = response.json()
 
-    assert data["quantity of all vacancies"] > 0
+    assert data["total"] > 0
 
     vacancies = [vacancy["title"] for vacancy in data["vacancies"]]
     assert "Python developer" in vacancies

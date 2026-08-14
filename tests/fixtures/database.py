@@ -29,7 +29,7 @@ async def setup_db():
 async def test_session():
     async with engine.connect() as conn:
         transaction = await conn.begin()
-        async_session = async_sessionmaker(autoflush=False, expire_on_commit=False, bind=conn)
+        async_session = async_sessionmaker(autoflush=False, expire_on_commit=False, bind=conn, join_transaction_mode="create_savepoint")
         
         async with async_session() as session:
             app.dependency_overrides[get_session] = lambda: session
@@ -37,4 +37,4 @@ async def test_session():
 
         await transaction.rollback()
 
-    app.dependency_overrides.clear()
+    app.dependency_overrides.pop(get_session, None)

@@ -10,7 +10,7 @@ async def test_get_resumes(admin_client, create_resume):
 
     data = response.json()
 
-    assert data["quantity of all resumes"] > 0
+    assert data["total"] > 0
 
     resumes = [resume["title"] for resume in data["resumes"]]
     assert "FastAPI Developer" in resumes

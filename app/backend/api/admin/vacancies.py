@@ -16,19 +16,19 @@ router = APIRouter(prefix="/vacancies", tags=['Admin | Vacancies'])
 @router.get('')
 async def get_vacancies(session: session_dep, limit: int = 10, offset: int = 0, admin: User = Depends(check_admin)):
 
-    vacancies_info = await admin_vacancies.get_vacancies(session=session, limit=limit, offset=offset, admin=admin)
-    return {**vacancies_info}
+    total, vacancies = await admin_vacancies.get_vacancies(session=session, limit=limit, offset=offset, admin=admin)
+    return {"total": total, "vacancies": vacancies}
 
 
 @router.patch('/{vacancy_id}')
 async def update_vacancy(session: session_dep, data: EditVacancy, current_vacancy: Vacancy = Depends(check_vacancy), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
     await admin_vacancies.update_vacancy(session=session, data=data, current_vacancy=current_vacancy, admin=admin, redis=redis)
-    return {'success': True, 'message': 'Vacancy was edited'}
+    return {'message': 'Vacancy was edited', "vacancy": current_vacancy}
 
 
 @router.delete('/{vacancy_id}')
 async def delete_vacancy(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
     await admin_vacancies.delete_vacancy(session=session, current_vacancy=current_vacancy, admin=admin, redis=redis)
-    return {'success': True, 'message': 'Vacancy was deleted'}
+    return {'message': 'Vacancy was deleted', "vacancy_id": current_vacancy.id}

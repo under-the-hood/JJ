@@ -16,19 +16,19 @@ router = APIRouter(prefix="/resumes", tags=['Admin | Resumes'])
 @router.get('')
 async def get_resumes(session: session_dep, limit: int = 10, offset: int = 0, admin: User = Depends(check_admin)):
 
-    resumes_info = await admin_resumes.get_resumes(session=session, limit=limit, offset=offset, admin=admin)
-    return {**resumes_info}
+    total, resumes = await admin_resumes.get_resumes(session=session, limit=limit, offset=offset, admin=admin)
+    return {"total": total, "resumes": resumes}
 
 
 @router.patch("/{resume_id}")
 async def update_resume(session: session_dep, data: EditResume, current_resume: Resume = Depends(check_resume), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
     await admin_resumes.update_resume(session=session, data=data, current_resume=current_resume, admin=admin, redis=redis)
-    return {'success': True, 'message': 'Resume was edited'}
+    return {'message': 'Resume was edited', "resume": current_resume}
 
 
 @router.delete("/{resume_id}")
 async def delete_resume(session: session_dep, current_resume: Resume = Depends(check_resume), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 
     await admin_resumes.delete_resume(session=session, current_resume=current_resume, admin=admin, redis=redis)
-    return {'success': True, 'message': 'Resume was deleted'}
+    return {'message': 'Resume was deleted', "resume_id": current_resume.id}

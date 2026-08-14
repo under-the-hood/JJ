@@ -19,8 +19,8 @@ sign_up_limit = rate_limiter_factory_by_ip("/users/sign_up", 5, 60)
 @router.post('/sign_up', dependencies=[Depends(sign_up_limit)])
 async def sign_up(session: session_dep, data: CreateUser = Depends(validate_user_registration)):
     
-    await user_service.create_user(session=session, data=data)
-    return {'success': True, 'message': 'Account was created'}
+    user = await user_service.create_user(session=session, data=data)
+    return {'message': 'User was created', "user": user}
 
 
 sign_in_limit = rate_limiter_factory_by_ip("/users/sign_in", 5, 60)
@@ -29,14 +29,14 @@ sign_in_limit = rate_limiter_factory_by_ip("/users/sign_in", 5, 60)
 async def sign_in(session: session_dep, data: Login, response: Response):
 
     access_token = await user_service.login(session=session, data=data, response=response)
-    return {'success': True, 'message': 'Login succesfull', 'token': access_token}
+    return {'message': 'Login succesfull', 'token': access_token}
 
 
 @router.get('/me')
 async def get_info(current_user: User = Depends(check_user), redis: Redis = Depends(get_redis)):
 
-    user_info = await user_service.get_info(current_user=current_user, redis=redis)
-    return {**user_info}
+    info, source = await user_service.get_info(current_user=current_user, redis=redis)
+    return {"info": info, "source": source}
 
 
 password_limit = rate_limiter_factory("/users/me/password", 5, 60)
@@ -45,18 +45,18 @@ password_limit = rate_limiter_factory("/users/me/password", 5, 60)
 async def update_password(session: session_dep, data: EditPassword = Depends(validate_edit_password), current_user: User = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     await user_service.update_password(session=session, data=data, current_user=current_user, redis=redis)
-    return {'success': True, 'message': 'Password was changed'}
+    return {'message': 'Password was changed'}
 
 
 @router.patch('/me/name')
 async def update_name(session: session_dep, data: EditName, current_user: User = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     await user_service.update_name(session=session, data=data, current_user=current_user, redis=redis)
-    return {'success': True, 'message': 'Name was changed'}
+    return {'message': 'Name was changed', "user": current_user}
 
 
 @router.delete('/me')
 async def delete_user(session: session_dep, data: Delete = Depends(validate_delete_user), current_user: User = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     await user_service.delete_user(session=session, data=data, current_user=current_user, redis=redis)
-    return {'success': True, 'message': 'Account was deleted'}
+    return {'message': 'Account was deleted', "user_id": current_user.id}

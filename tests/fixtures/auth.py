@@ -1,4 +1,4 @@
-from sqlalchemy import update
+from sqlalchemy import update, select
 
 from app.backend.models.user import User
 
@@ -20,6 +20,9 @@ async def get_token(client, role, email, session):
     if role == "admin":
         await session.execute(update(User).where(User.email == email).values(role = "admin"))
         await session.flush()
+        
+        admin_user = (await session.execute(select(User).where(User.email == email))).scalar_one()
+        await session.refresh(admin_user)
 
     login_response = await client.post('/users/sign_in', json={
         'email': email,

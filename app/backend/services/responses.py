@@ -49,11 +49,10 @@ async def get_responses(session: AsyncSession, current_vacancy: Vacancy, current
     
     validate_user_role(current_user, Role.tenant, "You are not a tenant")
 
-    query_responses = await session.execute(select(Response).options(joinedload(Response.resume), joinedload(Response.user)).where(Response.vacancy_id == current_vacancy.id))
+    query = await session.execute(select(Response).options(joinedload(Response.resume), joinedload(Response.user)).where(Response.vacancy_id == current_vacancy.id))
+    responses = query.scalars().all()
 
-    all_resumes = query_responses.scalars().all()
-
-    return all_resumes
+    return responses
 
 
 async def set_status(session: AsyncSession, data: SetStatus, current_response: Response, current_user: User):

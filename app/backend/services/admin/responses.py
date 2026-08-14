@@ -9,12 +9,10 @@ async def get_responses(session: AsyncSession, admin: User, limit: int = 10, off
     
     query = await session.execute(select(Response).limit(limit).offset(offset))    
     responses = query.scalars().all()
-    quantity = await session.scalar(select(func.count(Response.id)))
+    
+    total = await session.scalar(select(func.count(Response.id)))
 
-    return {
-        'quantity of all responses': quantity,
-        'responses': responses
-        }
+    return total, responses
 
 
 async def delete_response(session: AsyncSession, current_response: Response, admin: User):

@@ -18,7 +18,7 @@ async def search_resumes(session: AsyncSession, data: SearchResumes, current_use
 
     cached_resumes = await redis.get(cache_key)
     if cached_resumes:
-        return {"resumes": json.loads(cached_resumes), "source": "cache"}
+        return json.loads(cached_resumes), "cache"
 
     query = select(Resume)
 
@@ -46,10 +46,10 @@ async def search_resumes(session: AsyncSession, data: SearchResumes, current_use
     result = await session.execute(query)
     resumes = result.scalars().all()
 
-    resumes_json = [r.resumes_to_dict() for r in resumes]
-    await redis.set(cache_key, json.dumps(resumes_json), ex=300)
+    all_resumes = [r.resumes_to_dict() for r in resumes]
+    await redis.set(cache_key, json.dumps(all_resumes), ex=300)
 
-    return {"resumes": resumes_json, "source": "db"}
+    return all_resumes, "db"
 
 
 async def search_vacancies(session: AsyncSession, data: SearchVacancies, current_user: User, redis: Redis):
@@ -60,7 +60,7 @@ async def search_vacancies(session: AsyncSession, data: SearchVacancies, current
 
     cached_vacancies = await redis.get(cache_key)
     if cached_vacancies:
-        return {"vacancies": json.loads(cached_vacancies), "source": "cache"}
+        return json.loads(cached_vacancies), "cache"
 
     query = select(Vacancy)
 
@@ -93,7 +93,7 @@ async def search_vacancies(session: AsyncSession, data: SearchVacancies, current
     result = await session.execute(query)
     vacancies = result.scalars().all()
 
-    vacancies_json = [v.vacancies_to_dict() for v in vacancies]
-    await redis.set(cache_key, json.dumps(vacancies_json), ex=300)
+    all_vacancies = [v.vacancies_to_dict() for v in vacancies]
+    await redis.set(cache_key, json.dumps(all_vacancies), ex=300)
 
-    return {"vacancies": vacancies_json, "source": "db"}
+    return all_vacancies, "db"
