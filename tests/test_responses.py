@@ -4,13 +4,13 @@ from app.backend.models.mails import Mails
 
 
 @pytest.mark.asyncio
-async def test_send_response_to_vacancy(send_response_to_vacancy, mock_celery, test_session):
+async def test_send_response_to_vacancy(send_response_to_vacancy, send_mail, test_session):
     response = await send_response_to_vacancy()
     assert response is not None
 
-    mock_celery.assert_called_once()
+    send_mail.assert_called_once()
 
-    args, _ = mock_celery.call_args
+    args, _ = send_mail.call_args
     mail_id = args[0]
 
     mail = await test_session.get(Mails, mail_id)

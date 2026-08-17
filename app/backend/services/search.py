@@ -7,8 +7,9 @@ from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
 from app.backend.models.resume import Resume
 from app.backend.schemas.search import SearchResumes, SearchVacancies
-from app.backend.utils.search import apply_words_filter
+from app.backend.utils.search import meili
 
+apply_words_filter = []
 
 async def search_resumes(session: AsyncSession, data: SearchResumes, current_user: User, redis: Redis):
 
@@ -20,36 +21,29 @@ async def search_resumes(session: AsyncSession, data: SearchResumes, current_use
     if cached_resumes:
         return json.loads(cached_resumes), "cache"
 
-    query = select(Resume)
+    search_options = {
+        "limit": data.limit,
+        "offset": data.offset
+    }
+
+    query_parts = []
+    if data.title:
+        query_parts.append(data.title.strip())
 
     if data.city:
-        query = query.where(apply_words_filter(Resume.city, data.city))
+        query_parts.append(data.city.strip())
 
-    if data.title:
-        words = data.title.strip().split()
-        conditions = []
-        for word in words:
-            condition = Resume.title.ilike(f"%{word}%")
-            conditions.append(condition)
-        query = query.where(and_(*conditions))
-    
     if data.stack:
-        words = data.stack.strip().split()
-        conditions = []
-        for word in words:
-            condition = Resume.stack.ilike(f"%{word}%")
-            conditions.append(condition)
-        query = query.where(and_(*conditions))
+        query_parts.append(data.stack.strip())
 
-    query = query.limit(data.limit).offset(data.offset)
+    query_text = " ".join(query_parts)
 
-    result = await session.execute(query)
-    resumes = result.scalars().all()
+    result = meili.index("resumes").search(query_text, search_options)
+    resumes = result["hits"]
 
-    all_resumes = [r.resumes_to_dict() for r in resumes]
-    await redis.set(cache_key, json.dumps(all_resumes), ex=300)
+    await redis.set(cache_key, json.dumps(resumes), ex=300)
 
-    return all_resumes, "db"
+    return resumes, "db"
 
 
 async def search_vacancies(session: AsyncSession, data: SearchVacancies, current_user: User, redis: Redis):
@@ -62,38 +56,30 @@ async def search_vacancies(session: AsyncSession, data: SearchVacancies, current
     if cached_vacancies:
         return json.loads(cached_vacancies), "cache"
 
-    query = select(Vacancy)
+    search_options = {
+        "limit": data.limit,
+        "offset": data.offset
+    }
 
+    query_parts = []
     if data.title:
-        words = data.title.strip().split()
-        conditions = []
-        for word in words:
-            condition = Vacancy.title.ilike(f"%{word}%")
-            conditions.append(condition)
-        query = query.where(and_(*conditions))
+        query_parts.append(data.title.strip())
 
-    if data.compensation:
-        words = data.compensation.strip().split()
-        conditions = []
-        for word in words:
-            condition = Vacancy.compensation.ilike(f"%{word}%")
-            conditions.append(condition)
-        query = query.where(and_(*conditions))
-    
     if data.city:
-        words = data.city.strip().split()
-        conditions = []
-        for word in words:
-            condition = Vacancy.city.ilike(f"%{word}%")
-            conditions.append(condition)
-        query = query.where(and_(*conditions))
+        query_parts.append(data.city.strip())
 
-    query = query.limit(data.limit).offset(data.offset)
+    query_text = " ".join(query_parts)
 
-    result = await session.execute(query)
-    vacancies = result.scalars().all()
+    filters = []
+    if data.compensation:
+        filters.append(f"compensation >= {data.compensation}")
 
-    all_vacancies = [v.vacancies_to_dict() for v in vacancies]
-    await redis.set(cache_key, json.dumps(all_vacancies), ex=300)
+    if filters:
+        search_options["filter"] = filters
 
-    return all_vacancies, "db"
+    result = meili.index("vacancies").search(query_text, search_options)
+    vacancies = result["hits"]
+
+    await redis.set(cache_key, json.dumps(vacancies), ex=300)
+
+    return vacancies, "db"

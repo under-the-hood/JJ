@@ -5,6 +5,7 @@ from redis.asyncio import Redis
 from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
 from app.backend.schemas.vacancy import CreateVacancy, EditVacancy
+from app.backend.helpers.celery_tasks.search import sync_vacancy_task, delete_vacancy_task
 
 
 async def create_vacancy(session: AsyncSession, data: CreateVacancy, current_user: User, redis: Redis):
@@ -16,6 +17,7 @@ async def create_vacancy(session: AsyncSession, data: CreateVacancy, current_use
     await session.commit()
 
     await redis.incr("vacancy_version")
+    sync_vacancy_task.delay(new_vacancy.id)
     
     return new_vacancy
 
@@ -41,12 +43,14 @@ async def update_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: 
 
     await session.commit()
     await session.refresh(current_vacancy)
-
+    
+    sync_vacancy_task.delay(current_vacancy.id)
     await redis.incr("vacancy_version")
 
 
 async def delete_vacancy(session: AsyncSession, current_vacancy: Vacancy, redis: Redis):
-
+    delete_vacancy_task.delay(current_vacancy.id)
+    
     await session.delete(current_vacancy)
     await session.commit()
 

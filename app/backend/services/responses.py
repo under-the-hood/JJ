@@ -9,7 +9,7 @@ from app.backend.models.vacancy import Vacancy
 from app.backend.helpers.resume import check_resume_owner_helper
 from app.backend.models.mails import Mails
 from app.backend.schemas.response import ResponseSchema, SetStatus
-from app.backend.helpers.celery_tasks import send_mail_task
+from app.backend.helpers.celery_tasks.send_mail import send_mail_task
 from app.backend.helpers.validator import validate_user_role
 
 

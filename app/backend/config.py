@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     GF_SECURITY_ADMIN_USER: str
     GF_SECURITY_ADMIN_PASSWORD: str
 
+    MEILI_MASTER_KEY: str
+
     @property
     def database(self):
         return f'postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.POSTGRES_DB}'

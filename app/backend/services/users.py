@@ -10,7 +10,7 @@ from app.backend.models.user import User, Role
 from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, Delete
 from app.backend.dependencies.redis_cache import get_cache_key
 from app.backend.models.mails import Mails
-from app.backend.helpers.celery_tasks import send_mail_task
+from app.backend.helpers.celery_tasks.send_mail import send_mail_task
 from app.backend.helpers.cache import clear_user_profile_cache
 
 
@@ -39,7 +39,6 @@ async def create_user(session: AsyncSession, data: CreateUser):
 
     session.add(mail)
     await session.commit()
-    #await session.refresh(new_user)
     send_mail_task.delay(mail.id)
 
     return new_user

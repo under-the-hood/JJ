@@ -1,5 +1,7 @@
 import pytest
 
+from app.backend.models.vacancy import Vacancy
+from app.backend.utils.search import sync_vacancy
 
 @pytest.mark.asyncio
 async def test_user_info_cache_invalidation(tenant_client):
@@ -23,7 +25,7 @@ async def test_user_info_cache_invalidation(tenant_client):
 
 
 @pytest.mark.asyncio
-async def test_vacancy_search_invalidation(applicant_client, tenant_client):
+async def test_vacancy_search_invalidation(applicant_client, tenant_client, test_session):
 
     first_response = await applicant_client.get("/search/vacancies")
     assert first_response.json()["source"] == "db"
@@ -37,7 +39,11 @@ async def test_vacancy_search_invalidation(applicant_client, tenant_client):
         "compensation": 500000
     }
 
-    await tenant_client.post("/vacancies", json=new_vacancy)
+    create_vacancy = await tenant_client.post("/vacancies", json=new_vacancy)
+    vacancy_id = create_vacancy.json()["vacancy"]["id"]
+
+    vacancy = await test_session.get(Vacancy, vacancy_id)
+    sync_vacancy(vacancy)
 
     third_response = await applicant_client.get("/search/vacancies")
     assert third_response.json()["source"] == "db"

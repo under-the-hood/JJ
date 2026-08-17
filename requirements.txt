@@ -29,3 +29,4 @@ pytest-order
 flower
 pytest-asyncio
 prometheus-fastapi-instrumentator
+meilisearch

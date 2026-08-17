@@ -1,8 +1,15 @@
 import pytest
 
+from app.backend.models.resume import Resume
+from app.backend.models.vacancy import Vacancy
+from app.backend.utils.search import sync_vacancy, sync_resume
+
 
 @pytest.mark.asyncio
-async def test_search_resumes(tenant_client, create_resume):
+async def test_search_resumes(tenant_client, create_resume, test_session):
+
+    resume = await test_session.get(Resume, create_resume)
+    sync_resume(resume)
 
     response = await tenant_client.get("/search/resumes")
 
@@ -19,7 +26,10 @@ async def test_search_resumes(tenant_client, create_resume):
 
 
 @pytest.mark.asyncio
-async def test_search_vacancies(applicant_client, create_vacancy):
+async def test_search_vacancies(applicant_client, create_vacancy, test_session):
+
+    vacancy = await test_session.get(Vacancy, create_vacancy)
+    sync_vacancy(vacancy)
 
     response = await applicant_client.get("/search/vacancies")
 
