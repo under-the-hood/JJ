@@ -23,6 +23,7 @@ env:
   DATABASE_URL: postgresql+asyncpg://postgres:jjpassword@localhost:5432/jj
   GF_SECURITY_ADMIN_USER: test_grafana_user
   GF_SECURITY_ADMIN_PASSWORD: test_grafana_password
+  MEILI_MASTER_KEY: meili_master_key
 
 jobs:
   test:

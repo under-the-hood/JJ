@@ -160,6 +160,14 @@ services:
       - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
       - grafanadata:/var/lib/grafana
 
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    container_name: meilisearch
+    ports:
+      - "7700:7700"
+    env_file:
+      - .prod.env
+
 volumes:
   postgres_data:
   rabbitmq_data:

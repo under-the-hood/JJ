@@ -32,7 +32,7 @@ services:
 
   meilisearch:
     image: getmeili/meilisearch:v1.6
-    container_name: meilisearch
+    container_name: meilisearch-local
     ports:
       - "7700:7700"
     env_file:
