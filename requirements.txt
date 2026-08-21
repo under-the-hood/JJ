@@ -30,3 +30,4 @@ flower
 pytest-asyncio
 prometheus-fastapi-instrumentator
 meilisearch
+testcontainers

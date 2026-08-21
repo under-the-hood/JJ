@@ -63,18 +63,6 @@ jobs:
           --health-timeout 2s
           --health-retries 5
 
-      meilisearch:
-        image: getmeili/meilisearch:latest
-        env:
-          MEILI_MASTER_KEY: ${{ env.MEILI_MASTER_KEY }}
-        ports:
-          - 7700:7700
-        options: >-
-          --health-cmd "curl --fail http://localhost:7700/health || exit 1"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 5
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
