@@ -26,6 +26,8 @@ services:
       depends_on:
         db:
           condition: service_healthy
+        meilisearch:
+          condition: service_started
       env_file:
         - .prod.env
       command: >
@@ -100,6 +102,8 @@ services:
         condition: service_healthy
       backend:
         condition: service_started
+      meilisearch:
+        condition: service_started
 
   flower:
     build:
@@ -165,11 +169,16 @@ services:
     container_name: meilisearch
     ports:
       - "7700:7700"
+    volumes:
+      - meili_data:/meili_data
     env_file:
       - .prod.env
+    environment:
+      - MEILI_HTTP_ADDR=0.0.0.0:7700
 
 volumes:
   postgres_data:
   rabbitmq_data:
   grafanadata:
   prometheusdata:
+  meili_data:

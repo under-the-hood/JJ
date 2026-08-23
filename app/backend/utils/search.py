@@ -5,7 +5,7 @@ from app.backend.models.vacancy import Vacancy
 from app.backend.models.resume import Resume
 
 
-meili = meilisearch.Client("http://localhost:7700", settings.MEILI_MASTER_KEY)
+meili = meilisearch.Client(f"http://{settings.MEILI_HTTP_ADDR}:7700", settings.MEILI_MASTER_KEY)
 
 def init_meilisearch():
     create_vacancies_task = meili.create_index("vacancies", {"primaryKey": "id"})

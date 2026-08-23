@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     GF_SECURITY_ADMIN_PASSWORD: str
 
     MEILI_MASTER_KEY: str
+    MEILI_HTTP_ADDR: str
 
     @property
     def database(self):
