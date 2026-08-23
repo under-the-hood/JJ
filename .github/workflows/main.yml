@@ -24,6 +24,7 @@ env:
   GF_SECURITY_ADMIN_USER: test_grafana_user
   GF_SECURITY_ADMIN_PASSWORD: test_grafana_password
   MEILI_MASTER_KEY: meili_master_key
+  MEILI_HTTP_ADDR: meili_addr
 
 jobs:
   test:
