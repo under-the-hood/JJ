@@ -3,7 +3,7 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
-    container_name: jj_db
+    container_name: db
     restart: always
     env_file:
       - .prod.env

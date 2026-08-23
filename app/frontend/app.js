@@ -107,14 +107,18 @@ const NAV_BY_ROLE = {
   applicant: [
     { key: "search-vacancies", label: "Поиск вакансий" },
     { key: "my-resumes", label: "Мои резюме" },
+    { key: "mailbox", label: "Почта" },
     { key: "profile", label: "Профиль" },
   ],
   tenant: [
     { key: "search-resumes", label: "Поиск резюме" },
     { key: "my-vacancies", label: "Мои вакансии" },
+    { key: "mailbox", label: "Почта" },
     { key: "profile", label: "Профиль" },
   ],
   admin: [
+    { key: "admin", label: "Админка" },
+    { key: "mailbox", label: "Почта" },
     { key: "profile", label: "Профиль" },
   ],
 };
@@ -163,6 +167,8 @@ async function setView(view) {
       case "search-resumes": await renderSearchResumes(); break;
       case "my-vacancies": await renderMyVacancies(); break;
       case "my-resumes": await renderMyResumes(); break;
+      case "mailbox": await renderMailbox(); break;
+      case "admin": await renderAdmin(); break;
       case "profile": await renderProfile(); break;
       default: renderHome();
     }
@@ -546,6 +552,8 @@ async function openResponsesModal(vacancyId, title) {
   try {
     const responses = await get(`/responses/vacancies/${vacancyId}`);
     const host = document.getElementById("respList");
+    host.className = "";
+    host.removeAttribute("style");
     if (!responses.length) {
       host.innerHTML = `<div class="empty-state">Пока нет откликов</div>`;
       return;
@@ -681,6 +689,437 @@ async function deleteResume(id) {
       await loadMyResumes();
     } catch (err) { reportError(err); }
   };
+}
+
+/* ====================== mailbox (MailDev) ====================== */
+async function renderMailbox() {
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <div class="view">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div>
+          <h2 class="section-title" style="margin:0;">Почта</h2>
+          <p class="muted" style="margin:4px 0 0; font-size:13px;">Локальный почтовый ящик (MailDev) — сюда попадают все письма, которые отправляет платформа</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-glass btn-sm" id="refreshMail">Обновить</button>
+          <button class="btn btn-danger btn-sm" id="clearMail">Очистить всё</button>
+        </div>
+      </div>
+      <div id="mailList"></div>
+    </div>`;
+
+  document.getElementById("refreshMail").onclick = loadMailbox;
+  document.getElementById("clearMail").onclick = clearMailbox;
+  await loadMailbox();
+}
+
+async function loadMailbox() {
+  const list = document.getElementById("mailList");
+  list.innerHTML = `<div class="center" style="padding:40px;"><div class="spinner"></div></div>`;
+  try {
+    const res = await fetch("/mail/email", { credentials: "include" });
+    if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+    const emails = await res.json();
+
+    if (!emails.length) {
+      list.innerHTML = `<div class="empty-state">Писем пока нет</div>`;
+      return;
+    }
+
+    emails.sort((a, b) => new Date(b.time) - new Date(a.time));
+    list.innerHTML = emails.map(e => `
+      <div class="card glass" data-id="${e.id}" style="cursor:pointer; margin-bottom:12px;">
+        <div class="card-top">
+          <div>
+            <h3 style="margin-bottom:2px;">${escapeHtml(e.subject || "(без темы)")}</h3>
+            <div class="muted" style="font-size:13px;">
+              От: ${escapeHtml(formatMailAddr(e.from))} → Кому: ${escapeHtml(formatMailAddr(e.to))}
+            </div>
+          </div>
+          <div class="muted" style="font-size:12px; white-space:nowrap;">${formatMailDate(e.time)}</div>
+        </div>
+      </div>`).join("");
+
+    list.querySelectorAll(".card[data-id]").forEach(card => {
+      card.onclick = () => openMailModal(card.dataset.id);
+    });
+  } catch (err) {
+    reportError(err);
+    list.innerHTML = `<div class="empty-state">Не удалось загрузить письма — проверьте, что MailDev запущен</div>`;
+  }
+}
+
+async function openMailModal(id) {
+  openModal(`
+    <h2>Письмо</h2>
+    <div id="mailDetail" class="center" style="padding:30px;"><div class="spinner"></div></div>
+    <div class="modal-actions"><button class="btn btn-glass" id="closeMail">Закрыть</button></div>`);
+  document.getElementById("closeMail").onclick = closeModal;
+
+  try {
+    const res = await fetch(`/mail/email/${id}`, { credentials: "include" });
+    if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+    const email = await res.json();
+
+    const detail = document.getElementById("mailDetail");
+    detail.className = "";
+    detail.removeAttribute("style");
+    detail.innerHTML = `
+      <div class="field"><label>От</label><div>${escapeHtml(formatMailAddr(email.from))}</div></div>
+      <div class="field"><label>Кому</label><div>${escapeHtml(formatMailAddr(email.to))}</div></div>
+      <div class="field"><label>Тема</label><div>${escapeHtml(email.subject || "(без темы)")}</div></div>
+      <div class="field">
+        <label>Текст письма</label>
+        <div style="white-space:pre-wrap; background:rgba(255,255,255,0.6); border-radius:14px; padding:16px; border:1px solid rgba(120,120,128,0.22);">${escapeHtml(email.text || "(пусто)")}</div>
+      </div>`;
+  } catch (err) {
+    reportError(err);
+    document.getElementById("mailDetail").innerHTML = `<div class="empty-state">Не удалось загрузить письмо</div>`;
+  }
+}
+
+async function clearMailbox() {
+  openModal(`
+    <h2>Очистить всю почту?</h2>
+    <p class="muted">Это действие нельзя отменить.</p>
+    <div class="modal-actions">
+      <button class="btn btn-glass" id="cancelClear">Отмена</button>
+      <button class="btn btn-danger" id="confirmClear">Очистить</button>
+    </div>`);
+  document.getElementById("cancelClear").onclick = closeModal;
+  document.getElementById("confirmClear").onclick = async () => {
+    try {
+      const res = await fetch("/mail/email/all", { method: "DELETE", credentials: "include" });
+      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+      toast("Почта очищена");
+      closeModal();
+      await loadMailbox();
+    } catch (err) { reportError(err); }
+  };
+}
+
+function formatMailAddr(arr) {
+  if (!arr || !arr.length) return "—";
+  return arr.map(a => a.name ? `${a.name} <${a.address}>` : a.address).join(", ");
+}
+function formatMailDate(d) {
+  try { return new Date(d).toLocaleString("ru-RU"); } catch (e) { return d; }
+}
+
+/* ====================== admin ====================== */
+const ADMIN_TABS = [
+  { key: "users", label: "Пользователи" },
+  { key: "vacancies", label: "Вакансии" },
+  { key: "resumes", label: "Резюме" },
+  { key: "responses", label: "Отклики" },
+];
+
+const adminState = { tab: "users", offset: 0, limit: 10 };
+
+async function renderAdmin() {
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <div class="view">
+      <h2 class="section-title">Админка</h2>
+      <div class="tabs">
+        ${ADMIN_TABS.map(t => `<button class="btn ${adminState.tab === t.key ? "btn-primary" : "btn-glass"} btn-sm" data-tab="${t.key}">${t.label}</button>`).join("")}
+      </div>
+      <div id="adminContent"></div>
+    </div>`;
+
+  app.querySelectorAll("[data-tab]").forEach(btn => {
+    btn.onclick = () => {
+      adminState.tab = btn.dataset.tab;
+      adminState.offset = 0;
+      renderAdmin();
+    };
+  });
+
+  await loadAdminTab();
+}
+
+async function loadAdminTab() {
+  const host = document.getElementById("adminContent");
+  host.innerHTML = `<div class="center" style="padding:40px;"><div class="spinner"></div></div>`;
+  try {
+    if (adminState.tab === "users") await loadAdminUsers(host);
+    if (adminState.tab === "vacancies") await loadAdminVacancies(host);
+    if (adminState.tab === "resumes") await loadAdminResumes(host);
+    if (adminState.tab === "responses") await loadAdminResponses(host);
+  } catch (err) {
+    reportError(err);
+    host.innerHTML = `<div class="empty-state">Не удалось загрузить</div>`;
+  }
+}
+
+function paginationControls(total) {
+  const { offset, limit } = adminState;
+  const page = Math.floor(offset / limit) + 1;
+  const pages = Math.max(1, Math.ceil(total / limit));
+  return `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+      <span class="muted" style="font-size:13px;">Всего: ${total} · страница ${page} из ${pages}</span>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-glass btn-sm" id="pgPrev" ${offset <= 0 ? "disabled" : ""}>Назад</button>
+        <button class="btn btn-glass btn-sm" id="pgNext" ${offset + limit >= total ? "disabled" : ""}>Вперёд</button>
+      </div>
+    </div>`;
+}
+
+function wirePagination() {
+  const prev = document.getElementById("pgPrev");
+  const next = document.getElementById("pgNext");
+  if (prev) prev.onclick = () => { adminState.offset = Math.max(0, adminState.offset - adminState.limit); loadAdminTab(); };
+  if (next) next.onclick = () => { adminState.offset += adminState.limit; loadAdminTab(); };
+}
+
+function confirmDelete(title, body, onConfirm) {
+  openModal(`
+    <h2>${title}</h2>
+    <p class="muted">${body}</p>
+    <div class="modal-actions">
+      <button class="btn btn-glass" id="cancelD">Отмена</button>
+      <button class="btn btn-danger" id="confirmD">Удалить</button>
+    </div>`);
+  document.getElementById("cancelD").onclick = closeModal;
+  document.getElementById("confirmD").onclick = async () => {
+    try {
+      await onConfirm();
+      closeModal();
+      await loadAdminTab();
+    } catch (err) { reportError(err); }
+  };
+}
+
+/* ---- admin: users ---- */
+async function loadAdminUsers(host) {
+  const res = await get("/admin/users" + qs({ limit: adminState.limit, offset: adminState.offset }));
+  const users = res.users || [];
+  if (!users.length) { host.innerHTML = `<div class="empty-state">Пользователей нет</div>`; return; }
+
+  host.innerHTML = `
+    <div class="panel glass" style="padding:8px;">
+      ${users.map(u => `
+        <div class="card" style="margin:8px 0;">
+          <div class="card-top">
+            <div>
+              <h3 style="margin-bottom:2px;">${escapeHtml(u.name)}</h3>
+              <div class="muted" style="font-size:13px;">${escapeHtml(u.email)}</div>
+            </div>
+            <span class="pill-badge">${normalizeRole(String(u.role))}</span>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
+            <button class="btn btn-glass btn-sm" data-act="edit" data-id="${u.id}">Редактировать</button>
+            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${u.id}">Удалить</button>
+          </div>
+        </div>`).join("")}
+    </div>
+    ${paginationControls(res.total)}`;
+
+  host.querySelectorAll("button[data-act]").forEach(btn => {
+    const u = users.find(x => String(x.id) === btn.dataset.id);
+    if (btn.dataset.act === "edit") btn.onclick = () => openAdminUserForm(u);
+    if (btn.dataset.act === "delete") {
+      btn.onclick = () => confirmDelete(
+        "Удалить пользователя?",
+        "Это действие нельзя отменить — удалятся все его вакансии/резюме/отклики.",
+        () => del(`/admin/users/${u.id}`).then(() => toast("Пользователь удалён"))
+      );
+    }
+  });
+  wirePagination();
+}
+
+function openAdminUserForm(user) {
+  openModal(`
+    <h2>Пользователь</h2>
+    <div class="field"><label>Email</label><input value="${escapeAttr(user.email)}" disabled></div>
+    <div class="field"><label>Имя</label><input id="auName" value="${escapeAttr(user.name)}"></div>
+    <div class="field"><label>Роль</label>
+      <select id="auRole">
+        <option value="applicant" ${normalizeRole(String(user.role)) === "applicant" ? "selected" : ""}>Applicant</option>
+        <option value="tenant" ${normalizeRole(String(user.role)) === "tenant" ? "selected" : ""}>Tenant</option>
+        <option value="admin" ${normalizeRole(String(user.role)) === "admin" ? "selected" : ""}>Admin</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-glass" id="cancelAU">Отмена</button>
+      <button class="btn btn-primary" id="saveAU">Сохранить</button>
+    </div>`);
+  document.getElementById("cancelAU").onclick = closeModal;
+  document.getElementById("saveAU").onclick = async () => {
+    try {
+      await patch(`/admin/users/${user.id}`, {
+        new_name: document.getElementById("auName").value.trim(),
+        new_role: document.getElementById("auRole").value,
+      });
+      toast("Пользователь обновлён");
+      closeModal();
+      await loadAdminTab();
+    } catch (err) { reportError(err); }
+  };
+}
+
+/* ---- admin: vacancies ---- */
+async function loadAdminVacancies(host) {
+  const res = await get("/admin/vacancies" + qs({ limit: adminState.limit, offset: adminState.offset }));
+  const vacancies = res.vacancies || [];
+  if (!vacancies.length) { host.innerHTML = `<div class="empty-state">Вакансий нет</div>`; return; }
+
+  host.innerHTML = `
+    <div class="grid">
+      ${vacancies.map(v => `
+        <div class="card glass">
+          <h3>${escapeHtml(v.title)}</h3>
+          <div class="meta">
+            <span class="chip">📍 ${escapeHtml(v.city)}</span>
+            <span class="chip money">${formatMoney(v.compensation)}</span>
+          </div>
+          <div class="muted" style="font-size:12px; margin-top:8px;">tenant_id: ${v.tenant_id}</div>
+          <div style="display:flex; gap:8px; margin-top:14px;">
+            <button class="btn btn-glass btn-sm" data-act="edit" data-id="${v.id}">Редактировать</button>
+            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${v.id}">Удалить</button>
+          </div>
+        </div>`).join("")}
+    </div>
+    ${paginationControls(res.total)}`;
+
+  host.querySelectorAll("button[data-act]").forEach(btn => {
+    const v = vacancies.find(x => String(x.id) === btn.dataset.id);
+    if (btn.dataset.act === "edit") btn.onclick = () => openAdminVacancyForm(v);
+    if (btn.dataset.act === "delete") {
+      btn.onclick = () => confirmDelete(
+        "Удалить вакансию?", "Это действие нельзя отменить.",
+        () => del(`/admin/vacancies/${v.id}`).then(() => toast("Вакансия удалена"))
+      );
+    }
+  });
+  wirePagination();
+}
+
+function openAdminVacancyForm(v) {
+  openModal(`
+    <h2>Редактировать вакансию</h2>
+    <div class="field"><label>Должность</label><input id="avTitle" value="${escapeAttr(v.title)}"></div>
+    <div class="field"><label>Город</label><input id="avCity" value="${escapeAttr(v.city)}"></div>
+    <div class="field"><label>Зарплата</label><input id="avComp" type="number" value="${v.compensation}"></div>
+    <div class="modal-actions">
+      <button class="btn btn-glass" id="cancelAV">Отмена</button>
+      <button class="btn btn-primary" id="saveAV">Сохранить</button>
+    </div>`);
+  document.getElementById("cancelAV").onclick = closeModal;
+  document.getElementById("saveAV").onclick = async () => {
+    try {
+      await patch(`/admin/vacancies/${v.id}`, {
+        new_title: document.getElementById("avTitle").value.trim(),
+        new_city: document.getElementById("avCity").value.trim(),
+        new_compensation: parseInt(document.getElementById("avComp").value, 10),
+      });
+      toast("Вакансия обновлена");
+      closeModal();
+      await loadAdminTab();
+    } catch (err) { reportError(err); }
+  };
+}
+
+/* ---- admin: resumes ---- */
+async function loadAdminResumes(host) {
+  const res = await get("/admin/resumes" + qs({ limit: adminState.limit, offset: adminState.offset }));
+  const resumes = res.resumes || [];
+  if (!resumes.length) { host.innerHTML = `<div class="empty-state">Резюме нет</div>`; return; }
+
+  host.innerHTML = `
+    <div class="grid">
+      ${resumes.map(r => `
+        <div class="card glass">
+          <h3>${escapeHtml(r.title)}</h3>
+          <div class="meta"><span class="chip">📍 ${escapeHtml(r.city)}</span></div>
+          ${r.stack ? `<div class="meta" style="margin-top:8px;"><span class="chip">🛠 ${escapeHtml(r.stack)}</span></div>` : ""}
+          ${r.about ? `<div class="about">${escapeHtml(r.about)}</div>` : ""}
+          <div class="muted" style="font-size:12px; margin-top:8px;">applicant_id: ${r.applicant_id}</div>
+          <div style="display:flex; gap:8px; margin-top:14px;">
+            <button class="btn btn-glass btn-sm" data-act="edit" data-id="${r.id}">Редактировать</button>
+            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${r.id}">Удалить</button>
+          </div>
+        </div>`).join("")}
+    </div>
+    ${paginationControls(res.total)}`;
+
+  host.querySelectorAll("button[data-act]").forEach(btn => {
+    const r = resumes.find(x => String(x.id) === btn.dataset.id);
+    if (btn.dataset.act === "edit") btn.onclick = () => openAdminResumeForm(r);
+    if (btn.dataset.act === "delete") {
+      btn.onclick = () => confirmDelete(
+        "Удалить резюме?", "Это действие нельзя отменить.",
+        () => del(`/admin/resumes/${r.id}`).then(() => toast("Резюме удалено"))
+      );
+    }
+  });
+  wirePagination();
+}
+
+function openAdminResumeForm(r) {
+  openModal(`
+    <h2>Редактировать резюме</h2>
+    <div class="field"><label>Должность</label><input id="arTitle" value="${escapeAttr(r.title)}"></div>
+    <div class="field"><label>Город</label><input id="arCity" value="${escapeAttr(r.city)}"></div>
+    <div class="field"><label>Стек</label><input id="arStack" value="${escapeAttr(r.stack || "")}"></div>
+    <div class="field"><label>О себе</label><textarea id="arAbout">${escapeHtml(r.about || "")}</textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-glass" id="cancelAR">Отмена</button>
+      <button class="btn btn-primary" id="saveAR">Сохранить</button>
+    </div>`);
+  document.getElementById("cancelAR").onclick = closeModal;
+  document.getElementById("saveAR").onclick = async () => {
+    try {
+      await patch(`/admin/resumes/${r.id}`, {
+        new_title: document.getElementById("arTitle").value.trim(),
+        new_city: document.getElementById("arCity").value.trim(),
+        new_stack: document.getElementById("arStack").value.trim(),
+        new_about: document.getElementById("arAbout").value.trim(),
+      });
+      toast("Резюме обновлено");
+      closeModal();
+      await loadAdminTab();
+    } catch (err) { reportError(err); }
+  };
+}
+
+/* ---- admin: responses ---- */
+async function loadAdminResponses(host) {
+  const res = await get("/admin/responses" + qs({ limit: adminState.limit, offset: adminState.offset }));
+  const responses = res.responses || [];
+  if (!responses.length) { host.innerHTML = `<div class="empty-state">Откликов нет</div>`; return; }
+
+  host.innerHTML = `
+    <div class="panel glass" style="padding:8px;">
+      ${responses.map(r => `
+        <div class="card" style="margin:8px 0;">
+          <div class="card-top">
+            <div>
+              <div style="font-weight:700;">Отклик #${r.id}</div>
+              <div class="muted" style="font-size:13px;">
+                Соискатель ID: ${r.applicant_id} · Резюме ID: ${r.resume_id} · Вакансия ID: ${r.vacancy_id}
+              </div>
+            </div>
+            <span class="status-badge status-${r.status}">${STATUS_LABELS[r.status] || r.status}</span>
+          </div>
+          ${r.cover_letter ? `<div class="about">${escapeHtml(r.cover_letter)}</div>` : ""}
+          <div style="margin-top:12px;">
+            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${r.id}">Удалить</button>
+          </div>
+        </div>`).join("")}
+    </div>
+    ${paginationControls(res.total)}`;
+
+  host.querySelectorAll("button[data-act]").forEach(btn => {
+    btn.onclick = () => confirmDelete(
+      "Удалить отклик?", "Это действие нельзя отменить.",
+      () => del(`/admin/responses/${btn.dataset.id}`).then(() => toast("Отклик удалён"))
+    );
+  });
+  wirePagination();
 }
 
 /* ====================== profile ====================== */
