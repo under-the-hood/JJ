@@ -33,7 +33,7 @@ async function api(method, path, body) {
   try { data = await res.json(); } catch (e) { /* no body */ }
 
   if (!res.ok) {
-    const message = formatDetail(data && data.detail) || (data && data.message) || `Ошибка ${res.status}`;
+    const message = formatDetail(data && data.detail) || (data && data.message) || `Error ${res.status}`;
     throw new ApiError(message, res.status, data);
   }
   return data;
@@ -82,7 +82,7 @@ function toast(message, type = "success") {
 
 function reportError(err) {
   console.error(err);
-  toast(err.message || "Что-то пошло не так", "error");
+  toast(err.message || "Something went wrong", "error");
 }
 
 /* ====================== modal ====================== */
@@ -103,23 +103,30 @@ function openModal(innerHtml, { onMount } = {}) {
 }
 
 /* ====================== nav / shell ====================== */
+function defaultViewForRole(role) {
+  const r = normalizeRole(role);
+  if (r === "tenant") return "search-resumes";
+  if (r === "admin") return "admin";
+  return "search-vacancies";
+}
+
 const NAV_BY_ROLE = {
   applicant: [
-    { key: "search-vacancies", label: "Поиск вакансий" },
-    { key: "my-resumes", label: "Мои резюме" },
-    { key: "mailbox", label: "Почта" },
-    { key: "profile", label: "Профиль" },
+    { key: "search-vacancies", label: "Search vacancies" },
+    { key: "my-resumes", label: "My resumes" },
+    { key: "mailbox", label: "Mail" },
+    { key: "profile", label: "Profile" },
   ],
   tenant: [
-    { key: "search-resumes", label: "Поиск резюме" },
-    { key: "my-vacancies", label: "Мои вакансии" },
-    { key: "mailbox", label: "Почта" },
-    { key: "profile", label: "Профиль" },
+    { key: "search-resumes", label: "Search resumes" },
+    { key: "my-vacancies", label: "My vacancies" },
+    { key: "mailbox", label: "Mail" },
+    { key: "profile", label: "Profile" },
   ],
   admin: [
-    { key: "admin", label: "Админка" },
-    { key: "mailbox", label: "Почта" },
-    { key: "profile", label: "Профиль" },
+    { key: "admin", label: "Admin panel" },
+    { key: "mailbox", label: "Mail" },
+    { key: "profile", label: "Profile" },
   ],
 };
 
@@ -129,11 +136,9 @@ function renderShell() {
 
   if (!state.user) {
     navHost.innerHTML = "";
-    authHost.innerHTML = `
-      <button class="btn btn-glass btn-sm" id="navLogin">Войти</button>
-      <button class="btn btn-primary btn-sm" id="navRegister">Регистрация</button>`;
-    authHost.querySelector("#navLogin").onclick = () => setView("login");
-    authHost.querySelector("#navRegister").onclick = () => setView("register");
+    // The landing page keeps the header intentionally minimal: only the logo.
+    // Authentication actions are available in the hero instead.
+    authHost.innerHTML = "";
   } else {
     const role = normalizeRole(state.user.role);
     const items = NAV_BY_ROLE[role] || [];
@@ -146,11 +151,10 @@ function renderShell() {
     authHost.innerHTML = `
       <span class="pill-badge">${role}</span>
       <span class="muted" style="font-size:14px;">${state.user.name}</span>
-      <button class="btn btn-glass btn-sm" id="navLogout">Выйти</button>`;
+      <button class="btn btn-glass btn-sm" id="navLogout">Log out</button>`;
     authHost.querySelector("#navLogout").onclick = logout;
   }
 
-  document.querySelector(".brand").onclick = () => setView(state.user ? (normalizeRole(state.user.role) === "tenant" ? "search-resumes" : "search-vacancies") : "home");
 }
 
 async function setView(view) {
@@ -174,7 +178,7 @@ async function setView(view) {
     }
   } catch (err) {
     reportError(err);
-    app.innerHTML = `<div class="empty-state">Не удалось загрузить страницу</div>`;
+    app.innerHTML = `<div class="empty-state">Failed to load the page</div>`;
   }
 }
 
@@ -189,11 +193,8 @@ async function fetchMe() {
 }
 
 async function logout() {
-  // No dedicated logout endpoint on the backend — clearing local state is enough
-  // for the UI; the cookie will simply stop being sent as "authenticated" once
-  // the token naturally expires. If you add a logout endpoint later, call it here.
   state.user = null;
-  toast("Вы вышли из аккаунта");
+  toast("You have been logged out");
   setView("home");
 }
 
@@ -201,11 +202,11 @@ function renderHome() {
   document.getElementById("app").innerHTML = `
     <div class="view">
       <div class="hero">
-        <h1>Найди работу.<br>Найди человека.</h1>
-        <p>JJ — платформа для соискателей и работодателей: поиск вакансий, резюме и отклики в одном месте.</p>
-        <div style="margin-top:28px; display:flex; gap:12px; justify-content:center;">
-          <button class="btn btn-primary" id="heroRegister">Начать</button>
-          <button class="btn btn-glass" id="heroLogin">У меня уже есть аккаунт</button>
+        <h1>Find a job.<br>Find an employee.</h1>
+        <p>JJ is a platform for job seekers and employers: search for vacancies, resumes, and applications in one place.</p>
+        <div class="landing-buttons">
+          <button class="btn btn-primary" id="heroRegister">Get started</button>
+          <button class="btn btn-secondary" id="heroLogin">I already have an account</button>
         </div>
       </div>
     </div>`;
@@ -217,12 +218,12 @@ function renderLogin() {
   document.getElementById("app").innerHTML = `
     <div class="view center" style="padding-top:20px;">
       <div class="panel glass" style="max-width:400px; width:100%;">
-        <h2 class="section-title">Вход</h2>
+        <h2 class="section-title">Sign In</h2>
         <div class="field"><label>Email</label><input type="email" id="email"></div>
-        <div class="field"><label>Пароль</label><input type="password" id="password"></div>
-        <button class="btn btn-primary" id="submitLogin" style="width:100%;">Войти</button>
+        <div class="field"><label>Password</label><input type="password" id="password"></div>
+        <button class="btn btn-primary" id="submitLogin" style="width:100%;">Sign in</button>
         <p class="muted" style="text-align:center; margin-top:16px; font-size:14px;">
-          Нет аккаунта? <a href="#" id="goRegister">Зарегистрироваться</a>
+          Don't have an account? <a href="#" id="goRegister">Sign up</a>
         </p>
       </div>
     </div>`;
@@ -233,8 +234,8 @@ function renderLogin() {
     try {
       await post("/users/sign_in", { email, password });
       await fetchMe();
-      toast("Добро пожаловать!");
-      setView(normalizeRole(state.user.role) === "tenant" ? "search-resumes" : "search-vacancies");
+      toast("Welcome");
+      setView(defaultViewForRole(state.user.role));
     } catch (err) { reportError(err); }
   };
 }
@@ -243,20 +244,20 @@ function renderRegister() {
   document.getElementById("app").innerHTML = `
     <div class="view center" style="padding-top:20px;">
       <div class="panel glass" style="max-width:440px; width:100%;">
-        <h2 class="section-title">Регистрация</h2>
-        <div class="field"><label>Я хочу</label>
+        <h2 class="section-title">Sign Up</h2>
+        <div class="field"><label>I want to</label>
           <select id="role">
-            <option value="applicant">Искать работу</option>
-            <option value="tenant">Нанимать сотрудников</option>
+            <option value="applicant">Find a job</option>
+            <option value="tenant">Hire employees</option>
           </select>
         </div>
-        <div class="field"><label>Имя</label><input id="name" placeholder="3–15 символов, буквы"></div>
+        <div class="field"><label>Name</label><input id="name" placeholder="3–15 characters, letters"></div>
         <div class="field"><label>Email</label><input type="email" id="email"></div>
-        <div class="field"><label>Пароль</label><input type="password" id="password" placeholder="8–25 символов"></div>
-        <div class="field"><label>Повторите пароль</label><input type="password" id="repeat_password"></div>
-        <button class="btn btn-primary" id="submitRegister" style="width:100%;">Создать аккаунт</button>
+        <div class="field"><label>Password</label><input type="password" id="password" placeholder="8–25 characters"></div>
+        <div class="field"><label>Repeat password</label><input type="password" id="repeat_password"></div>
+        <button class="btn btn-primary" id="submitRegister" style="width:100%;">Create account</button>
         <p class="muted" style="text-align:center; margin-top:16px; font-size:14px;">
-          Уже есть аккаунт? <a href="#" id="goLogin">Войти</a>
+          Already have an account? <a href="#" id="goLogin">Sign in</a>
         </p>
       </div>
     </div>`;
@@ -271,7 +272,7 @@ function renderRegister() {
     };
     try {
       await post("/users/sign_up", body);
-      toast("Аккаунт создан, теперь войдите");
+      toast("Account created, please sign in now");
       setView("login");
     } catch (err) { reportError(err); }
   };
@@ -282,14 +283,14 @@ async function renderSearchVacancies() {
   const app = document.getElementById("app");
   app.innerHTML = `
     <div class="view">
-      <h2 class="section-title">Поиск вакансий</h2>
+      <h2 class="section-title">Search Vacancies</h2>
       <div class="panel glass">
         <div class="form-row">
-          <div class="field"><label>Должность</label><input id="fTitle" placeholder="Python developer"></div>
-          <div class="field"><label>Город</label><input id="fCity" placeholder="Almaty"></div>
-          <div class="field"><label>Зарплата от</label><input id="fComp" type="number" min="0"></div>
+          <div class="field"><label>Job Title</label><input id="fTitle" placeholder="Python Developer"></div>
+          <div class="field"><label>City</label><input id="fCity" placeholder="Almaty"></div>
+          <div class="field"><label>Salary from</label><input id="fComp" type="number" min="0"></div>
         </div>
-        <button class="btn btn-primary" id="doSearch">Искать</button>
+        <button class="btn btn-primary" id="doSearch">Search</button>
       </div>
       <div id="results" class="grid"></div>
     </div>`;
@@ -306,7 +307,7 @@ async function renderSearchVacancies() {
       const res = await get("/search/vacancies" + qs(params));
       const vacancies = res.vacancies || [];
       if (!vacancies.length) {
-        results.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Ничего не найдено</div>`;
+        results.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Nothing found</div>`;
         return;
       }
       results.innerHTML = vacancies.map(v => `
@@ -318,14 +319,14 @@ async function renderSearchVacancies() {
             <span class="chip">📍 ${escapeHtml(v.city)}</span>
             <span class="chip money">${formatMoney(v.compensation)}</span>
           </div>
-          <button class="btn btn-primary btn-sm" style="margin-top:16px;" data-id="${v.id}" data-title="${escapeAttr(v.title)}">Откликнуться</button>
+          <button class="btn btn-primary btn-sm" style="margin-top:16px;" data-id="${v.id}" data-title="${escapeAttr(v.title)}">Apply</button>
         </div>`).join("");
       results.querySelectorAll("button[data-id]").forEach(btn => {
         btn.onclick = () => openApplyModal(btn.dataset.id, btn.dataset.title);
       });
     } catch (err) {
       reportError(err);
-      results.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Не удалось загрузить</div>`;
+      results.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Failed to load</div>`;
     }
   };
 
@@ -345,26 +346,26 @@ async function openApplyModal(vacancyId, vacancyTitle) {
 
   if (!myResumes.length) {
     openModal(`
-      <h2>Нужно резюме</h2>
-      <p class="muted">Чтобы откликнуться, сначала создайте резюме в разделе «Мои резюме».</p>
-      <div class="modal-actions"><button class="btn btn-glass" id="closeM">Закрыть</button></div>`);
+      <h2>Resume Required</h2>
+      <p class="muted">To apply, first create a resume in the "My resumes" section.</p>
+      <div class="modal-actions"><button class="btn btn-glass" id="closeM">Close</button></div>`);
     document.getElementById("closeM").onclick = closeModal;
     return;
   }
 
   openModal(`
-    <h2>Отклик на «${escapeHtml(vacancyTitle)}»</h2>
-    <div class="field"><label>Резюме</label>
+    <h2>Application for '${escapeHtml(vacancyTitle)}'</h2>
+    <div class="field"><label>Resume</label>
       <select id="resumeSelect">
         ${myResumes.map(r => `<option value="${r.id}">${escapeHtml(r.title)}</option>`).join("")}
       </select>
     </div>
-    <div class="field"><label>Сопроводительное письмо</label>
-      <textarea id="coverLetter" maxlength="100" placeholder="Пара слов о себе (до 100 символов)"></textarea>
+    <div class="field"><label>Cover Letter</label>
+      <textarea id="coverLetter" maxlength="100" placeholder="A few words about yourself (up to 100 characters)"></textarea>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-glass" id="cancelApply">Отмена</button>
-      <button class="btn btn-primary" id="submitApply">Отправить</button>
+      <button class="btn btn-glass" id="cancelApply">Cancel</button>
+      <button class="btn btn-primary" id="submitApply">Submit</button>
     </div>`);
 
   document.getElementById("cancelApply").onclick = closeModal;
@@ -374,7 +375,7 @@ async function openApplyModal(vacancyId, vacancyTitle) {
         resume_id: parseInt(document.getElementById("resumeSelect").value, 10),
         cover_letter: document.getElementById("coverLetter").value.trim(),
       });
-      toast("Отклик отправлен!");
+      toast("Application sent!");
       closeModal();
     } catch (err) { reportError(err); }
   };
@@ -385,14 +386,14 @@ async function renderSearchResumes() {
   const app = document.getElementById("app");
   app.innerHTML = `
     <div class="view">
-      <h2 class="section-title">Поиск резюме</h2>
+      <h2 class="section-title">Search Resumes</h2>
       <div class="panel glass">
         <div class="form-row">
-          <div class="field"><label>Должность</label><input id="fTitle" placeholder="FastAPI developer"></div>
-          <div class="field"><label>Город</label><input id="fCity" placeholder="Almaty"></div>
-          <div class="field"><label>Стек</label><input id="fStack" placeholder="Python, FastAPI"></div>
+          <div class="field"><label>Job Title</label><input id="fTitle" placeholder="FastAPI Developer"></div>
+          <div class="field"><label>City</label><input id="fCity" placeholder="Almaty"></div>
+          <div class="field"><label>Stack</label><input id="fStack" placeholder="Python, FastAPI"></div>
         </div>
-        <button class="btn btn-primary" id="doSearch">Искать</button>
+        <button class="btn btn-primary" id="doSearch">Search</button>
       </div>
       <div id="results" class="grid"></div>
     </div>`;
@@ -409,7 +410,7 @@ async function renderSearchResumes() {
       const res = await get("/search/resumes" + qs(params));
       const resumes = res.resumes || [];
       if (!resumes.length) {
-        results.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Ничего не найдено</div>`;
+        results.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Nothing found</div>`;
         return;
       }
       results.innerHTML = resumes.map(r => `
@@ -423,7 +424,7 @@ async function renderSearchResumes() {
         </div>`).join("");
     } catch (err) {
       reportError(err);
-      results.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Не удалось загрузить</div>`;
+      results.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Failed to load</div>`;
     }
   };
 
@@ -440,8 +441,8 @@ async function renderMyVacancies() {
   app.innerHTML = `
     <div class="view">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h2 class="section-title" style="margin:0;">Мои вакансии</h2>
-        <button class="btn btn-primary" id="createBtn">+ Новая вакансия</button>
+        <h2 class="section-title" style="margin:0;">My Vacancies</h2>
+        <button class="btn btn-primary" id="createBtn">+ New Vacancy</button>
       </div>
       <div id="list" class="grid"></div>
     </div>`;
@@ -458,7 +459,7 @@ async function loadMyVacancies() {
     const res = await get("/vacancies/my");
     const vacancies = res.vacancies || [];
     if (!vacancies.length) {
-      list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">У вас пока нет вакансий</div>`;
+      list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">You have no vacancies yet</div>`;
       return;
     }
     list.innerHTML = vacancies.map(v => `
@@ -469,9 +470,9 @@ async function loadMyVacancies() {
           <span class="chip money">${formatMoney(v.compensation)}</span>
         </div>
         <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
-          <button class="btn btn-glass btn-sm" data-act="responses" data-id="${v.id}" data-title="${escapeAttr(v.title)}">Отклики</button>
-          <button class="btn btn-glass btn-sm" data-act="edit" data-id="${v.id}">Редактировать</button>
-          <button class="btn btn-danger btn-sm" data-act="delete" data-id="${v.id}">Удалить</button>
+          <button class="btn btn-glass btn-sm" data-act="responses" data-id="${v.id}" data-title="${escapeAttr(v.title)}">Applications</button>
+          <button class="btn btn-glass btn-sm" data-act="edit" data-id="${v.id}">Edit</button>
+          <button class="btn btn-danger btn-sm" data-act="delete" data-id="${v.id}">Delete</button>
         </div>
       </div>`).join("");
 
@@ -483,20 +484,20 @@ async function loadMyVacancies() {
     });
   } catch (err) {
     reportError(err);
-    list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Не удалось загрузить</div>`;
+    list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Failed to load</div>`;
   }
 }
 
 function openVacancyForm(existing) {
   const isEdit = !!existing;
   openModal(`
-    <h2>${isEdit ? "Редактировать вакансию" : "Новая вакансия"}</h2>
-    <div class="field"><label>Должность</label><input id="vTitle" value="${isEdit ? escapeAttr(existing.title) : ""}" placeholder="4–30 символов"></div>
-    <div class="field"><label>Город</label><input id="vCity" value="${isEdit ? escapeAttr(existing.city) : ""}"></div>
-    <div class="field"><label>Зарплата</label><input id="vComp" type="number" min="0" value="${isEdit ? existing.compensation : ""}"></div>
+    <h2>${isEdit ? "Edit Vacancy" : "New Vacancy"}</h2>
+    <div class="field"><label>Job Title</label><input id="vTitle" value="${isEdit ? escapeAttr(existing.title) : ""}" placeholder="4–30 characters"></div>
+    <div class="field"><label>City</label><input id="vCity" value="${isEdit ? escapeAttr(existing.city) : ""}"></div>
+    <div class="field"><label>Salary</label><input id="vComp" type="number" min="0" value="${isEdit ? existing.compensation : ""}"></div>
     <div class="modal-actions">
-      <button class="btn btn-glass" id="cancelV">Отмена</button>
-      <button class="btn btn-primary" id="saveV">${isEdit ? "Сохранить" : "Создать"}</button>
+      <button class="btn btn-glass" id="cancelV">Cancel</button>
+      <button class="btn btn-primary" id="saveV">${isEdit ? "Save" : "Create"}</button>
     </div>`);
 
   document.getElementById("cancelV").onclick = closeModal;
@@ -507,10 +508,10 @@ function openVacancyForm(existing) {
     try {
       if (isEdit) {
         await patch(`/vacancies/${existing.id}`, { new_title: title, new_city: city, new_compensation: compensation });
-        toast("Вакансия обновлена");
+        toast("Vacancy updated");
       } else {
         await post("/vacancies", { title, city, compensation });
-        toast("Вакансия создана");
+        toast("Vacancy created");
       }
       closeModal();
       await loadMyVacancies();
@@ -520,17 +521,17 @@ function openVacancyForm(existing) {
 
 async function deleteVacancy(id) {
   openModal(`
-    <h2>Удалить вакансию?</h2>
-    <p class="muted">Это действие нельзя отменить.</p>
+    <h2>Delete Vacancy?</h2>
+    <p class="muted">This action cannot be undone.</p>
     <div class="modal-actions">
-      <button class="btn btn-glass" id="cancelD">Отмена</button>
-      <button class="btn btn-danger" id="confirmD">Удалить</button>
+      <button class="btn btn-glass" id="cancelD">Cancel</button>
+      <button class="btn btn-danger" id="confirmD">Delete</button>
     </div>`);
   document.getElementById("cancelD").onclick = closeModal;
   document.getElementById("confirmD").onclick = async () => {
     try {
       await del(`/vacancies/${id}`);
-      toast("Вакансия удалена");
+      toast("Vacancy deleted");
       closeModal();
       await loadMyVacancies();
     } catch (err) { reportError(err); }
@@ -538,15 +539,15 @@ async function deleteVacancy(id) {
 }
 
 const STATUS_LABELS = {
-  send: "Отправлен", viewed: "Просмотрен", shortlisted: "В шортлисте",
-  interview: "Собеседование", hired: "Оффер", rejected: "Отказ",
+  send: "Sent", viewed: "Viewed", shortlisted: "Shortlisted",
+  interview: "Interview", hired: "Hired", rejected: "Rejected",
 };
 
 async function openResponsesModal(vacancyId, title) {
   openModal(`
-    <h2>Отклики: ${escapeHtml(title)}</h2>
+    <h2>Applications: ${escapeHtml(title)}</h2>
     <div id="respList" class="center" style="padding:30px;"><div class="spinner"></div></div>
-    <div class="modal-actions"><button class="btn btn-glass" id="closeR">Закрыть</button></div>`);
+    <div class="modal-actions"><button class="btn btn-glass" id="closeR">Close</button></div>`);
   document.getElementById("closeR").onclick = closeModal;
 
   try {
@@ -555,7 +556,7 @@ async function openResponsesModal(vacancyId, title) {
     host.className = "";
     host.removeAttribute("style");
     if (!responses.length) {
-      host.innerHTML = `<div class="empty-state">Пока нет откликов</div>`;
+      host.innerHTML = `<div class="empty-state">No applications yet</div>`;
       return;
     }
     host.innerHTML = responses.map(r => `
@@ -581,13 +582,13 @@ async function openResponsesModal(vacancyId, title) {
       sel.onchange = async () => {
         try {
           await patch(`/responses/${sel.dataset.resp}/status`, { status: sel.value });
-          toast("Статус обновлён");
+          toast("Status updated");
         } catch (err) { reportError(err); }
       };
     });
   } catch (err) {
     reportError(err);
-    document.getElementById("respList").innerHTML = `<div class="empty-state">Не удалось загрузить</div>`;
+    document.getElementById("respList").innerHTML = `<div class="empty-state">Failed to load</div>`;
   }
 }
 
@@ -597,8 +598,8 @@ async function renderMyResumes() {
   app.innerHTML = `
     <div class="view">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h2 class="section-title" style="margin:0;">Мои резюме</h2>
-        <button class="btn btn-primary" id="createBtn">+ Новое резюме</button>
+        <h2 class="section-title" style="margin:0;">My Resumes</h2>
+        <button class="btn btn-primary" id="createBtn">+ New Resume</button>
       </div>
       <div id="list" class="grid"></div>
     </div>`;
@@ -613,7 +614,7 @@ async function loadMyResumes() {
     const res = await get("/resumes/my");
     const resumes = res.resumes || [];
     if (!resumes.length) {
-      list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">У вас пока нет резюме</div>`;
+      list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">You have no resumes yet</div>`;
       return;
     }
     list.innerHTML = resumes.map(r => `
@@ -623,8 +624,8 @@ async function loadMyResumes() {
         ${r.stack ? `<div class="meta" style="margin-top:8px;"><span class="chip">🛠 ${escapeHtml(r.stack)}</span></div>` : ""}
         ${r.about ? `<div class="about">${escapeHtml(r.about)}</div>` : ""}
         <div style="display:flex; gap:8px; margin-top:16px;">
-          <button class="btn btn-glass btn-sm" data-act="edit" data-id="${r.id}">Редактировать</button>
-          <button class="btn btn-danger btn-sm" data-act="delete" data-id="${r.id}">Удалить</button>
+          <button class="btn btn-glass btn-sm" data-act="edit" data-id="${r.id}">Edit</button>
+          <button class="btn btn-danger btn-sm" data-act="delete" data-id="${r.id}">Delete</button>
         </div>
       </div>`).join("");
 
@@ -635,21 +636,21 @@ async function loadMyResumes() {
     });
   } catch (err) {
     reportError(err);
-    list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Не удалось загрузить</div>`;
+    list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Failed to load</div>`;
   }
 }
 
 function openResumeForm(existing) {
   const isEdit = !!existing;
   openModal(`
-    <h2>${isEdit ? "Редактировать резюме" : "Новое резюме"}</h2>
-    <div class="field"><label>Должность</label><input id="rTitle" value="${isEdit ? escapeAttr(existing.title) : ""}"></div>
-    <div class="field"><label>Город</label><input id="rCity" value="${isEdit ? escapeAttr(existing.city) : ""}"></div>
-    <div class="field"><label>Стек</label><input id="rStack" value="${isEdit ? escapeAttr(existing.stack) : ""}" placeholder="Python, FastAPI, PostgreSQL"></div>
-    <div class="field"><label>О себе</label><textarea id="rAbout">${isEdit ? escapeHtml(existing.about || "") : ""}</textarea></div>
+    <h2>${isEdit ? "Edit Resume" : "New Resume"}</h2>
+    <div class="field"><label>Job Title</label><input id="rTitle" value="${isEdit ? escapeAttr(existing.title) : ""}"></div>
+    <div class="field"><label>City</label><input id="rCity" value="${isEdit ? escapeAttr(existing.city) : ""}"></div>
+    <div class="field"><label>Stack</label><input id="rStack" value="${isEdit ? escapeAttr(existing.stack) : ""}" placeholder="Python, FastAPI, PostgreSQL"></div>
+    <div class="field"><label>About me</label><textarea id="rAbout">${isEdit ? escapeHtml(existing.about || "") : ""}</textarea></div>
     <div class="modal-actions">
-      <button class="btn btn-glass" id="cancelR">Отмена</button>
-      <button class="btn btn-primary" id="saveR">${isEdit ? "Сохранить" : "Создать"}</button>
+      <button class="btn btn-glass" id="cancelR">Cancel</button>
+      <button class="btn btn-primary" id="saveR">${isEdit ? "Save" : "Create"}</button>
     </div>`);
 
   document.getElementById("cancelR").onclick = closeModal;
@@ -661,10 +662,10 @@ function openResumeForm(existing) {
     try {
       if (isEdit) {
         await patch(`/resumes/${existing.id}`, { new_title: title, new_city: city, new_stack: stack, new_about: about });
-        toast("Резюме обновлено");
+        toast("Resume updated");
       } else {
         await post("/resumes", { title, city, stack, about });
-        toast("Резюме создано");
+        toast("Resume created");
       }
       closeModal();
       await loadMyResumes();
@@ -674,17 +675,17 @@ function openResumeForm(existing) {
 
 async function deleteResume(id) {
   openModal(`
-    <h2>Удалить резюме?</h2>
-    <p class="muted">Это действие нельзя отменить.</p>
+    <h2>Delete Resume?</h2>
+    <p class="muted">This action cannot be undone.</p>
     <div class="modal-actions">
-      <button class="btn btn-glass" id="cancelD">Отмена</button>
-      <button class="btn btn-danger" id="confirmD">Удалить</button>
+      <button class="btn btn-glass" id="cancelD">Cancel</button>
+      <button class="btn btn-danger" id="confirmD">Delete</button>
     </div>`);
   document.getElementById("cancelD").onclick = closeModal;
   document.getElementById("confirmD").onclick = async () => {
     try {
       await del(`/resumes/${id}`);
-      toast("Резюме удалено");
+      toast("Resume deleted");
       closeModal();
       await loadMyResumes();
     } catch (err) { reportError(err); }
@@ -698,12 +699,11 @@ async function renderMailbox() {
     <div class="view">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
         <div>
-          <h2 class="section-title" style="margin:0;">Почта</h2>
-          <p class="muted" style="margin:4px 0 0; font-size:13px;">Локальный почтовый ящик (MailDev) — сюда попадают все письма, которые отправляет платформа</p>
+          <h2 class="section-title" style="margin:0;">Mail</h2>
         </div>
         <div style="display:flex; gap:8px;">
-          <button class="btn btn-glass btn-sm" id="refreshMail">Обновить</button>
-          <button class="btn btn-danger btn-sm" id="clearMail">Очистить всё</button>
+          <button class="btn btn-glass btn-sm" id="refreshMail">Refresh</button>
+          <button class="btn btn-danger btn-sm" id="clearMail">Clear My Mail</button>
         </div>
       </div>
       <div id="mailList"></div>
@@ -714,16 +714,30 @@ async function renderMailbox() {
   await loadMailbox();
 }
 
+function isMailForCurrentUser(email) {
+  const currentAddress = (state.user && state.user.email || "").trim().toLowerCase();
+  return (email.to || []).some(recipient =>
+    String(recipient.address || "").trim().toLowerCase() === currentAddress
+  );
+}
+
+function visibleMailboxEmails(allEmails) {
+  return allEmails.filter(isMailForCurrentUser);
+}
+
 async function loadMailbox() {
   const list = document.getElementById("mailList");
   list.innerHTML = `<div class="center" style="padding:40px;"><div class="spinner"></div></div>`;
   try {
     const res = await fetch("/mail/email", { credentials: "include" });
-    if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-    const emails = await res.json();
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    const allEmails = await res.json();
+    // MailDev is a shared development inbox. Keep each user's view private in
+    // the UI by showing only messages addressed to the signed-in user.
+    const emails = visibleMailboxEmails(allEmails);
 
     if (!emails.length) {
-      list.innerHTML = `<div class="empty-state">Писем пока нет</div>`;
+      list.innerHTML = `<div class="empty-state">No emails yet</div>`;
       return;
     }
 
@@ -732,9 +746,9 @@ async function loadMailbox() {
       <div class="card glass" data-id="${e.id}" style="cursor:pointer; margin-bottom:12px;">
         <div class="card-top">
           <div>
-            <h3 style="margin-bottom:2px;">${escapeHtml(e.subject || "(без темы)")}</h3>
+            <h3 style="margin-bottom:2px;">${escapeHtml(e.subject || "(no subject)")}</h3>
             <div class="muted" style="font-size:13px;">
-              От: ${escapeHtml(formatMailAddr(e.from))} → Кому: ${escapeHtml(formatMailAddr(e.to))}
+              From: ${escapeHtml(formatMailAddr(e.from))} → To: ${escapeHtml(formatMailAddr(e.to))}
             </div>
           </div>
           <div class="muted" style="font-size:12px; white-space:nowrap;">${formatMailDate(e.time)}</div>
@@ -746,57 +760,77 @@ async function loadMailbox() {
     });
   } catch (err) {
     reportError(err);
-    list.innerHTML = `<div class="empty-state">Не удалось загрузить письма — проверьте, что MailDev запущен</div>`;
+    list.innerHTML = `<div class="empty-state">Failed to load emails - check if MailDev is running</div>`;
   }
+}
+
+async function clearMailbox() {
+  openModal(`
+    <h2>Clear your mailbox?</h2>
+    <p class="muted">Only emails addressed to your account will be deleted.</p>
+    <div class="modal-actions">
+      <button class="btn btn-glass" id="cancelClear">Cancel</button>
+      <button class="btn btn-danger" id="confirmClear">Clear My Mail</button>
+    </div>`);
+  document.getElementById("cancelClear").onclick = closeModal;
+  document.getElementById("confirmClear").onclick = async () => {
+    const button = document.getElementById("confirmClear");
+    button.disabled = true;
+    try {
+      const res = await fetch("/mail/email", { credentials: "include" });
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+      // Even administrators must only delete messages addressed to their own
+      // account; the admin's broader read view must not affect this action.
+      const emails = (await res.json()).filter(isMailForCurrentUser);
+
+      // Delete the already filtered message ids one by one. MailDev has a
+      // shared store, so never use its global "delete all" endpoint here.
+      const results = await Promise.all(
+        emails.map(email => fetch(`/mail/email/${encodeURIComponent(email.id)}`, {
+          method: "DELETE",
+          credentials: "include",
+        }))
+      );
+      const failed = results.find(result => !result.ok);
+      if (failed) throw new Error(`Error ${failed.status}`);
+
+      toast(emails.length ? "Your mailbox was cleared" : "Your mailbox is already empty");
+      closeModal();
+      await loadMailbox();
+    } catch (err) {
+      reportError(err);
+      button.disabled = false;
+    }
+  };
 }
 
 async function openMailModal(id) {
   openModal(`
-    <h2>Письмо</h2>
+    <h2>Email Message</h2>
     <div id="mailDetail" class="center" style="padding:30px;"><div class="spinner"></div></div>
-    <div class="modal-actions"><button class="btn btn-glass" id="closeMail">Закрыть</button></div>`);
+    <div class="modal-actions"><button class="btn btn-glass" id="closeMail">Close</button></div>`);
   document.getElementById("closeMail").onclick = closeModal;
 
   try {
     const res = await fetch(`/mail/email/${id}`, { credentials: "include" });
-    if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+    if (!res.ok) throw new Error(`Error ${res.status}`);
     const email = await res.json();
 
     const detail = document.getElementById("mailDetail");
     detail.className = "";
     detail.removeAttribute("style");
     detail.innerHTML = `
-      <div class="field"><label>От</label><div>${escapeHtml(formatMailAddr(email.from))}</div></div>
-      <div class="field"><label>Кому</label><div>${escapeHtml(formatMailAddr(email.to))}</div></div>
-      <div class="field"><label>Тема</label><div>${escapeHtml(email.subject || "(без темы)")}</div></div>
+      <div class="field"><label>From</label><div>${escapeHtml(formatMailAddr(email.from))}</div></div>
+      <div class="field"><label>To</label><div>${escapeHtml(formatMailAddr(email.to))}</div></div>
+      <div class="field"><label>Subject</label><div>${escapeHtml(email.subject || "(no subject)")}</div></div>
       <div class="field">
-        <label>Текст письма</label>
-        <div style="white-space:pre-wrap; background:rgba(255,255,255,0.6); border-radius:14px; padding:16px; border:1px solid rgba(120,120,128,0.22);">${escapeHtml(email.text || "(пусто)")}</div>
+        <label>Message Body</label>
+        <div style="white-space:pre-wrap; background:rgba(255,255,255,0.6); border-radius:14px; padding:16px; border:1px solid rgba(120,120,128,0.22);">${escapeHtml(email.text || "(empty)")}</div>
       </div>`;
   } catch (err) {
     reportError(err);
-    document.getElementById("mailDetail").innerHTML = `<div class="empty-state">Не удалось загрузить письмо</div>`;
+    document.getElementById("mailDetail").innerHTML = `<div class="empty-state">Failed to load email</div>`;
   }
-}
-
-async function clearMailbox() {
-  openModal(`
-    <h2>Очистить всю почту?</h2>
-    <p class="muted">Это действие нельзя отменить.</p>
-    <div class="modal-actions">
-      <button class="btn btn-glass" id="cancelClear">Отмена</button>
-      <button class="btn btn-danger" id="confirmClear">Очистить</button>
-    </div>`);
-  document.getElementById("cancelClear").onclick = closeModal;
-  document.getElementById("confirmClear").onclick = async () => {
-    try {
-      const res = await fetch("/mail/email/all", { method: "DELETE", credentials: "include" });
-      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-      toast("Почта очищена");
-      closeModal();
-      await loadMailbox();
-    } catch (err) { reportError(err); }
-  };
 }
 
 function formatMailAddr(arr) {
@@ -804,15 +838,15 @@ function formatMailAddr(arr) {
   return arr.map(a => a.name ? `${a.name} <${a.address}>` : a.address).join(", ");
 }
 function formatMailDate(d) {
-  try { return new Date(d).toLocaleString("ru-RU"); } catch (e) { return d; }
+  try { return new Date(d).toLocaleString("en-US"); } catch (e) { return d; }
 }
 
 /* ====================== admin ====================== */
 const ADMIN_TABS = [
-  { key: "users", label: "Пользователи" },
-  { key: "vacancies", label: "Вакансии" },
-  { key: "resumes", label: "Резюме" },
-  { key: "responses", label: "Отклики" },
+  { key: "users", label: "Users" },
+  { key: "vacancies", label: "Vacancies" },
+  { key: "resumes", label: "Resumes" },
+  { key: "responses", label: "Applications" },
 ];
 
 const adminState = { tab: "users", offset: 0, limit: 10 };
@@ -821,7 +855,7 @@ async function renderAdmin() {
   const app = document.getElementById("app");
   app.innerHTML = `
     <div class="view">
-      <h2 class="section-title">Админка</h2>
+      <h2 class="section-title">Admin Panel</h2>
       <div class="tabs">
         ${ADMIN_TABS.map(t => `<button class="btn ${adminState.tab === t.key ? "btn-primary" : "btn-glass"} btn-sm" data-tab="${t.key}">${t.label}</button>`).join("")}
       </div>
@@ -849,7 +883,7 @@ async function loadAdminTab() {
     if (adminState.tab === "responses") await loadAdminResponses(host);
   } catch (err) {
     reportError(err);
-    host.innerHTML = `<div class="empty-state">Не удалось загрузить</div>`;
+    host.innerHTML = `<div class="empty-state">Failed to load</div>`;
   }
 }
 
@@ -859,10 +893,10 @@ function paginationControls(total) {
   const pages = Math.max(1, Math.ceil(total / limit));
   return `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
-      <span class="muted" style="font-size:13px;">Всего: ${total} · страница ${page} из ${pages}</span>
+      <span class="muted" style="font-size:13px;">Total: ${total} · page ${page} of ${pages}</span>
       <div style="display:flex; gap:8px;">
-        <button class="btn btn-glass btn-sm" id="pgPrev" ${offset <= 0 ? "disabled" : ""}>Назад</button>
-        <button class="btn btn-glass btn-sm" id="pgNext" ${offset + limit >= total ? "disabled" : ""}>Вперёд</button>
+        <button class="btn btn-glass btn-sm" id="pgPrev" ${offset <= 0 ? "disabled" : ""}>Previous</button>
+        <button class="btn btn-glass btn-sm" id="pgNext" ${offset + limit >= total ? "disabled" : ""}>Next</button>
       </div>
     </div>`;
 }
@@ -879,8 +913,8 @@ function confirmDelete(title, body, onConfirm) {
     <h2>${title}</h2>
     <p class="muted">${body}</p>
     <div class="modal-actions">
-      <button class="btn btn-glass" id="cancelD">Отмена</button>
-      <button class="btn btn-danger" id="confirmD">Удалить</button>
+      <button class="btn btn-glass" id="cancelD">Cancel</button>
+      <button class="btn btn-danger" id="confirmD">Delete</button>
     </div>`);
   document.getElementById("cancelD").onclick = closeModal;
   document.getElementById("confirmD").onclick = async () => {
@@ -896,7 +930,7 @@ function confirmDelete(title, body, onConfirm) {
 async function loadAdminUsers(host) {
   const res = await get("/admin/users" + qs({ limit: adminState.limit, offset: adminState.offset }));
   const users = res.users || [];
-  if (!users.length) { host.innerHTML = `<div class="empty-state">Пользователей нет</div>`; return; }
+  if (!users.length) { host.innerHTML = `<div class="empty-state">No users</div>`; return; }
 
   host.innerHTML = `
     <div class="panel glass" style="padding:8px;">
@@ -910,8 +944,8 @@ async function loadAdminUsers(host) {
             <span class="pill-badge">${normalizeRole(String(u.role))}</span>
           </div>
           <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
-            <button class="btn btn-glass btn-sm" data-act="edit" data-id="${u.id}">Редактировать</button>
-            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${u.id}">Удалить</button>
+            <button class="btn btn-glass btn-sm" data-act="edit" data-id="${u.id}">Edit</button>
+            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${u.id}">Delete</button>
           </div>
         </div>`).join("")}
     </div>
@@ -922,9 +956,9 @@ async function loadAdminUsers(host) {
     if (btn.dataset.act === "edit") btn.onclick = () => openAdminUserForm(u);
     if (btn.dataset.act === "delete") {
       btn.onclick = () => confirmDelete(
-        "Удалить пользователя?",
-        "Это действие нельзя отменить — удалятся все его вакансии/резюме/отклики.",
-        () => del(`/admin/users/${u.id}`).then(() => toast("Пользователь удалён"))
+        "Delete User?",
+        "This action cannot be undone - all their vacancies/resumes/applications will be deleted.",
+        () => del(`/admin/users/${u.id}`).then(() => toast("User deleted"))
       );
     }
   });
@@ -933,19 +967,19 @@ async function loadAdminUsers(host) {
 
 function openAdminUserForm(user) {
   openModal(`
-    <h2>Пользователь</h2>
+    <h2>User</h2>
     <div class="field"><label>Email</label><input value="${escapeAttr(user.email)}" disabled></div>
-    <div class="field"><label>Имя</label><input id="auName" value="${escapeAttr(user.name)}"></div>
-    <div class="field"><label>Роль</label>
+    <div class="field"><label>Name</label><input id="auName" value="${escapeAttr(user.name)}"></div>
+    <div class="field"><label>Role</label>
       <select id="auRole">
         <option value="applicant" ${normalizeRole(String(user.role)) === "applicant" ? "selected" : ""}>Applicant</option>
-        <option value="tenant" ${normalizeRole(String(user.role)) === "tenant" ? "selected" : ""}>Tenant</option>
+        <option value="tenant" ${normalizeRole(String(user.role)) === "tenant" ? "selected" : ""}>Employer</option>
         <option value="admin" ${normalizeRole(String(user.role)) === "admin" ? "selected" : ""}>Admin</option>
       </select>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-glass" id="cancelAU">Отмена</button>
-      <button class="btn btn-primary" id="saveAU">Сохранить</button>
+      <button class="btn btn-glass" id="cancelAU">Cancel</button>
+      <button class="btn btn-primary" id="saveAU">Save</button>
     </div>`);
   document.getElementById("cancelAU").onclick = closeModal;
   document.getElementById("saveAU").onclick = async () => {
@@ -954,7 +988,7 @@ function openAdminUserForm(user) {
         new_name: document.getElementById("auName").value.trim(),
         new_role: document.getElementById("auRole").value,
       });
-      toast("Пользователь обновлён");
+      toast("User updated");
       closeModal();
       await loadAdminTab();
     } catch (err) { reportError(err); }
@@ -965,7 +999,7 @@ function openAdminUserForm(user) {
 async function loadAdminVacancies(host) {
   const res = await get("/admin/vacancies" + qs({ limit: adminState.limit, offset: adminState.offset }));
   const vacancies = res.vacancies || [];
-  if (!vacancies.length) { host.innerHTML = `<div class="empty-state">Вакансий нет</div>`; return; }
+  if (!vacancies.length) { host.innerHTML = `<div class="empty-state">No vacancies</div>`; return; }
 
   host.innerHTML = `
     <div class="grid">
@@ -978,8 +1012,8 @@ async function loadAdminVacancies(host) {
           </div>
           <div class="muted" style="font-size:12px; margin-top:8px;">tenant_id: ${v.tenant_id}</div>
           <div style="display:flex; gap:8px; margin-top:14px;">
-            <button class="btn btn-glass btn-sm" data-act="edit" data-id="${v.id}">Редактировать</button>
-            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${v.id}">Удалить</button>
+            <button class="btn btn-glass btn-sm" data-act="edit" data-id="${v.id}">Edit</button>
+            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${v.id}">Delete</button>
           </div>
         </div>`).join("")}
     </div>
@@ -990,8 +1024,8 @@ async function loadAdminVacancies(host) {
     if (btn.dataset.act === "edit") btn.onclick = () => openAdminVacancyForm(v);
     if (btn.dataset.act === "delete") {
       btn.onclick = () => confirmDelete(
-        "Удалить вакансию?", "Это действие нельзя отменить.",
-        () => del(`/admin/vacancies/${v.id}`).then(() => toast("Вакансия удалена"))
+        "Delete Vacancy?", "This action cannot be undone.",
+        () => del(`/admin/vacancies/${v.id}`).then(() => toast("Vacancy deleted"))
       );
     }
   });
@@ -1000,13 +1034,13 @@ async function loadAdminVacancies(host) {
 
 function openAdminVacancyForm(v) {
   openModal(`
-    <h2>Редактировать вакансию</h2>
-    <div class="field"><label>Должность</label><input id="avTitle" value="${escapeAttr(v.title)}"></div>
-    <div class="field"><label>Город</label><input id="avCity" value="${escapeAttr(v.city)}"></div>
-    <div class="field"><label>Зарплата</label><input id="avComp" type="number" value="${v.compensation}"></div>
+    <h2>Edit Vacancy</h2>
+    <div class="field"><label>Job Title</label><input id="avTitle" value="${escapeAttr(v.title)}"></div>
+    <div class="field"><label>City</label><input id="avCity" value="${escapeAttr(v.city)}"></div>
+    <div class="field"><label>Salary</label><input id="avComp" type="number" value="${v.compensation}"></div>
     <div class="modal-actions">
-      <button class="btn btn-glass" id="cancelAV">Отмена</button>
-      <button class="btn btn-primary" id="saveAV">Сохранить</button>
+      <button class="btn btn-glass" id="cancelAV">Cancel</button>
+      <button class="btn btn-primary" id="saveAV">Save</button>
     </div>`);
   document.getElementById("cancelAV").onclick = closeModal;
   document.getElementById("saveAV").onclick = async () => {
@@ -1016,7 +1050,7 @@ function openAdminVacancyForm(v) {
         new_city: document.getElementById("avCity").value.trim(),
         new_compensation: parseInt(document.getElementById("avComp").value, 10),
       });
-      toast("Вакансия обновлена");
+      toast("Vacancy updated");
       closeModal();
       await loadAdminTab();
     } catch (err) { reportError(err); }
@@ -1027,7 +1061,7 @@ function openAdminVacancyForm(v) {
 async function loadAdminResumes(host) {
   const res = await get("/admin/resumes" + qs({ limit: adminState.limit, offset: adminState.offset }));
   const resumes = res.resumes || [];
-  if (!resumes.length) { host.innerHTML = `<div class="empty-state">Резюме нет</div>`; return; }
+  if (!resumes.length) { host.innerHTML = `<div class="empty-state">No resumes</div>`; return; }
 
   host.innerHTML = `
     <div class="grid">
@@ -1039,8 +1073,8 @@ async function loadAdminResumes(host) {
           ${r.about ? `<div class="about">${escapeHtml(r.about)}</div>` : ""}
           <div class="muted" style="font-size:12px; margin-top:8px;">applicant_id: ${r.applicant_id}</div>
           <div style="display:flex; gap:8px; margin-top:14px;">
-            <button class="btn btn-glass btn-sm" data-act="edit" data-id="${r.id}">Редактировать</button>
-            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${r.id}">Удалить</button>
+            <button class="btn btn-glass btn-sm" data-act="edit" data-id="${r.id}">Edit</button>
+            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${r.id}">Delete</button>
           </div>
         </div>`).join("")}
     </div>
@@ -1051,8 +1085,8 @@ async function loadAdminResumes(host) {
     if (btn.dataset.act === "edit") btn.onclick = () => openAdminResumeForm(r);
     if (btn.dataset.act === "delete") {
       btn.onclick = () => confirmDelete(
-        "Удалить резюме?", "Это действие нельзя отменить.",
-        () => del(`/admin/resumes/${r.id}`).then(() => toast("Резюме удалено"))
+        "Delete Resume?", "This action cannot be undone.",
+        () => del(`/admin/resumes/${r.id}`).then(() => toast("Resume deleted"))
       );
     }
   });
@@ -1061,14 +1095,14 @@ async function loadAdminResumes(host) {
 
 function openAdminResumeForm(r) {
   openModal(`
-    <h2>Редактировать резюме</h2>
-    <div class="field"><label>Должность</label><input id="arTitle" value="${escapeAttr(r.title)}"></div>
-    <div class="field"><label>Город</label><input id="arCity" value="${escapeAttr(r.city)}"></div>
-    <div class="field"><label>Стек</label><input id="arStack" value="${escapeAttr(r.stack || "")}"></div>
-    <div class="field"><label>О себе</label><textarea id="arAbout">${escapeHtml(r.about || "")}</textarea></div>
+    <h2>Edit Resume</h2>
+    <div class="field"><label>Job Title</label><input id="arTitle" value="${escapeAttr(r.title)}"></div>
+    <div class="field"><label>City</label><input id="arCity" value="${escapeAttr(r.city)}"></div>
+    <div class="field"><label>Stack</label><input id="arStack" value="${escapeAttr(r.stack || "")}"></div>
+    <div class="field"><label>About me</label><textarea id="arAbout">${escapeHtml(r.about || "")}</textarea></div>
     <div class="modal-actions">
-      <button class="btn btn-glass" id="cancelAR">Отмена</button>
-      <button class="btn btn-primary" id="saveAR">Сохранить</button>
+      <button class="btn btn-glass" id="cancelAR">Cancel</button>
+      <button class="btn btn-primary" id="saveAR">Save</button>
     </div>`);
   document.getElementById("cancelAR").onclick = closeModal;
   document.getElementById("saveAR").onclick = async () => {
@@ -1079,7 +1113,7 @@ function openAdminResumeForm(r) {
         new_stack: document.getElementById("arStack").value.trim(),
         new_about: document.getElementById("arAbout").value.trim(),
       });
-      toast("Резюме обновлено");
+      toast("Resume updated");
       closeModal();
       await loadAdminTab();
     } catch (err) { reportError(err); }
@@ -1090,7 +1124,7 @@ function openAdminResumeForm(r) {
 async function loadAdminResponses(host) {
   const res = await get("/admin/responses" + qs({ limit: adminState.limit, offset: adminState.offset }));
   const responses = res.responses || [];
-  if (!responses.length) { host.innerHTML = `<div class="empty-state">Откликов нет</div>`; return; }
+  if (!responses.length) { host.innerHTML = `<div class="empty-state">No applications</div>`; return; }
 
   host.innerHTML = `
     <div class="panel glass" style="padding:8px;">
@@ -1098,16 +1132,16 @@ async function loadAdminResponses(host) {
         <div class="card" style="margin:8px 0;">
           <div class="card-top">
             <div>
-              <div style="font-weight:700;">Отклик #${r.id}</div>
+              <div style="font-weight:700;">Application #${r.id}</div>
               <div class="muted" style="font-size:13px;">
-                Соискатель ID: ${r.applicant_id} · Резюме ID: ${r.resume_id} · Вакансия ID: ${r.vacancy_id}
+                Applicant ID: ${r.applicant_id} · Resume ID: ${r.resume_id} · Vacancy ID: ${r.vacancy_id}
               </div>
             </div>
             <span class="status-badge status-${r.status}">${STATUS_LABELS[r.status] || r.status}</span>
           </div>
           ${r.cover_letter ? `<div class="about">${escapeHtml(r.cover_letter)}</div>` : ""}
           <div style="margin-top:12px;">
-            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${r.id}">Удалить</button>
+            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${r.id}">Delete</button>
           </div>
         </div>`).join("")}
     </div>
@@ -1115,8 +1149,8 @@ async function loadAdminResponses(host) {
 
   host.querySelectorAll("button[data-act]").forEach(btn => {
     btn.onclick = () => confirmDelete(
-      "Удалить отклик?", "Это действие нельзя отменить.",
-      () => del(`/admin/responses/${btn.dataset.id}`).then(() => toast("Отклик удалён"))
+      "Delete Application?", "This action cannot be undone.",
+      () => del(`/admin/responses/${btn.dataset.id}`).then(() => toast("Application deleted"))
     );
   });
   wirePagination();
@@ -1128,26 +1162,26 @@ async function renderProfile() {
   const role = normalizeRole(state.user.role);
   app.innerHTML = `
     <div class="view">
-      <h2 class="section-title">Профиль</h2>
+      <h2 class="section-title">Profile</h2>
       <div class="panel glass" style="max-width:480px;">
         <div class="field"><label>Email</label><input value="${escapeAttr(state.user.email)}" disabled></div>
-        <div class="field"><label>Роль</label><input value="${role}" disabled></div>
-        <div class="field"><label>Имя</label><input id="pName" value="${escapeAttr(state.user.name)}"></div>
-        <button class="btn btn-primary" id="saveName">Сохранить имя</button>
+        <div class="field"><label>Role</label><input value="${role}" disabled></div>
+        <div class="field"><label>Name</label><input id="pName" value="${escapeAttr(state.user.name)}"></div>
+        <button class="btn btn-primary" id="saveName">Save Name</button>
       </div>
 
       <div class="panel glass" style="max-width:480px;">
-        <h3 style="margin-top:0;">Сменить пароль</h3>
-        <div class="field"><label>Текущий пароль</label><input type="password" id="oldPass"></div>
-        <div class="field"><label>Новый пароль</label><input type="password" id="newPass"></div>
-        <div class="field"><label>Повторите новый пароль</label><input type="password" id="repeatPass"></div>
-        <button class="btn btn-primary" id="savePass">Сменить пароль</button>
+        <h3 style="margin-top:0;">Change Password</h3>
+        <div class="field"><label>Current Password</label><input type="password" id="oldPass"></div>
+        <div class="field"><label>New Password</label><input type="password" id="newPass"></div>
+        <div class="field"><label>Repeat New Password</label><input type="password" id="repeatPass"></div>
+        <button class="btn btn-primary" id="savePass">Change Password</button>
       </div>
 
       <div class="panel glass" style="max-width:480px;">
-        <h3 style="margin-top:0; color:var(--danger);">Опасная зона</h3>
-        <div class="field"><label>Пароль для подтверждения</label><input type="password" id="delPass"></div>
-        <button class="btn btn-danger" id="deleteAcc">Удалить аккаунт</button>
+        <h3 style="margin-top:0; color:var(--danger);">Danger Zone</h3>
+        <div class="field"><label>Password for Confirmation</label><input type="password" id="delPass"></div>
+        <button class="btn btn-danger" id="deleteAcc">Delete Account</button>
       </div>
     </div>`;
 
@@ -1155,7 +1189,7 @@ async function renderProfile() {
     try {
       await patch("/users/me/name", { new_name: document.getElementById("pName").value.trim() });
       await fetchMe();
-      toast("Имя обновлено");
+      toast("Name updated");
       renderShell();
     } catch (err) { reportError(err); }
   };
@@ -1167,7 +1201,7 @@ async function renderProfile() {
         new_password: document.getElementById("newPass").value,
         repeat_new_password: document.getElementById("repeatPass").value,
       });
-      toast("Пароль изменён");
+      toast("Password changed");
       ["oldPass", "newPass", "repeatPass"].forEach(id => document.getElementById(id).value = "");
     } catch (err) { reportError(err); }
   };
@@ -1175,7 +1209,7 @@ async function renderProfile() {
   document.getElementById("deleteAcc").onclick = async () => {
     try {
       await api("DELETE", "/users/me", { password: document.getElementById("delPass").value });
-      toast("Аккаунт удалён");
+      toast("Account deleted");
       state.user = null;
       setView("home");
     } catch (err) { reportError(err); }
@@ -1185,7 +1219,7 @@ async function renderProfile() {
 /* ====================== helpers ====================== */
 function formatMoney(v) {
   if (v === null || v === undefined) return "—";
-  return new Intl.NumberFormat("ru-RU").format(v) + " ₸";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
 }
 function escapeHtml(s) {
   if (s === null || s === undefined) return "";
@@ -1193,11 +1227,37 @@ function escapeHtml(s) {
 }
 function escapeAttr(s) { return escapeHtml(s); }
 
+/* ====================== theme ====================== */
+function applyTheme(theme) {
+  const isDark = theme === "dark";
+  document.documentElement.classList.toggle("dark-theme", isDark);
+  document.body.classList.toggle("dark-theme", isDark);
+  const toggle = document.getElementById("themeToggle");
+  if (toggle) {
+    toggle.querySelector(".theme-icon").innerHTML = isDark
+      ? `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path></svg>`
+      : "☾";
+    toggle.setAttribute("aria-label", isDark ? "Switch to light theme" : "Switch to dark theme");
+    toggle.title = isDark ? "Switch to light theme" : "Switch to dark theme";
+  }
+}
+
+function initTheme() {
+  const savedTheme = localStorage.getItem("jj-theme");
+  applyTheme(savedTheme === "dark" ? "dark" : "light");
+  document.getElementById("themeToggle").onclick = () => {
+    const nextTheme = document.body.classList.contains("dark-theme") ? "light" : "dark";
+    localStorage.setItem("jj-theme", nextTheme);
+    applyTheme(nextTheme);
+  };
+}
+
 /* ====================== boot ====================== */
 (async function init() {
+  initTheme();
   await fetchMe();
   if (state.user) {
-    setView(normalizeRole(state.user.role) === "tenant" ? "search-resumes" : "search-vacancies");
+    setView(defaultViewForRole(state.user.role));
   } else {
     setView("home");
   }
