@@ -3,13 +3,12 @@ from redis.asyncio import Redis
 import json
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.backend.models.user import User
+from app.backend.models.user import User, Role
 from app.backend.models.vacancy import Vacancy
 from app.backend.models.resume import Resume
 from app.backend.schemas.search import SearchResumes, SearchVacancies
 from app.backend.utils.search import meili
 
-apply_words_filter = []
 
 async def search_resumes(session: AsyncSession, data: SearchResumes, current_user: User, redis: Redis):
 

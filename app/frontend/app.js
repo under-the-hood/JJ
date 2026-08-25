@@ -849,7 +849,7 @@ const ADMIN_TABS = [
   { key: "responses", label: "Applications" },
 ];
 
-const adminState = { tab: "users", offset: 0, limit: 10 };
+const adminState = { tab: "users", offset: 0, limit: 10, query: "" };
 
 async function renderAdmin() {
   const app = document.getElementById("app");
@@ -866,6 +866,7 @@ async function renderAdmin() {
     btn.onclick = () => {
       adminState.tab = btn.dataset.tab;
       adminState.offset = 0;
+      adminState.query = "";
       renderAdmin();
     };
   });
@@ -906,6 +907,29 @@ function wirePagination() {
   const next = document.getElementById("pgNext");
   if (prev) prev.onclick = () => { adminState.offset = Math.max(0, adminState.offset - adminState.limit); loadAdminTab(); };
   if (next) next.onclick = () => { adminState.offset += adminState.limit; loadAdminTab(); };
+}
+
+function wireAdminSearch(host, placeholder) {
+  const form = host.querySelector("#adminSearchForm");
+  if (!form) return;
+  const input = form.querySelector("input");
+  form.onsubmit = (event) => {
+    event.preventDefault();
+    adminState.query = input.value.trim();
+    adminState.offset = 0;
+    loadAdminTab();
+  };
+}
+
+function adminSearchMarkup(placeholder) {
+  return `
+    <form id="adminSearchForm" class="panel glass" style="display:flex; gap:8px; align-items:end; margin-bottom:16px;">
+      <div class="field" style="flex:1; margin:0;">
+        <label>Search</label>
+        <input name="q" placeholder="${placeholder}" value="${escapeAttr(adminState.query)}">
+      </div>
+      <button class="btn btn-primary" type="submit">Search</button>
+    </form>`;
 }
 
 function confirmDelete(title, body, onConfirm) {
@@ -997,11 +1021,40 @@ function openAdminUserForm(user) {
 
 /* ---- admin: vacancies ---- */
 async function loadAdminVacancies(host) {
-  const res = await get("/admin/vacancies" + qs({ limit: adminState.limit, offset: adminState.offset }));
-  const vacancies = res.vacancies || [];
-  if (!vacancies.length) { host.innerHTML = `<div class="empty-state">No vacancies</div>`; return; }
+  let res;
+  let usedAdminFallback = false;
+  if (adminState.query) {
+    try {
+      res = await get("/search/vacancies" + qs({
+        title: adminState.query,
+        limit: adminState.limit,
+        offset: adminState.offset,
+      }));
+    } catch (err) {
+      if (err.status !== 403) throw err;
+      usedAdminFallback = true;
+      res = await get("/admin/vacancies" + qs({ limit: 100, offset: 0 }));
+    }
+  } else {
+    res = await get("/admin/vacancies" + qs({ limit: adminState.limit, offset: adminState.offset }));
+  }
+
+  let vacancies = res.vacancies || [];
+  if (usedAdminFallback) {
+    const query = adminState.query.toLowerCase();
+    vacancies = vacancies.filter(v =>
+      [v.title, v.city].some(value => String(value || "").toLowerCase().includes(query))
+    );
+  }
+  const total = usedAdminFallback ? vacancies.length : (res.total ?? vacancies.length);
+  if (!vacancies.length) {
+    host.innerHTML = adminSearchMarkup("Title, city or keywords") + `<div class="empty-state">No vacancies</div>`;
+    wireAdminSearch(host);
+    return;
+  }
 
   host.innerHTML = `
+    ${adminSearchMarkup("Title, city or keywords")}
     <div class="grid">
       ${vacancies.map(v => `
         <div class="card glass">
@@ -1017,7 +1070,7 @@ async function loadAdminVacancies(host) {
           </div>
         </div>`).join("")}
     </div>
-    ${paginationControls(res.total)}`;
+    ${paginationControls(total)}`;
 
   host.querySelectorAll("button[data-act]").forEach(btn => {
     const v = vacancies.find(x => String(x.id) === btn.dataset.id);
@@ -1029,6 +1082,7 @@ async function loadAdminVacancies(host) {
       );
     }
   });
+  wireAdminSearch(host);
   wirePagination();
 }
 
@@ -1059,11 +1113,42 @@ function openAdminVacancyForm(v) {
 
 /* ---- admin: resumes ---- */
 async function loadAdminResumes(host) {
-  const res = await get("/admin/resumes" + qs({ limit: adminState.limit, offset: adminState.offset }));
-  const resumes = res.resumes || [];
-  if (!resumes.length) { host.innerHTML = `<div class="empty-state">No resumes</div>`; return; }
+  let res;
+  let usedAdminFallback = false;
+  if (adminState.query) {
+    try {
+      res = await get("/search/resumes" + qs({
+        title: adminState.query,
+        limit: adminState.limit,
+        offset: adminState.offset,
+      }));
+    } catch (err) {
+      if (err.status !== 403) throw err;
+      usedAdminFallback = true;
+      res = await get("/admin/resumes" + qs({ limit: 100, offset: 0 }));
+    }
+  } else {
+    res = await get("/admin/resumes" + qs({ limit: adminState.limit, offset: adminState.offset }));
+  }
+
+  let resumes = res.resumes || [];
+  if (usedAdminFallback) {
+    const query = adminState.query.toLowerCase();
+    resumes = resumes.filter(r =>
+      [r.title, r.city, r.stack, r.about].some(value =>
+        String(value || "").toLowerCase().includes(query)
+      )
+    );
+  }
+  const total = usedAdminFallback ? resumes.length : (res.total ?? resumes.length);
+  if (!resumes.length) {
+    host.innerHTML = adminSearchMarkup("Title, city, stack or keywords") + `<div class="empty-state">No resumes</div>`;
+    wireAdminSearch(host);
+    return;
+  }
 
   host.innerHTML = `
+    ${adminSearchMarkup("Title, city, stack or keywords")}
     <div class="grid">
       ${resumes.map(r => `
         <div class="card glass">
@@ -1078,7 +1163,7 @@ async function loadAdminResumes(host) {
           </div>
         </div>`).join("")}
     </div>
-    ${paginationControls(res.total)}`;
+    ${paginationControls(total)}`;
 
   host.querySelectorAll("button[data-act]").forEach(btn => {
     const r = resumes.find(x => String(x.id) === btn.dataset.id);
@@ -1090,6 +1175,7 @@ async function loadAdminResumes(host) {
       );
     }
   });
+  wireAdminSearch(host);
   wirePagination();
 }
 

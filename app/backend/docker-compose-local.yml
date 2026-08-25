@@ -37,6 +37,8 @@ services:
       - "7700:7700"
     env_file:
       - ../../.dev.env
+    environment:
+      MEILI_HTTP_ADDR: 0.0.0.0:7700
 
 volumes:
   rabbitmq_data:

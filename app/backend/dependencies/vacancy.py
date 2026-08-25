@@ -6,12 +6,17 @@ from app.backend.database.database import session_dep
 from app.backend.models.vacancy import Vacancy
 from app.backend.dependencies.user import check_user
 from app.backend.dependencies.auth import get_user_token
+from app.backend.helpers.validator import validate_roles
 
 
 async def check_tenant(current_user: User = Depends(check_user)):
     if current_user.role != Role.tenant:
         raise HTTPException(status_code=403, detail='Only tenants can make/update vacancies')
 
+    return current_user
+
+async def check_tenant_or_admin(current_user: User = Depends(check_user)):
+    validate_roles(current_user, [Role.tenant, Role.admin], "Only tenants can search vacancies")
     return current_user
 
 async def check_vacancy(session: session_dep, vacancy_id: int):
