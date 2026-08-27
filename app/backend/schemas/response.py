@@ -2,6 +2,7 @@ from pydantic import Field, EmailStr
 from enum import Enum
 
 from app.backend.schemas.base import Base
+from app.backend.schemas.search import PaginationParams
 
 
 class Status(str, Enum):
@@ -42,3 +43,8 @@ class ResponseRead(Base):
 
 class SetStatus(Base):
     status: Status
+
+class SearchResponses(PaginationParams):
+    title: str | None = Field(default=None, min_length=2, max_length=100, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
+    stack: str | None = Field(default=None, min_length=2, max_length=100, pattern=r'^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;]+$')
+    status: ResponseStatus | None = Field(default=None)

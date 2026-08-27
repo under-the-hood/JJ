@@ -1,16 +1,12 @@
-from sqlalchemy import select, and_
 from redis.asyncio import Redis
 import json
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.backend.models.user import User, Role
-from app.backend.models.vacancy import Vacancy
-from app.backend.models.resume import Resume
+from app.backend.models.user import User
 from app.backend.schemas.search import SearchResumes, SearchVacancies
 from app.backend.utils.search import meili
 
 
-async def search_resumes(session: AsyncSession, data: SearchResumes, current_user: User, redis: Redis):
+async def search_resumes(data: SearchResumes, current_user: User, redis: Redis):
 
     version = await redis.get("resume_version") or "0"
     search_params = f"version:{version}_q:{data.title or ''}_city:{data.city or ''}_stack:{data.stack or ''}_limit:{data.limit}_offset:{data.offset}"
@@ -18,7 +14,8 @@ async def search_resumes(session: AsyncSession, data: SearchResumes, current_use
 
     cached_resumes = await redis.get(cache_key)
     if cached_resumes:
-        return json.loads(cached_resumes), "cache"
+        resumes = json.loads(cached_resumes)
+        return resumes, len(resumes), "cache"
 
     search_options = {
         "limit": data.limit,
@@ -40,12 +37,13 @@ async def search_resumes(session: AsyncSession, data: SearchResumes, current_use
     result = meili.index("resumes").search(query_text, search_options)
     resumes = result["hits"]
 
+    total = result.get("estimatedTotalHits", len(resumes))
     await redis.set(cache_key, json.dumps(resumes), ex=300)
 
-    return resumes, "db"
+    return resumes, total, "db"
 
 
-async def search_vacancies(session: AsyncSession, data: SearchVacancies, current_user: User, redis: Redis):
+async def search_vacancies(data: SearchVacancies, current_user: User, redis: Redis):
 
     version = await redis.get("vacancy_version") or "0"
     search_params = f"version:{version}_q:{data.title or ''}_city:{data.city or ''}_compensation:{data.compensation or ''}_limit:{data.limit}_offset:{data.offset}"
@@ -53,7 +51,8 @@ async def search_vacancies(session: AsyncSession, data: SearchVacancies, current
 
     cached_vacancies = await redis.get(cache_key)
     if cached_vacancies:
-        return json.loads(cached_vacancies), "cache"
+        vacancies = json.loads(cached_vacancies)
+        return vacancies, len(vacancies), "cache"
 
     search_options = {
         "limit": data.limit,
@@ -79,6 +78,7 @@ async def search_vacancies(session: AsyncSession, data: SearchVacancies, current
     result = meili.index("vacancies").search(query_text, search_options)
     vacancies = result["hits"]
 
+    total = result.get("estimatedTotalHits", len(vacancies))
     await redis.set(cache_key, json.dumps(vacancies), ex=300)
 
-    return vacancies, "db"
+    return vacancies, total, "db"

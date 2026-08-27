@@ -1,21 +1,14 @@
-from sqlalchemy import select, func
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.backend.models.response import Response
 from app.backend.models.user import User
+from app.backend.helpers.celery_tasks.search import delete_response_task
 
 
-async def get_responses(session: AsyncSession, admin: User, limit: int = 10, offset: int = 0):
-    
-    query = await session.execute(select(Response).limit(limit).offset(offset))    
-    responses = query.scalars().all()
-    
-    total = await session.scalar(select(func.count(Response.id)))
-
-    return total, responses
-
-
-async def delete_response(session: AsyncSession, current_response: Response, admin: User):
+async def delete_response(session: AsyncSession, current_response: Response, admin: User, redis: Redis):
+    delete_response_task.delay(current_response.id)
+    await redis.incr("response_version")
 
     await session.delete(current_response)
     await session.commit()

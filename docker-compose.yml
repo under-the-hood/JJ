@@ -63,6 +63,8 @@ services:
       - "15672:15672"
     env_file:
       - .prod.env
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
       test: rabbitmq-diagnostics -q check_running
       interval: 5s

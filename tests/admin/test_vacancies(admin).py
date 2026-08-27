@@ -1,21 +1,5 @@
 import pytest
 
-
-@pytest.mark.asyncio
-async def test_get_vacancies(admin_client, create_vacancy):
-
-    response = await admin_client.get("/admin/vacancies")
-
-    assert response.status_code == 200
-
-    data = response.json()
-
-    assert data["total"] > 0
-
-    vacancies = [vacancy["title"] for vacancy in data["vacancies"]]
-    assert "Python developer" in vacancies
-
-
 @pytest.mark.asyncio
 async def test_update_vacancy(admin_client, create_vacancy):
 

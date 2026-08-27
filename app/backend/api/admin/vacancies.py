@@ -13,13 +13,6 @@ import app.backend.services.admin.vacancies as admin_vacancies
 
 router = APIRouter(prefix="/vacancies", tags=['Admin | Vacancies'])
 
-@router.get('')
-async def get_vacancies(session: session_dep, limit: int = 10, offset: int = 0, admin: User = Depends(check_admin)):
-
-    total, vacancies = await admin_vacancies.get_vacancies(session=session, limit=limit, offset=offset, admin=admin)
-    return {"total": total, "vacancies": vacancies}
-
-
 @router.patch('/{vacancy_id}')
 async def update_vacancy(session: session_dep, data: EditVacancy, current_vacancy: Vacancy = Depends(check_vacancy), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 

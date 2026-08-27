@@ -3,7 +3,6 @@ from redis.asyncio import Redis
 
 from app.backend.dependencies.vacancy import check_tenant_or_admin
 from app.backend.dependencies.resume import check_applicant_or_admin
-from app.backend.database.database import session_dep
 from app.backend.models.user import User
 from app.backend.schemas.search import SearchResumes, SearchVacancies
 from app.backend.helpers.rate_limiter import rate_limiter_factory
@@ -16,14 +15,14 @@ router = APIRouter(prefix="/search", tags=['Search'])
 search_resumes_limiter = rate_limiter_factory("/search/resumes", 5, 60)
 
 @router.get('/resumes', dependencies=[Depends(search_resumes_limiter)])
-async def search_resumes(session: session_dep, current_user: User = Depends(check_applicant_or_admin), data: SearchResumes = Depends(), redis: Redis = Depends(get_redis)):
-    all_resumes, source  = await search_service.search_resumes(session=session, data=data, current_user=current_user, redis=redis)
-    return {"resumes": all_resumes, "source": source}
+async def search_resumes(data: SearchResumes = Depends(), current_user: User = Depends(check_tenant_or_admin), redis: Redis = Depends(get_redis)):
+    all_resumes, total, source  = await search_service.search_resumes(data=data, current_user=current_user, redis=redis)
+    return {"resumes": all_resumes, "total": total, "source": source}
 
 
 search_vacancy_limiter = rate_limiter_factory("/search/vacancies", 5, 60)
 
 @router.get('/vacancies', dependencies=[Depends(search_vacancy_limiter)])
-async def search_vacancies(session: session_dep, data: SearchVacancies = Depends(), current_user: User = Depends(check_tenant_or_admin), redis: Redis = Depends(get_redis)):
-    all_vacancies, source = await search_service.search_vacancies(session=session, data=data, current_user=current_user, redis=redis)
-    return {"vacancies": all_vacancies, "source": source}
+async def search_vacancies(data: SearchVacancies = Depends(), current_user: User = Depends(check_applicant_or_admin), redis: Redis = Depends(get_redis)):
+    all_vacancies, total, source = await search_service.search_vacancies(data=data, current_user=current_user, redis=redis)
+    return {"vacancies": all_vacancies, "total": total, "source": source}

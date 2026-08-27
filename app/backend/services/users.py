@@ -11,10 +11,11 @@ from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, 
 from app.backend.dependencies.redis_cache import get_cache_key
 from app.backend.models.mails import Mails
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
+from app.backend.helpers.celery_tasks.search import sync_user_task, delete_user_task
 from app.backend.helpers.cache import clear_user_profile_cache
 
 
-async def create_user(session: AsyncSession, data: CreateUser):
+async def create_user(session: AsyncSession, data: CreateUser, redis: Redis):
 
     new_user = User(
         email = data.email,
@@ -40,6 +41,9 @@ async def create_user(session: AsyncSession, data: CreateUser):
     session.add(mail)
     await session.commit()
     send_mail_task.delay(mail.id)
+    sync_user_task.delay(new_user.id)
+
+    await redis.incr("user_version")
 
     return new_user
 
@@ -92,7 +96,9 @@ async def update_password(session: AsyncSession, data: EditPassword, current_use
     await session.commit()
     await session.refresh(current_user)
     send_mail_task.delay(mail.id)
+    sync_user_task.delay(current_user.id)
 
+    await redis.incr("user_version")
     await clear_user_profile_cache(redis, current_user.id)
 
 
@@ -103,6 +109,7 @@ async def update_name(session: AsyncSession, data: EditName, current_user: User,
     await session.commit()
     await session.refresh(current_user)
 
+    await redis.incr("user_version")
     #Delete cache
     await clear_user_profile_cache(redis, current_user.id)
 
@@ -112,4 +119,6 @@ async def delete_user(session: AsyncSession, data: Delete, current_user: User, r
     await session.delete(current_user)
     await session.commit()
 
+    delete_user_task.delay(current_user.id)
+    await redis.incr("user_version")
     await clear_user_profile_cache(redis, current_user.id)

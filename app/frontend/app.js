@@ -849,7 +849,7 @@ const ADMIN_TABS = [
   { key: "responses", label: "Applications" },
 ];
 
-const adminState = { tab: "users", offset: 0, limit: 10, query: "" };
+const adminState = { tab: "users", offset: 0, limit: 10, query: "", status: "" };
 
 async function renderAdmin() {
   const app = document.getElementById("app");
@@ -867,6 +867,7 @@ async function renderAdmin() {
       adminState.tab = btn.dataset.tab;
       adminState.offset = 0;
       adminState.query = "";
+      adminState.status = "";
       renderAdmin();
     };
   });
@@ -1021,40 +1022,22 @@ function openAdminUserForm(user) {
 
 /* ---- admin: vacancies ---- */
 async function loadAdminVacancies(host) {
-  let res;
-  let usedAdminFallback = false;
-  if (adminState.query) {
-    try {
-      res = await get("/search/vacancies" + qs({
-        title: adminState.query,
-        limit: adminState.limit,
-        offset: adminState.offset,
-      }));
-    } catch (err) {
-      if (err.status !== 403) throw err;
-      usedAdminFallback = true;
-      res = await get("/admin/vacancies" + qs({ limit: 100, offset: 0 }));
-    }
-  } else {
-    res = await get("/admin/vacancies" + qs({ limit: adminState.limit, offset: adminState.offset }));
-  }
+  const res = await get("/search/vacancies" + qs({
+    title: adminState.query,
+    limit: adminState.limit,
+    offset: adminState.offset,
+  }));
 
-  let vacancies = res.vacancies || [];
-  if (usedAdminFallback) {
-    const query = adminState.query.toLowerCase();
-    vacancies = vacancies.filter(v =>
-      [v.title, v.city].some(value => String(value || "").toLowerCase().includes(query))
-    );
-  }
-  const total = usedAdminFallback ? vacancies.length : (res.total ?? vacancies.length);
+  const vacancies = res.vacancies || [];
+  const total = res.total ?? vacancies.length;
   if (!vacancies.length) {
-    host.innerHTML = adminSearchMarkup("Title, city or keywords") + `<div class="empty-state">No vacancies</div>`;
+    host.innerHTML = adminSearchMarkup("Title or city") + `<div class="empty-state">No vacancies</div>`;
     wireAdminSearch(host);
     return;
   }
 
   host.innerHTML = `
-    ${adminSearchMarkup("Title, city or keywords")}
+    ${adminSearchMarkup("Title or city")}
     <div class="grid">
       ${vacancies.map(v => `
         <div class="card glass">
@@ -1113,42 +1096,22 @@ function openAdminVacancyForm(v) {
 
 /* ---- admin: resumes ---- */
 async function loadAdminResumes(host) {
-  let res;
-  let usedAdminFallback = false;
-  if (adminState.query) {
-    try {
-      res = await get("/search/resumes" + qs({
-        title: adminState.query,
-        limit: adminState.limit,
-        offset: adminState.offset,
-      }));
-    } catch (err) {
-      if (err.status !== 403) throw err;
-      usedAdminFallback = true;
-      res = await get("/admin/resumes" + qs({ limit: 100, offset: 0 }));
-    }
-  } else {
-    res = await get("/admin/resumes" + qs({ limit: adminState.limit, offset: adminState.offset }));
-  }
+  const res = await get("/search/resumes" + qs({
+    title: adminState.query,
+    limit: adminState.limit,
+    offset: adminState.offset,
+  }));
 
-  let resumes = res.resumes || [];
-  if (usedAdminFallback) {
-    const query = adminState.query.toLowerCase();
-    resumes = resumes.filter(r =>
-      [r.title, r.city, r.stack, r.about].some(value =>
-        String(value || "").toLowerCase().includes(query)
-      )
-    );
-  }
-  const total = usedAdminFallback ? resumes.length : (res.total ?? resumes.length);
+  const resumes = res.resumes || [];
+  const total = res.total ?? resumes.length;
   if (!resumes.length) {
-    host.innerHTML = adminSearchMarkup("Title, city, stack or keywords") + `<div class="empty-state">No resumes</div>`;
+    host.innerHTML = adminSearchMarkup("Title, city or stack") + `<div class="empty-state">No resumes</div>`;
     wireAdminSearch(host);
     return;
   }
 
   host.innerHTML = `
-    ${adminSearchMarkup("Title, city, stack or keywords")}
+    ${adminSearchMarkup("Title, city or stack")}
     <div class="grid">
       ${resumes.map(r => `
         <div class="card glass">
@@ -1207,12 +1170,58 @@ function openAdminResumeForm(r) {
 }
 
 /* ---- admin: responses ---- */
+function responsesSearchMarkup() {
+  const statuses = Object.keys(STATUS_LABELS);
+  const activeStatus = adminState.status || statuses[0];
+  const statusOptions = statuses
+    .map(s => `<option value="${s}" ${activeStatus === s ? "selected" : ""}>${s === "send" ? "Send" : STATUS_LABELS[s]}</option>`)
+    .join("");
+  return `
+    <form id="adminSearchForm" class="panel glass" style="display:flex; gap:8px; align-items:end; margin-bottom:16px; flex-wrap:wrap;">
+      <div class="field" style="flex:1; min-width:180px; margin:0;">
+        <label>Search</label>
+        <input name="q" placeholder="Title or stack" value="${escapeAttr(adminState.query)}">
+      </div>
+      <div class="field" style="min-width:160px; margin:0;">
+        <label>Status</label>
+        <select name="status">
+          ${statusOptions}
+        </select>
+      </div>
+      <button class="btn btn-primary" type="submit">Search</button>
+    </form>`;
+}
+
+function wireResponsesSearch(host) {
+  const form = host.querySelector("#adminSearchForm");
+  if (!form) return;
+  form.onsubmit = (event) => {
+    event.preventDefault();
+    adminState.query = form.querySelector("input[name='q']").value.trim();
+    adminState.status = form.querySelector("select[name='status']").value;
+    adminState.offset = 0;
+    loadAdminTab();
+  };
+}
+
 async function loadAdminResponses(host) {
-  const res = await get("/admin/responses" + qs({ limit: adminState.limit, offset: adminState.offset }));
+  const res = await get("/responses" + qs({
+    title: adminState.query,
+    status: adminState.status || Object.keys(STATUS_LABELS)[0],
+    limit: adminState.limit,
+    offset: adminState.offset,
+  }));
   const responses = res.responses || [];
-  if (!responses.length) { host.innerHTML = `<div class="empty-state">No applications</div>`; return; }
+  const total = res.total ?? responses.length;
+
+  if (!responses.length) {
+    host.innerHTML = responsesSearchMarkup() + `<div class="empty-state">No applications</div>`;
+    wireResponsesSearch(host);
+    return;
+  }
 
   host.innerHTML = `
+    ${responsesSearchMarkup()}
     <div class="panel glass" style="padding:8px;">
       ${responses.map(r => `
         <div class="card" style="margin:8px 0;">
@@ -1225,13 +1234,16 @@ async function loadAdminResponses(host) {
             </div>
             <span class="status-badge status-${r.status}">${STATUS_LABELS[r.status] || r.status}</span>
           </div>
-          ${r.cover_letter ? `<div class="about">${escapeHtml(r.cover_letter)}</div>` : ""}
+          ${r.resume ? `<div class="meta" style="margin-top:10px;">
+            <span class="chip">📄 ${escapeHtml(r.resume.title)}</span>
+            ${r.resume.stack ? `<span class="chip">🛠 ${escapeHtml(r.resume.stack)}</span>` : ""}
+          </div>` : ""}
           <div style="margin-top:12px;">
             <button class="btn btn-danger btn-sm" data-act="delete" data-id="${r.id}">Delete</button>
           </div>
         </div>`).join("")}
     </div>
-    ${paginationControls(res.total)}`;
+    ${paginationControls(total)}`;
 
   host.querySelectorAll("button[data-act]").forEach(btn => {
     btn.onclick = () => confirmDelete(
@@ -1239,6 +1251,7 @@ async function loadAdminResponses(host) {
       () => del(`/admin/responses/${btn.dataset.id}`).then(() => toast("Application deleted"))
     );
   });
+  wireResponsesSearch(host);
   wirePagination();
 }
 

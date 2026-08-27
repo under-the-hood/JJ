@@ -13,13 +13,6 @@ import app.backend.services.admin.resumes as admin_resumes
 
 router = APIRouter(prefix="/resumes", tags=['Admin | Resumes'])
 
-@router.get('')
-async def get_resumes(session: session_dep, limit: int = 10, offset: int = 0, admin: User = Depends(check_admin)):
-
-    total, resumes = await admin_resumes.get_resumes(session=session, limit=limit, offset=offset, admin=admin)
-    return {"total": total, "resumes": resumes}
-
-
 @router.patch("/{resume_id}")
 async def update_resume(session: session_dep, data: EditResume, current_resume: Resume = Depends(check_resume), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
 

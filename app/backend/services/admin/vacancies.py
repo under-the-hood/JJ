@@ -7,16 +7,6 @@ from app.backend.models.vacancy import Vacancy
 from app.backend.schemas.vacancy import EditVacancy
 
 
-async def get_vacancies(session: AsyncSession, admin: User, limit: int = 10, offset: int = 0):
-    
-    query = await session.execute(select(Vacancy).limit(limit).offset(offset))
-    vacancies = query.scalars().all()
-
-    total = await session.scalar(select(func.count(Vacancy.id)))
-
-    return total, vacancies
-
-
 async def update_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: EditVacancy, admin: User, redis: Redis):
     
     if data.new_title:

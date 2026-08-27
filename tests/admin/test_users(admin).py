@@ -1,19 +1,9 @@
 import pytest
 
 
-@pytest.mark.asyncio
-async def test_get_users(admin_client):
-
-    response = await admin_client.get("/admin/users")
-
-    assert response.status_code == 200
-
-    data = response.json()
-
-    assert data["total"] > 0
-
-    emails = [user["email"] for user in data["users"]]
-    assert "admin_account@example.com" in emails
+@pytest.mark.anyio
+async def search_users():
+    ...
 
 
 @pytest.mark.asyncio

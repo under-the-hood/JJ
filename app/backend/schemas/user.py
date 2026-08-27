@@ -2,6 +2,7 @@ from pydantic import Field, EmailStr
 from enum import Enum
 
 from app.backend.schemas.base import Base
+from app.backend.schemas.search import PaginationParams
 
 
 class Role(str, Enum):
@@ -30,3 +31,8 @@ class EditName(Base):
 
 class Delete(Base):
     password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
+
+
+class SearchUsers(PaginationParams):
+    email: EmailStr | None = Field(default=None)
+    name: str | None = Field(default=None, min_length=3, max_length=15, pattern=r'^[a-zA-Zа-яА-Я\s]+$')

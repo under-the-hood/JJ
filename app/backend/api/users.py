@@ -17,9 +17,9 @@ router = APIRouter(prefix="/users", tags=["Users"])
 sign_up_limit = rate_limiter_factory_by_ip("/users/sign_up", 5, 60)
 
 @router.post('/sign_up', dependencies=[Depends(sign_up_limit)])
-async def sign_up(session: session_dep, data: CreateUser = Depends(validate_user_registration)):
+async def sign_up(session: session_dep, data: CreateUser = Depends(validate_user_registration), redis: Redis = Depends(get_redis)):
     
-    user = await user_service.create_user(session=session, data=data)
+    user = await user_service.create_user(session=session, data=data, redis=redis)
     return {'message': 'User was created', "user": user}
 
 

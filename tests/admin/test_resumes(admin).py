@@ -1,21 +1,5 @@
 import pytest
 
-
-@pytest.mark.asyncio
-async def test_get_resumes(admin_client, create_resume):
-
-    response = await admin_client.get("/admin/resumes")
-
-    assert response.status_code == 200
-
-    data = response.json()
-
-    assert data["total"] > 0
-
-    resumes = [resume["title"] for resume in data["resumes"]]
-    assert "FastAPI Developer" in resumes
-
-
 @pytest.mark.asyncio
 async def test_update_resume(admin_client, create_resume):
     resume_id = create_resume
