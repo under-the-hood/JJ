@@ -1,6 +1,8 @@
 import pytest
 
 from app.backend.models.mails import Mails
+from app.backend.utils.search import sync_response
+from app.backend.models.response import Response
 
 
 @pytest.mark.asyncio
@@ -36,6 +38,19 @@ async def test_get_responses(tenant_client, create_vacancy, send_response_to_vac
     first_response = data[0]
     assert "resume" in first_response
     assert "user" in first_response
+
+
+@pytest.mark.asyncio
+async def test_search_responses(admin_client, send_response_to_vacancy, test_session):
+    response_id = await send_response_to_vacancy()
+    response_to_vacancy = await test_session.get(Response, response_id)
+    sync_response(response_to_vacancy)
+
+    search_response = await admin_client.get("/responses")
+    assert search_response.status_code == 200
+
+    data = search_response.json()["responses"][0]["resume"]["title"]
+    assert "FastAPI Developer" in data
 
 
 @pytest.mark.asyncio

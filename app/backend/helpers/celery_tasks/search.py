@@ -31,7 +31,7 @@ def sync_resume_task(resume_id: int):
             
         return sync_resume(resume).status
 
-@celery.task(name="delete_resumes_task")
+@celery.task(name="delete_resume_task")
 def delete_resume_task(resume_id: int):
     delete_resume(resume_id)
     return "deleted"
