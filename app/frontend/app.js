@@ -114,6 +114,7 @@ const NAV_BY_ROLE = {
   applicant: [
     { key: "search-vacancies", label: "Search vacancies" },
     { key: "my-resumes", label: "My resumes" },
+    { key: "my-responses", label: "My applications" },
     { key: "mailbox", label: "Mail" },
     { key: "profile", label: "Profile" },
   ],
@@ -171,6 +172,7 @@ async function setView(view) {
       case "search-resumes": await renderSearchResumes(); break;
       case "my-vacancies": await renderMyVacancies(); break;
       case "my-resumes": await renderMyResumes(); break;
+      case "my-responses": await renderMyResponses(); break;
       case "mailbox": await renderMailbox(); break;
       case "admin": await renderAdmin(); break;
       case "profile": await renderProfile(); break;
@@ -600,7 +602,7 @@ async function openResponsesModal(vacancyId, title) {
               <span class="status-badge status-${r.status}">${STATUS_LABELS[r.status] || r.status}</span>
             </div>
             ${r.resume ? `<div class="meta" style="margin-top:10px;">
-              <span class="chip">📄 ${escapeHtml(r.resume.title)}</span>
+              <span class="chip">${escapeHtml(r.resume.title)}</span>
               ${r.resume.stack ? `<span class="chip">🛠 ${escapeHtml(r.resume.stack)}</span>` : ""}
             </div>` : ""}
             <div class="field" style="margin-top:14px; margin-bottom:0;">
@@ -752,6 +754,67 @@ async function deleteResume(id) {
       toast("Resume deleted");
       closeModal();
       await loadMyResumes();
+    } catch (err) { reportError(err); }
+  };
+}
+
+/* ====================== my responses (applicant) ====================== */
+async function renderMyResponses() {
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <div class="view">
+      <h2 class="section-title" style="margin-bottom:16px;">My Applications</h2>
+      <div id="list" class="grid"></div>
+    </div>`;
+  await loadMyResponses();
+}
+
+async function loadMyResponses() {
+  const list = document.getElementById("list");
+  list.innerHTML = `<div class="center" style="padding:40px; grid-column:1/-1;"><div class="spinner"></div></div>`;
+  try {
+    const responses = await get("/responses/my");
+    if (!responses.length) {
+      list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">You haven't applied to any vacancies yet</div>`;
+      return;
+    }
+    list.innerHTML = responses.map(r => `
+      <div class="card glass">
+        <div class="card-top">
+          <h3 style="margin:0;">${escapeHtml(r.vacancy.title)}</h3>
+          <span class="status-badge status-${r.status}">${STATUS_LABELS[r.status] || r.status}</span>
+        </div>
+        <div class="meta" style="margin-top:6px;"><span class="chip">${escapeHtml(r.resume.title)}</span></div>
+        ${r.cover_letter ? `<div class="about">${escapeHtml(r.cover_letter)}</div>` : ""}
+        <div style="display:flex; gap:8px; margin-top:16px;">
+          <button class="btn btn-danger btn-sm" data-act="delete" data-id="${r.id}">Delete</button>
+        </div>
+      </div>`).join("");
+
+    list.querySelectorAll("button[data-act='delete']").forEach(btn => {
+      btn.onclick = () => deleteMyResponse(btn.dataset.id);
+    });
+  } catch (err) {
+    reportError(err);
+    list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Failed to load</div>`;
+  }
+}
+
+async function deleteMyResponse(id) {
+  openModal(`
+    <h2>Delete Application?</h2>
+    <p class="muted">This action cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn btn-glass" id="cancelD">Cancel</button>
+      <button class="btn btn-danger" id="confirmD">Delete</button>
+    </div>`);
+  document.getElementById("cancelD").onclick = closeModal;
+  document.getElementById("confirmD").onclick = async () => {
+    try {
+      await del("/responses" + qs({ response_id: id }));
+      toast("Application deleted");
+      closeModal();
+      await loadMyResponses();
     } catch (err) { reportError(err); }
   };
 }

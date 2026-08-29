@@ -1,15 +1,13 @@
 from fastapi import APIRouter, Depends
-from redis.asyncio import Redis
 
 from app.backend.database.database import session_dep
-from app.backend.database.redis_database import get_redis
-from app.backend.dependencies.resume import check_applicant
-from app.backend.dependencies.vacancy import check_vacancy_owner, check_tenant, check_vacancy, check_tenant_or_admin
+from app.backend.dependencies.resume import check_applicant, check_resume_owner
+from app.backend.dependencies.vacancy import check_tenant, check_vacancy, check_tenant_or_admin
 from app.backend.dependencies.response import check_response_owner
 from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
 from app.backend.models.response import Response
-from app.backend.schemas.response import ResponseSchema, ResponseRead, SetStatus, SearchResponses
+from app.backend.schemas.response import ResponseSchema, ResponseRead,  SetStatus, SearchResponses
 from app.backend.helpers.rate_limiter import rate_limiter_factory
 import app.backend.services.responses as response_service
 
@@ -31,11 +29,18 @@ async def search_responses(session: session_dep, data: SearchResponses = Depends
     responses, total, source = await response_service.search_responses(session=session, data=data, current_user=current_user)
     return {"responses": responses, "total": total, "source": source}
 
-@router.get('/vacancies/{vacancy_id}', response_model=list[ResponseRead])
-async def get_responses(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy_owner), current_user: User = Depends(check_tenant)):
 
-    responses = await response_service.get_responses(session=session, current_vacancy=current_vacancy, current_user=current_user)
+@router.get('/my', response_model=list[ResponseRead])
+async def get_my_responses(session: session_dep, current_user: User = Depends(check_applicant)):
+
+    responses = await response_service.get_my_responses(session=session, current_user=current_user)
     return responses
+
+
+@router.delete("/{response_id}")
+async def delete_response(session: session_dep, current_response: Response = Depends(check_response_owner), current_user: User = Depends(check_applicant)):
+    await response_service.delete_response(session=session, current_response=current_response, current_user=current_user)
+    return {"message": "Response was deleted", "response_id": current_response.id}
 
 
 set_status_limiter = rate_limiter_factory("/responses/{response_id}/status", 5, 60)

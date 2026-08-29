@@ -23,23 +23,22 @@ async def test_send_response_to_vacancy(send_response_to_vacancy, send_mail, tes
 
 
 @pytest.mark.asyncio
-async def test_get_responses(tenant_client, create_vacancy, send_response_to_vacancy):
-
+async def test_get_responses(applicant_client, send_response_to_vacancy):
     await send_response_to_vacancy()
-    vacancy_id = create_vacancy
-
-    response = await tenant_client.get(f"/responses/vacancies/{vacancy_id}")
-
+    
+    response = await applicant_client.get("/responses/my")
     assert response.status_code == 200
 
-    data = response.json()
+    cover_letter = response.json()[0]["cover_letter"]
+    assert "Hello! I want work in your company!" in cover_letter
 
-    assert isinstance(data, list)
-    assert len(data) > 0
 
-    first_response = data[0]
-    assert "resume" in first_response
-    assert "user" in first_response
+@pytest.mark.asyncio
+async def test_delete_response(applicant_client, send_response_to_vacancy):
+    response_id = await send_response_to_vacancy()
+
+    response = await applicant_client.request("DELETE", f"/responses/{response_id}")
+    assert response.status_code == 200
 
 
 @pytest.mark.asyncio

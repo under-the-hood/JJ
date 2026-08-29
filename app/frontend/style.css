@@ -68,10 +68,13 @@ html { background: #ffffff; }
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+   position: relative;
+   z-index: 1;
+}
+.topbar-inner:has(.nav:empty) .brand {
    position: absolute;
    left: 50%;
    transform: translateX(-50%);
-   z-index: 1;
 }
 .theme-toggle {
   margin-left: auto;
@@ -230,6 +233,14 @@ input:focus, textarea:focus, select:focus {
 }
 textarea { resize: vertical; min-height: 80px; }
 .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+
+/* hide native up/down spinner arrows on number inputs */
+input[type="number"] { -moz-appearance: textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 
 /* ---------- buttons ---------- */
 .btn {

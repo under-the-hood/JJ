@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.backend.models.response import Response
 from app.backend.models.user import User, Role
+from app.backend.models.resume import Resume
 from app.backend.models.vacancy import Vacancy
 from app.backend.helpers.resume import check_resume_owner_helper
 from app.backend.helpers.vacancy import check_vacancy_owner_helper
@@ -12,7 +13,7 @@ from app.backend.models.mails import Mails
 from app.backend.schemas.response import ResponseSchema, SetStatus, SearchResponses
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
 from app.backend.helpers.validator import validate_user_role
-from app.backend.helpers.celery_tasks.search import sync_response_task
+from app.backend.helpers.celery_tasks.search import sync_response_task, delete_response_task
 from app.backend.utils.search import meili
 
 
@@ -90,14 +91,22 @@ async def search_responses(session: AsyncSession, data: SearchResponses, current
     return responses, total, "db"
 
 
-async def get_responses(session: AsyncSession, current_vacancy: Vacancy, current_user: User):
+async def get_my_responses(session: AsyncSession, current_user: User):
     
-    validate_user_role(current_user, Role.tenant, "You are not a tenant")
+    validate_user_role(current_user, Role.applicant, "You are not an applicant")
 
-    query = await session.execute(select(Response).options(joinedload(Response.resume), joinedload(Response.user)).where(Response.vacancy_id == current_vacancy.id))
+    query = await session.execute(select(Response).options(joinedload(Response.resume), joinedload(Response.vacancy)).where(Response.applicant_id == current_user.id))
     responses = query.scalars().all()
 
     return responses
+
+
+async def delete_response(session: AsyncSession, current_response: Response, current_user: User):
+    validate_user_role(current_user, Role.applicant, "Only applicant can delete their own responses")
+    
+    delete_response_task.delay(current_response.id)
+    await session.delete(current_response)
+    await session.commit()
 
 
 async def set_status(session: AsyncSession, data: SetStatus, current_response: Response, current_user: User):

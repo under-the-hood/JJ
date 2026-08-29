@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from redis.asyncio import Redis
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.backend.models.user import User
@@ -8,7 +8,7 @@ from app.backend.schemas.resume import CreateResume, EditResume
 from app.backend.helpers.celery_tasks.search import sync_resume_task, delete_resume_task
 
 
-async def create_resume(session: AsyncSession, data: CreateResume, current_user: User, redis: Redis):
+async def create_resume(session: AsyncSession, data: CreateResume, current_user: User):
 
     new_resume = Resume(**data.model_dump())
 
@@ -17,7 +17,6 @@ async def create_resume(session: AsyncSession, data: CreateResume, current_user:
     session.add(new_resume)
     await session.commit()
 
-    await redis.incr("resume_version")
     sync_resume_task.delay(new_resume.id)
 
     return new_resume
@@ -31,7 +30,7 @@ async def get_my_resumes(session: AsyncSession, current_user: User):
     return all_resumes
 
 
-async def update_resume(session: AsyncSession, current_resume: Resume, data: EditResume, redis: Redis):
+async def update_resume(session: AsyncSession, current_resume: Resume, data: EditResume):
 
     if data.new_title:
         current_resume.title = data.new_title
@@ -48,14 +47,11 @@ async def update_resume(session: AsyncSession, current_resume: Resume, data: Edi
     await session.commit()
     await session.refresh(current_resume)
 
-    await redis.incr("resume_version")
     sync_resume_task.delay(current_resume.id)
 
 
-async def delete_resume(session: AsyncSession, current_resume: Resume, redis: Redis):
+async def delete_resume(session: AsyncSession, current_resume: Resume):
     delete_resume_task.delay(current_resume.id)
 
     await session.delete(current_resume)
     await session.commit()
-
-    await redis.incr("resume_version")

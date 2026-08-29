@@ -24,7 +24,10 @@ class ApplicantRead(Base):
 class ResumeRead(Base):
     id: int
     title: str
-    stack: str
+
+class VacancyRead(Base):
+    id: int
+    title: str
 
 class ResponseStatus(str, Enum):
     send = "send"
@@ -38,8 +41,8 @@ class ResponseRead(Base):
     id: int
     cover_letter: str
     status: ResponseStatus
-    user: ApplicantRead
     resume: ResumeRead
+    vacancy: VacancyRead
 
 class SetStatus(Base):
     status: Status
