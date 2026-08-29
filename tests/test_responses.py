@@ -1,4 +1,6 @@
 import pytest
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
 from app.backend.models.mails import Mails
 from app.backend.utils.search import sync_response
@@ -43,7 +45,13 @@ async def test_get_responses(tenant_client, create_vacancy, send_response_to_vac
 @pytest.mark.asyncio
 async def test_search_responses(admin_client, send_response_to_vacancy, test_session):
     response_id = await send_response_to_vacancy()
-    response_to_vacancy = await test_session.get(Response, response_id)
+
+    query = await test_session.execute(
+        select(Response)
+        .options(joinedload(Response.resume))
+        .where(Response.id == response_id)
+    )
+    response_to_vacancy = query.scalar_one()
     sync_response(response_to_vacancy)
 
     search_response = await admin_client.get("/responses")

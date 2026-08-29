@@ -543,53 +543,117 @@ const STATUS_LABELS = {
   interview: "Interview", hired: "Hired", rejected: "Rejected",
 };
 
+function tenantResponsesSearchMarkup(respState) {
+  const statusOptions = ["", ...Object.keys(STATUS_LABELS).filter(s => s !== "send")]
+    .map(s => `<option value="${s}" ${respState.status === s ? "selected" : ""}>${s === "" ? "All statuses" : STATUS_LABELS[s]}</option>`)
+    .join("");
+  return `
+    <form id="respSearchForm" style="display:flex; gap:8px; align-items:end; margin-bottom:16px; flex-wrap:wrap;">
+      <div class="field" style="flex:1; min-width:160px; margin:0;">
+        <label>Search</label>
+        <input name="q" placeholder="Title" value="${escapeAttr(respState.query)}">
+      </div>
+      <div class="field" style="min-width:150px; margin:0;">
+        <label>Status</label>
+        <select name="status">${statusOptions}</select>
+      </div>
+      <button class="btn btn-primary" type="submit">Search</button>
+    </form>`;
+}
+
 async function openResponsesModal(vacancyId, title) {
+  const respState = { query: "", status: "", offset: 0, limit: 10 };
+
+  async function renderList() {
+    const host = document.getElementById("respList");
+    host.className = "center";
+    host.style.padding = "30px";
+    host.innerHTML = `<div class="spinner"></div>`;
+
+    try {
+      const res = await get("/responses" + qs({
+        vacancy_id: vacancyId,
+        title: respState.query,
+        status: respState.status,
+        limit: respState.limit,
+        offset: respState.offset,
+      }));
+      const responses = res.responses || [];
+      const total = res.total ?? responses.length;
+
+      host.className = "";
+      host.removeAttribute("style");
+
+      if (!responses.length) {
+        host.innerHTML = `<div class="empty-state">No applications</div>`;
+        return;
+      }
+
+      host.innerHTML = `
+        ${responses.map(r => `
+          <div class="card glass" style="margin-bottom:12px;">
+            <div class="card-top">
+              <div>
+                <h3 style="margin-bottom:2px;">Application #${r.id}</h3>
+                <div class="muted" style="font-size:13px;">Applicant ID: ${r.applicant_id}</div>
+              </div>
+              <span class="status-badge status-${r.status}">${STATUS_LABELS[r.status] || r.status}</span>
+            </div>
+            ${r.resume ? `<div class="meta" style="margin-top:10px;">
+              <span class="chip">📄 ${escapeHtml(r.resume.title)}</span>
+              ${r.resume.stack ? `<span class="chip">🛠 ${escapeHtml(r.resume.stack)}</span>` : ""}
+            </div>` : ""}
+            <div class="field" style="margin-top:14px; margin-bottom:0;">
+              <select data-resp="${r.id}">
+                ${Object.keys(STATUS_LABELS).filter(s => s !== "send").map(s =>
+                  `<option value="${s}" ${s === r.status ? "selected" : ""}>${STATUS_LABELS[s]}</option>`).join("")}
+              </select>
+            </div>
+          </div>`).join("")}
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+          <span class="muted" style="font-size:13px;">Total: ${total}</span>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-glass btn-sm" id="respPrev" ${respState.offset <= 0 ? "disabled" : ""}>Previous</button>
+            <button class="btn btn-glass btn-sm" id="respNext" ${respState.offset + respState.limit >= total ? "disabled" : ""}>Next</button>
+          </div>
+        </div>`;
+
+      host.querySelectorAll("select[data-resp]").forEach(sel => {
+        sel.onchange = async () => {
+          try {
+            await patch(`/responses/${sel.dataset.resp}/status`, { status: sel.value });
+            toast("Status updated");
+          } catch (err) { reportError(err); }
+        };
+      });
+
+      const prevBtn = document.getElementById("respPrev");
+      const nextBtn = document.getElementById("respNext");
+      if (prevBtn) prevBtn.onclick = () => { respState.offset = Math.max(0, respState.offset - respState.limit); renderList(); };
+      if (nextBtn) nextBtn.onclick = () => { respState.offset += respState.limit; renderList(); };
+    } catch (err) {
+      reportError(err);
+      host.innerHTML = `<div class="empty-state">Failed to load</div>`;
+    }
+  }
+
   openModal(`
     <h2>Applications: ${escapeHtml(title)}</h2>
+    ${tenantResponsesSearchMarkup(respState)}
     <div id="respList" class="center" style="padding:30px;"><div class="spinner"></div></div>
     <div class="modal-actions"><button class="btn btn-glass" id="closeR">Close</button></div>`);
+
   document.getElementById("closeR").onclick = closeModal;
+  document.getElementById("respSearchForm").onsubmit = (event) => {
+    event.preventDefault();
+    const form = event.target;
+    respState.query = form.querySelector("input[name='q']").value.trim();
+    respState.status = form.querySelector("select[name='status']").value;
+    respState.offset = 0;
+    renderList();
+  };
 
-  try {
-    const responses = await get(`/responses/vacancies/${vacancyId}`);
-    const host = document.getElementById("respList");
-    host.className = "";
-    host.removeAttribute("style");
-    if (!responses.length) {
-      host.innerHTML = `<div class="empty-state">No applications yet</div>`;
-      return;
-    }
-    host.innerHTML = responses.map(r => `
-      <div class="card glass" style="margin-bottom:12px;">
-        <div class="card-top">
-          <div>
-            <h3 style="margin-bottom:2px;">${escapeHtml(r.user.name)}</h3>
-            <div class="muted" style="font-size:13px;">${escapeHtml(r.user.email)}</div>
-          </div>
-          <span class="status-badge status-${r.status}">${STATUS_LABELS[r.status] || r.status}</span>
-        </div>
-        <div class="meta" style="margin-top:10px;"><span class="chip">📄 ${escapeHtml(r.resume.title)}</span></div>
-        ${r.cover_letter ? `<div class="about">${escapeHtml(r.cover_letter)}</div>` : ""}
-        <div class="field" style="margin-top:14px; margin-bottom:0;">
-          <select data-resp="${r.id}">
-            ${Object.keys(STATUS_LABELS).filter(s => s !== "send").map(s =>
-              `<option value="${s}" ${s === r.status ? "selected" : ""}>${STATUS_LABELS[s]}</option>`).join("")}
-          </select>
-        </div>
-      </div>`).join("");
-
-    host.querySelectorAll("select[data-resp]").forEach(sel => {
-      sel.onchange = async () => {
-        try {
-          await patch(`/responses/${sel.dataset.resp}/status`, { status: sel.value });
-          toast("Status updated");
-        } catch (err) { reportError(err); }
-      };
-    });
-  } catch (err) {
-    reportError(err);
-    document.getElementById("respList").innerHTML = `<div class="empty-state">Failed to load</div>`;
-  }
+  await renderList();
 }
 
 /* ====================== my resumes (applicant) ====================== */

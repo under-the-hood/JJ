@@ -20,15 +20,15 @@ router = APIRouter(prefix="/responses", tags=["Response"])
 response_limiter = rate_limiter_factory("/responses/vacancies/{vacancy_id}", 5, 60)
 
 @router.post('/vacancies/{vacancy_id}', dependencies=[Depends(response_limiter)])
-async def send_response_to_vacancy(session: session_dep, data: ResponseSchema, current_vacancy: Vacancy = Depends(check_vacancy), current_user: User = Depends(check_applicant), redis: Redis = Depends(get_redis)):
+async def send_response_to_vacancy(session: session_dep, data: ResponseSchema, current_vacancy: Vacancy = Depends(check_vacancy), current_user: User = Depends(check_applicant)):
 
-    response = await response_service.send_response_to_vacancy(session=session, data=data, current_vacancy=current_vacancy, current_user=current_user, redis=redis)
+    response = await response_service.send_response_to_vacancy(session=session, data=data, current_vacancy=current_vacancy, current_user=current_user)
     return {'message': 'You responded to vacancy', "response": response}
 
 
 @router.get("")
-async def search_responses(data: SearchResponses = Depends(), current_user: User = Depends(check_tenant_or_admin), redis: Redis = Depends(get_redis)):
-    responses, total, source = await response_service.search_responses(data=data, current_user=current_user, redis=redis)
+async def search_responses(session: session_dep, data: SearchResponses = Depends(), current_user: User = Depends(check_tenant_or_admin)):
+    responses, total, source = await response_service.search_responses(session=session, data=data, current_user=current_user)
     return {"responses": responses, "total": total, "source": source}
 
 @router.get('/vacancies/{vacancy_id}', response_model=list[ResponseRead])
@@ -41,7 +41,7 @@ async def get_responses(session: session_dep, current_vacancy: Vacancy = Depends
 set_status_limiter = rate_limiter_factory("/responses/{response_id}/status", 5, 60)
 
 @router.patch('/{response_id}/status', dependencies=[Depends(set_status_limiter)])
-async def set_status(session: session_dep, data: SetStatus, current_response: Response = Depends(check_response_owner), current_user: User = Depends(check_tenant), redis: Redis = Depends(get_redis)):
+async def set_status(session: session_dep, data: SetStatus, current_response: Response = Depends(check_response_owner), current_user: User = Depends(check_tenant)):
     
-    await response_service.set_status(session=session, data=data, current_response=current_response, current_user=current_user, redis=redis)
+    await response_service.set_status(session=session, data=data, current_response=current_response, current_user=current_user)
     return {'message': 'Status was updated', "response_id": current_response.id}

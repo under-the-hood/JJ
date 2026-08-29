@@ -35,7 +35,7 @@ def init_meilisearch():
     users_index.update_searchable_attributes(["email", "name"])
 
     responses_index.update_searchable_attributes(["resume.title", "resume.stack"])
-    responses_index.update_filterable_attributes(["status"])
+    responses_index.update_filterable_attributes(["status", "vacancy_id"])
 
 
 def sync_vacancy(vacancy: Vacancy):

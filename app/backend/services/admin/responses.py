@@ -8,7 +8,6 @@ from app.backend.helpers.celery_tasks.search import delete_response_task
 
 async def delete_response(session: AsyncSession, current_response: Response, admin: User, redis: Redis):
     delete_response_task.delay(current_response.id)
-    await redis.incr("response_version")
 
     await session.delete(current_response)
     await session.commit()

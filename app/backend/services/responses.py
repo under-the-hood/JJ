@@ -1,14 +1,13 @@
-import json
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
-from redis.asyncio import Redis
 
 from app.backend.models.response import Response
 from app.backend.models.user import User, Role
 from app.backend.models.vacancy import Vacancy
 from app.backend.helpers.resume import check_resume_owner_helper
+from app.backend.helpers.vacancy import check_vacancy_owner_helper
 from app.backend.models.mails import Mails
 from app.backend.schemas.response import ResponseSchema, SetStatus, SearchResponses
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
@@ -17,7 +16,7 @@ from app.backend.helpers.celery_tasks.search import sync_response_task
 from app.backend.utils.search import meili
 
 
-async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, current_vacancy: Vacancy, current_user: User, redis: Redis):
+async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, current_vacancy: Vacancy, current_user: User):
 
     validate_user_role(current_user, Role.applicant, "Only applicant can apply to vacancy")
 
@@ -47,19 +46,21 @@ async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, 
     sync_response_task.delay(response.id)
     send_mail_task.delay(mail.id)
 
-    await redis.incr("response_version")
     return response
 
 
-async def search_responses(data: SearchResponses, current_user: User, redis: Redis):
-    version = await redis.get("response_version") or "0"
-    search_params = f"version:{version}_q:{data.title or ''}_stack:{data.stack or ''}_status:{data.status or ''}_limit:{data.limit}_offset:{data.offset}"
-    cache_key = f"search:responses:{search_params}"
-
-    cached_responses = await redis.get(cache_key)
-    if cached_responses:
-        responses = json.loads(cached_responses)
-        return responses, len(responses), "cache"
+async def search_responses(session: AsyncSession, data: SearchResponses, current_user: User):
+    filters = []
+    
+    if current_user.role != Role.admin:
+        if not data.vacancy_id:
+            raise HTTPException(status_code=400, detail="Tenant must specify vacancy_id for searching responses")
+        
+        await check_vacancy_owner_helper(session, data.vacancy_id, current_user.id)
+        filters.append(f"vacancy_id = {data.vacancy_id}")
+    else:
+        if data.vacancy_id:
+            filters.append(f"vacancy_id = {data.vacancy_id}")
 
     search_options = {
         "limit": data.limit,
@@ -73,7 +74,6 @@ async def search_responses(data: SearchResponses, current_user: User, redis: Red
     if data.stack:
         query_parts.append(data.stack.strip())
 
-    filters = []
     if data.status:
         filters.append(f"status = '{data.status}'")
 
@@ -86,7 +86,6 @@ async def search_responses(data: SearchResponses, current_user: User, redis: Red
     responses = result["hits"]
 
     total = result.get("estimatedTotalHits", len(responses))
-    await redis.set(cache_key, json.dumps(responses), ex=300)
 
     return responses, total, "db"
 
@@ -101,7 +100,7 @@ async def get_responses(session: AsyncSession, current_vacancy: Vacancy, current
     return responses
 
 
-async def set_status(session: AsyncSession, data: SetStatus, current_response: Response, current_user: User, redis: Redis):
+async def set_status(session: AsyncSession, data: SetStatus, current_response: Response, current_user: User):
     
     validate_user_role(current_user, Role.tenant, "Only tenants can set status to responses")
     current_response.status = data.status
@@ -119,7 +118,5 @@ async def set_status(session: AsyncSession, data: SetStatus, current_response: R
 
     sync_response_task.delay(current_response.id)
     send_mail_task.delay(mail.id)
-
-    await redis.incr("response_version")
 
     return current_response

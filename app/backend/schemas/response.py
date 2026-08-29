@@ -45,6 +45,7 @@ class SetStatus(Base):
     status: Status
 
 class SearchResponses(PaginationParams):
+    vacancy_id: int | None = Field(default=None)
     title: str | None = Field(default=None, min_length=2, max_length=100, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
     stack: str | None = Field(default=None, min_length=2, max_length=100, pattern=r'^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;]+$')
     status: ResponseStatus | None = Field(default=None)
