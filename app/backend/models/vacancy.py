@@ -14,6 +14,7 @@ class Vacancy(Base):
 
     user = relationship('User', back_populates='vacancy')
     responses = relationship('Response', back_populates='vacancy')
+    invitations = relationship("Invitation", back_populates="vacancy")
 
     def vacancies_to_dict(self):
         return {

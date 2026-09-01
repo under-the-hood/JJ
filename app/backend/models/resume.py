@@ -14,9 +14,9 @@ class Resume(Base):
     stack: Mapped[str]
     city: Mapped[str]
 
-
     user = relationship('User', back_populates='resume')
     responses = relationship('Response', back_populates='resume')
+    invitations = relationship("Invitation", back_populates="resume")
 
     def resumes_to_dict(self):
         return {

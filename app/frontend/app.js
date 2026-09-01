@@ -423,7 +423,11 @@ async function renderSearchResumes() {
           </div>
           ${r.stack ? `<div class="meta" style="margin-top:8px;"><span class="chip">🛠 ${escapeHtml(r.stack)}</span></div>` : ""}
           ${r.about ? `<div class="about">${escapeHtml(r.about)}</div>` : ""}
+          <button class="btn btn-primary btn-sm" style="margin-top:16px;" data-id="${r.id}" data-title="${escapeAttr(r.title)}">Invite</button>
         </div>`).join("");
+      results.querySelectorAll("button[data-id]").forEach(btn => {
+        btn.onclick = () => openInviteModal(btn.dataset.id, btn.dataset.title);
+      });
     } catch (err) {
       reportError(err);
       results.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Failed to load</div>`;
@@ -435,6 +439,50 @@ async function renderSearchResumes() {
     .forEach(el => el.addEventListener("keydown", e => { if (e.key === "Enter") runSearch(); }));
 
   await runSearch();
+}
+
+async function openInviteModal(resumeId, resumeTitle) {
+  let myVacancies = [];
+  try {
+    const res = await get("/vacancies/my");
+    myVacancies = res.vacancies || [];
+  } catch (err) { reportError(err); return; }
+
+  if (!myVacancies.length) {
+    openModal(`
+      <h2>Vacancy Required</h2>
+      <p class="muted">To invite, first create a vacancy in the "My vacancies" section.</p>
+      <div class="modal-actions"><button class="btn btn-glass" id="closeM">Close</button></div>`);
+    document.getElementById("closeM").onclick = closeModal;
+    return;
+  }
+
+  openModal(`
+    <h2>Invite '${escapeHtml(resumeTitle)}' to interview</h2>
+    <div class="field"><label>Vacancy</label>
+      <select id="vacancySelect">
+        ${myVacancies.map(v => `<option value="${v.id}">${escapeHtml(v.title)}</option>`).join("")}
+      </select>
+    </div>
+    <div class="field"><label>Cover Letter</label>
+      <textarea id="coverLetter" maxlength="100" placeholder="A few words about the invitation (up to 100 characters)"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-glass" id="cancelInvite">Cancel</button>
+      <button class="btn btn-primary" id="submitInvite">Submit</button>
+    </div>`);
+
+  document.getElementById("cancelInvite").onclick = closeModal;
+  document.getElementById("submitInvite").onclick = async () => {
+    try {
+      await post(`/invitation/interview/${resumeId}`, {
+        vacancy_id: parseInt(document.getElementById("vacancySelect").value, 10),
+        cover_letter: document.getElementById("coverLetter").value.trim(),
+      });
+      toast("Invitation sent!");
+      closeModal();
+    } catch (err) { reportError(err); }
+  };
 }
 
 /* ====================== my vacancies (tenant) ====================== */

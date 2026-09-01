@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.backend.models.response import Response
 from app.backend.models.user import User, Role
-from app.backend.models.resume import Resume
 from app.backend.models.vacancy import Vacancy
 from app.backend.helpers.resume import check_resume_owner_helper
 from app.backend.helpers.vacancy import check_vacancy_owner_helper
@@ -18,9 +17,6 @@ from app.backend.utils.search import meili
 
 
 async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, current_vacancy: Vacancy, current_user: User):
-
-    validate_user_role(current_user, Role.applicant, "Only applicant can apply to vacancy")
-
     query_check = await session.execute(select(Response).where(Response.resume_id == data.resume_id, Response.vacancy_id == current_vacancy.id))
 
     if query_check.scalar_one_or_none():

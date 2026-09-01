@@ -22,3 +22,5 @@ class User(Base):
     resume = relationship('Resume', back_populates='user', cascade="all, delete-orphan", passive_deletes=True)
     responses = relationship('Response', back_populates='user', cascade="all, delete-orphan", passive_deletes=True)
     mails = relationship("Mails", back_populates="user", cascade="all, delete-orphan", passive_deletes=True)
+    sent_invitations = relationship("Invitation", foreign_keys="[Invitation.tenant_id]", back_populates="tenant", cascade="all, delete-orphan", passive_deletes=True)
+    received_invitations = relationship("Invitation", foreign_keys="[Invitation.applicant_id]", back_populates="applicant", cascade="all, delete-orphan", passive_deletes=True)

@@ -20,6 +20,7 @@ from app.backend.models.response import Response
 from app.backend.models.resume import Resume
 from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
+from app.backend.models.invitations import Invitation
 from app.backend.config import settings
 
 config.set_main_option('sqlalchemy.url', f"{settings.database}?async_fallback=True")

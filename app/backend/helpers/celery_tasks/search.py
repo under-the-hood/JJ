@@ -5,6 +5,7 @@ from app.backend.models.response import Response
 from app.backend.database.database import celery_session
 from app.backend.utils.search import sync_vacancy, sync_resume, sync_user, sync_response, delete_vacancy, delete_resume, delete_user, delete_response
 from app.backend.models.user import User
+from app.backend.models.invitations import Invitation
 
 
 @celery.task(name="sync_vacancy_task")

@@ -9,8 +9,8 @@ from app.backend.models.response import Response
 
 @pytest.mark.asyncio
 async def test_send_response_to_vacancy(send_response_to_vacancy, send_mail, test_session):
-    response = await send_response_to_vacancy()
-    assert response is not None
+    response_id = await send_response_to_vacancy()
+    assert response_id is not None
 
     send_mail.assert_called_once()
 

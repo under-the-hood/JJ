@@ -14,7 +14,6 @@ import app.backend.services.responses as response_service
 
 router = APIRouter(prefix="/responses", tags=["Response"])
 
-
 response_limiter = rate_limiter_factory("/responses/vacancies/{vacancy_id}", 5, 60)
 
 @router.post('/vacancies/{vacancy_id}', dependencies=[Depends(response_limiter)])
