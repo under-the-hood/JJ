@@ -9,9 +9,11 @@ def validate_admin_action(current_user: User, current_admin: User):
 
     return current_admin
 
+
 def validate_user_role(current_user: User, role: Role, error_msg: str):
     if current_user.role != role:
         raise HTTPException(status_code=403, detail=error_msg)
+
 
 def validate_roles(current_user: User, roles: list[Role], error_msg: str):
     if current_user.role not in roles:

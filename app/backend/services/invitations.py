@@ -6,10 +6,10 @@ from app.backend.models.user import User
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
 from app.backend.schemas.invitations import InvitationSchema
 from app.backend.models.invitations import Invitation
-from app.backend.helpers.vacancy import check_vacancy_owner_helper
+from app.backend.helpers.vacancy import check_vacancy_owner
 from app.backend.models.mails import Mails
 from app.backend.models.resume import Resume
-
+from app.backend.helpers.vacancy import get_vacancy
 
 
 async def send_interview_invitation(session: AsyncSession, data: InvitationSchema, current_resume: Resume, current_user: User):
@@ -19,7 +19,7 @@ async def send_interview_invitation(session: AsyncSession, data: InvitationSchem
 
     applicant_id = current_resume.applicant_id
     
-    await check_vacancy_owner_helper(session, data.vacancy_id, current_user.id)
+    current_vacancy = await check_vacancy_owner(session, data.vacancy_id, current_user.id)
     
     invitation = Invitation(**data.model_dump())
     invitation.applicant_id = applicant_id
@@ -30,7 +30,7 @@ async def send_interview_invitation(session: AsyncSession, data: InvitationSchem
 
     mail = Mails(
         recipient_id = applicant_id,
-        subject = "You have been invited to an interview!",
+        subject = f"You have been invited to an interview!\nTenant {current_user.name} invited you to an interview\nVacancy:\ntitle: {current_vacancy.title}\ncompenstation: {current_vacancy.compensation}",
         body = data.cover_letter
     )
 

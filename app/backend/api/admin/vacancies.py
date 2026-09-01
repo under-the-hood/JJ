@@ -14,14 +14,12 @@ import app.backend.services.admin.vacancies as admin_vacancies
 router = APIRouter(prefix="/vacancies", tags=['Admin | Vacancies'])
 
 @router.patch('/{vacancy_id}')
-async def update_vacancy(session: session_dep, data: EditVacancy, current_vacancy: Vacancy = Depends(check_vacancy), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
-
-    await admin_vacancies.update_vacancy(session=session, data=data, current_vacancy=current_vacancy, admin=admin, redis=redis)
+async def update_vacancy(session: session_dep, data: EditVacancy, current_vacancy: Vacancy = Depends(check_vacancy), admin: User = Depends(check_admin)):
+    await admin_vacancies.update_vacancy(session=session, data=data, current_vacancy=current_vacancy, admin=admin)
     return {'message': 'Vacancy was edited', "vacancy": current_vacancy}
 
 
 @router.delete('/{vacancy_id}')
-async def delete_vacancy(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
-
-    await admin_vacancies.delete_vacancy(session=session, current_vacancy=current_vacancy, admin=admin, redis=redis)
+async def delete_vacancy(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy), admin: User = Depends(check_admin)):
+    await admin_vacancies.delete_vacancy(session=session, current_vacancy=current_vacancy, admin=admin)
     return {'message': 'Vacancy was deleted', "vacancy_id": current_vacancy.id}

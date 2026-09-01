@@ -1,5 +1,3 @@
-from sqlalchemy import select, func
-from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.backend.models.user import User
@@ -7,8 +5,7 @@ from app.backend.models.resume import Resume
 from app.backend.schemas.resume import EditResume
 
 
-async def update_resume(session: AsyncSession, current_resume: Resume, data: EditResume, admin: User, redis: Redis):
-    
+async def update_resume(session: AsyncSession, current_resume: Resume, data: EditResume, admin: User):
     if data.new_title:
         current_resume.title = data.new_title
 
@@ -24,12 +21,7 @@ async def update_resume(session: AsyncSession, current_resume: Resume, data: Edi
     await session.commit()
     await session.refresh(current_resume)
 
-    await redis.incr("resume_version")
 
-
-async def delete_resume(session: AsyncSession, current_resume: Resume, admin: User, redis: Redis):
-
+async def delete_resume(session: AsyncSession, current_resume: Resume, admin: User):
     await session.delete(current_resume)
     await session.commit()
-
-    await redis.incr("resume_version")

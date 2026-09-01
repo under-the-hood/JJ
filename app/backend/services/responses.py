@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.backend.models.response import Response
 from app.backend.models.user import User, Role
 from app.backend.models.vacancy import Vacancy
-from app.backend.helpers.resume import check_resume_owner_helper
-from app.backend.helpers.vacancy import check_vacancy_owner_helper
+from app.backend.helpers.resume import check_resume_owner
+from app.backend.helpers.vacancy import check_vacancy_owner
 from app.backend.models.mails import Mails
 from app.backend.schemas.response import ResponseSchema, SetStatus, SearchResponses
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
@@ -26,7 +26,7 @@ async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, 
     response.applicant_id = current_user.id
     response.vacancy_id = current_vacancy.id
 
-    current_resume = await check_resume_owner_helper(session, data.resume_id, current_user.id)
+    current_resume = await check_resume_owner(session, data.resume_id, current_user.id)
     
     session.add(response)
 
@@ -53,7 +53,7 @@ async def search_responses(session: AsyncSession, data: SearchResponses, current
         if not data.vacancy_id:
             raise HTTPException(status_code=400, detail="Tenant must specify vacancy_id for searching responses")
         
-        await check_vacancy_owner_helper(session, data.vacancy_id, current_user.id)
+        await check_vacancy_owner(session, data.vacancy_id, current_user.id)
         filters.append(f"vacancy_id = {data.vacancy_id}")
     else:
         if data.vacancy_id:

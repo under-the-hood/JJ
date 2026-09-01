@@ -13,9 +13,9 @@ from app.backend.schemas.user import SearchUsers
 router = APIRouter(prefix="/users", tags=['Admin | Users'])
 
 @router.get("")
-async def search_users(data: SearchUsers = Depends(), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
-    users, total, source = await admin_users.search_users(data=data, admin=admin, redis=redis)
-    return {"users": users, "total": total, "source": source}
+async def search_users(data: SearchUsers = Depends(), admin: User = Depends(check_admin)):
+    users, total = await admin_users.search_users(data=data, admin=admin)
+    return {"users": users, "total": total}
 
 
 @router.patch("/{user_id}")

@@ -1,5 +1,3 @@
-from sqlalchemy import select, func
-from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.backend.models.user import User
@@ -7,8 +5,7 @@ from app.backend.models.vacancy import Vacancy
 from app.backend.schemas.vacancy import EditVacancy
 
 
-async def update_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: EditVacancy, admin: User, redis: Redis):
-    
+async def update_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: EditVacancy, admin: User):
     if data.new_title:
         current_vacancy.title = data.new_title
 
@@ -20,13 +17,8 @@ async def update_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: 
 
     await session.commit()
     await session.refresh(current_vacancy)
-    
-    await redis.incr("vacancy_version")
 
 
-async def delete_vacancy(session: AsyncSession, current_vacancy: Vacancy, admin: User, redis: Redis):
-    
+async def delete_vacancy(session: AsyncSession, current_vacancy: Vacancy, admin: User):
     await session.delete(current_vacancy)
     await session.commit()
-    
-    await redis.incr("vacancy_version")

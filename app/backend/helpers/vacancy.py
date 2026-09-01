@@ -15,7 +15,7 @@ async def get_vacancy(session: AsyncSession, vacancy_id: int):
     return current_vacancy
 
 
-async def check_vacancy_owner_helper(session: AsyncSession, vacancy_id: int, user_id: int):
+async def check_vacancy_owner(session: AsyncSession, vacancy_id: int, user_id: int):
     current_vacancy = await get_vacancy(session, vacancy_id)
 
     if user_id != current_vacancy.tenant_id:

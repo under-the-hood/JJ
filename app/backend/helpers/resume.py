@@ -16,7 +16,7 @@ async def get_resume(session: AsyncSession, resume_id: int):
     return current_resume
 
 
-async def check_resume_owner_helper(session: AsyncSession, resume_id: int, user_id: int):
+async def check_resume_owner(session: AsyncSession, resume_id: int, user_id: int):
     current_resume = await get_resume(session, resume_id)
 
     if user_id != current_resume.applicant_id:

@@ -43,8 +43,6 @@ async def create_user(session: AsyncSession, data: CreateUser, redis: Redis):
     send_mail_task.delay(mail.id)
     sync_user_task.delay(new_user.id)
 
-    await redis.incr("user_version")
-
     return new_user
 
 
@@ -83,7 +81,6 @@ async def get_info(current_user: User, redis: Redis):
 
 
 async def update_password(session: AsyncSession, data: EditPassword, current_user: User, redis: Redis):
-
     current_user.password = hashing_password(data.new_password)
 
     mail = Mails(
@@ -98,8 +95,7 @@ async def update_password(session: AsyncSession, data: EditPassword, current_use
     send_mail_task.delay(mail.id)
     sync_user_task.delay(current_user.id)
 
-    await redis.incr("user_version")
-    await clear_user_profile_cache(redis, current_user.id)
+    clear_user_profile_cache(redis, current_user.id)
 
 
 async def update_name(session: AsyncSession, data: EditName, current_user: User, redis: Redis):
@@ -109,9 +105,7 @@ async def update_name(session: AsyncSession, data: EditName, current_user: User,
     await session.commit()
     await session.refresh(current_user)
 
-    await redis.incr("user_version")
-    #Delete cache
-    await clear_user_profile_cache(redis, current_user.id)
+    clear_user_profile_cache(redis, current_user.id)
 
 
 async def delete_user(session: AsyncSession, data: Delete, current_user: User, redis: Redis):
@@ -120,5 +114,4 @@ async def delete_user(session: AsyncSession, data: Delete, current_user: User, r
     await session.commit()
 
     delete_user_task.delay(current_user.id)
-    await redis.incr("user_version")
     await clear_user_profile_cache(redis, current_user.id)
