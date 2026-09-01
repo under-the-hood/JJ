@@ -25,8 +25,8 @@ async def send_response_to_vacancy(session: session_dep, data: ResponseSchema, c
 
 @router.get("")
 async def search_responses(session: session_dep, data: SearchResponses = Depends(), current_user: User = Depends(check_tenant_or_admin)):
-    responses, total, source = await response_service.search_responses(session=session, data=data, current_user=current_user)
-    return {"responses": responses, "total": total, "source": source}
+    responses, total = await response_service.search_responses(session=session, data=data, current_user=current_user)
+    return {"responses": responses, "total": total}
 
 
 @router.get('/my', response_model=list[ResponseRead])

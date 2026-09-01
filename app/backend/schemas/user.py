@@ -15,7 +15,7 @@ class CreateUser(Base):
     password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
     repeat_password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
     role: Role
-    name: str = Field(min_length=3, max_length=15, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
+    name: str = Field(min_length=3, max_length=15, pattern=r"^[a-zA-Zа-яА-Я\s\-']+$")
 
 class Login(Base):
     email: EmailStr
@@ -27,7 +27,7 @@ class EditPassword(Base):
     repeat_new_password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
 
 class EditName(Base):
-    new_name: str = Field(min_length=3, max_length=15, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
+    new_name: str = Field(min_length=3, max_length=15, pattern=r"^[a-zA-Zа-яА-Я\s\-']+$")
 
 class Delete(Base):
     password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
@@ -35,4 +35,4 @@ class Delete(Base):
 
 class SearchUsers(PaginationParams):
     email: EmailStr | None = Field(default=None)
-    name: str | None = Field(default=None, min_length=3, max_length=15, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
+    name: str | None = Field(default=None, min_length=3, max_length=15, pattern=r"^[a-zA-Zа-яА-Я\s\-']+$")

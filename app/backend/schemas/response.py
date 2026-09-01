@@ -14,7 +14,7 @@ class Status(str, Enum):
 
 class ResponseSchema(Base):
     resume_id: int
-    cover_letter: str = Field(min_length=0, max_length=100, pattern=r'^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;]+$')
+    cover_letter: str = Field(min_length=0, max_length=100, pattern=r"^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;'@\+#/]+$")
 
 class ApplicantRead(Base):
     id: int
@@ -49,6 +49,6 @@ class SetStatus(Base):
 
 class SearchResponses(PaginationParams):
     vacancy_id: int | None = Field(default=None)
-    title: str | None = Field(default=None, min_length=2, max_length=100, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
-    stack: str | None = Field(default=None, min_length=2, max_length=100, pattern=r'^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;]+$')
+    title: str | None = Field(default=None, min_length=2, max_length=100, pattern=r"^[a-zA-Zа-яА-Я0-9\s\.,\-\+#&\(\)/]+$")
+    stack: str | None = Field(default=None, min_length=2, max_length=100, pattern=r"^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;'@\+#/]+$")
     status: ResponseStatus | None = Field(default=None)

@@ -84,7 +84,7 @@ async def search_responses(session: AsyncSession, data: SearchResponses, current
 
     total = result.get("estimatedTotalHits", len(responses))
 
-    return responses, total, "db"
+    return responses, total
 
 
 async def get_my_responses(session: AsyncSession, current_user: User):

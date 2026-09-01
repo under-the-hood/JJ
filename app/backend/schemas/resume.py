@@ -4,13 +4,13 @@ from app.backend.schemas.base import Base
 
 
 class CreateResume(Base):
-    title: str = Field(min_length=3, max_length=30, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
+    title: str = Field(min_length=3, max_length=30, pattern=r"^[a-zA-Zа-яА-Я0-9\s\.,\-\+#&\(\)/]+$")
     about: str = Field(min_length=0, max_length=150, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
-    city: str = Field(min_length=2, max_length=25, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
-    stack: str = Field(min_length=3, max_length=50, pattern=r'^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;]+$')
+    city: str = Field(min_length=2, max_length=25, pattern=r"^[a-zA-Zа-яА-Я\s\-]+$")
+    stack: str = Field(min_length=3, max_length=50, pattern=r"^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;'@\+#/]+$")
 
 class EditResume(Base):
-    new_title: str | None = Field(default=None, min_length=2, max_length=25, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
-    new_about: str | None = Field(default=None, min_length=0, max_length=150, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
-    new_city: str | None = Field(default=None, min_length=2, max_length=25, pattern=r'^[a-zA-Zа-яА-Я\s]+$')
-    new_stack: str | None = Field(default=None, min_length=2, max_length=35, pattern=r'^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;]+$')
+    new_title: str | None = Field(default=None, min_length=2, max_length=25, pattern=r"^[a-zA-Zа-яА-Я0-9\s\.,\-\+#&\(\)/]+$")
+    new_about: str | None = Field(default=None, min_length=0, max_length=150, pattern=r"^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;'@\+#/]+$")
+    new_city: str | None = Field(default=None, min_length=2, max_length=25, pattern=r"^[a-zA-Zа-яА-Я\s\-]+$")
+    new_stack: str | None = Field(default=None, min_length=2, max_length=35, pattern=r"^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;'@\+#/]+$")

@@ -14,7 +14,7 @@ async def check_tenant(current_user: User = Depends(check_user)):
     return current_user
 
 async def check_tenant_or_admin(current_user: User = Depends(check_user)):
-    validate_roles(current_user, [Role.tenant, Role.admin], "Only tenants can search vacancies")
+    validate_roles(current_user, [Role.tenant, Role.admin], "Only tenants can do this")
     return current_user
 
 async def check_vacancy(session: session_dep, vacancy_id: int):
