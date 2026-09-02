@@ -11,7 +11,7 @@ from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, 
 from app.backend.dependencies.redis_cache import get_cache_key
 from app.backend.models.mails import Mails
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
-from app.backend.helpers.celery_tasks.search import sync_user_task, delete_user_task
+from app.backend.helpers.celery_tasks.meilisearch.user import sync_user_task, delete_user_task
 from app.backend.helpers.cache import clear_user_profile_cache
 
 

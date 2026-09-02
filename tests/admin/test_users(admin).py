@@ -1,7 +1,7 @@
 import pytest
 
 from app.backend.models.user import User
-from app.backend.utils.search import sync_user
+from app.backend.utils.meilisearch.user import sync_user
 
 
 @pytest.mark.asyncio

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.backend.models.user import User
 from app.backend.models.resume import Resume
 from app.backend.schemas.resume import CreateResume, EditResume
-from app.backend.helpers.celery_tasks.search import sync_resume_task, delete_resume_task
+from app.backend.helpers.celery_tasks.meilisearch.resume import sync_resume_task, delete_resume_task
 
 
 async def create_resume(session: AsyncSession, data: CreateResume, current_user: User):

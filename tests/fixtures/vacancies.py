@@ -16,3 +16,12 @@ async def create_vacancy(tenant_client):
     vacancy_id = data["vacancy"]["id"]    
 
     return vacancy_id
+
+
+@pytest.fixture(autouse=True)
+def sync_vacancy(mocker):
+    return mocker.patch("app.backend.helpers.celery_tasks.meilisearch.vacancy.sync_vacancy_task.delay")
+
+@pytest.fixture(autouse=True)
+def delete_vacancy(mocker):
+    return mocker.patch("app.backend.helpers.celery_tasks.meilisearch.vacancy.delete_vacancy_task.delay")

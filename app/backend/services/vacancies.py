@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
 from app.backend.schemas.vacancy import CreateVacancy, EditVacancy
-from app.backend.helpers.celery_tasks.search import sync_vacancy_task, delete_vacancy_task
+from app.backend.helpers.celery_tasks.meilisearch.vacancy import sync_vacancy_task, delete_vacancy_task
 
 
 async def create_vacancy(session: AsyncSession, data: CreateVacancy, current_user: User):

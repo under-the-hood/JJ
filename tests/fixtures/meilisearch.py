@@ -1,6 +1,6 @@
 import pytest
 
-from app.backend.utils.search import meili
+from app.backend.utils.meilisearch.client import meili
 
 
 @pytest.fixture(autouse=True)

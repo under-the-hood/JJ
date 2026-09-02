@@ -1,6 +1,6 @@
 from app.backend.models.user import User
 from app.backend.schemas.search import SearchResumes, SearchVacancies
-from app.backend.utils.search import meili
+from app.backend.utils.meilisearch.client import meili
 
 
 async def search_resumes(data: SearchResumes, current_user: User):

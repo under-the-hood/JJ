@@ -12,8 +12,8 @@ from app.backend.models.mails import Mails
 from app.backend.schemas.response import ResponseSchema, SetStatus, SearchResponses
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
 from app.backend.helpers.validator import validate_user_role
-from app.backend.helpers.celery_tasks.search import sync_response_task, delete_response_task
-from app.backend.utils.search import meili
+from app.backend.helpers.celery_tasks.meilisearch.response import sync_response_task, delete_response_task
+from app.backend.utils.meilisearch.client import meili
 
 
 async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, current_vacancy: Vacancy, current_user: User):

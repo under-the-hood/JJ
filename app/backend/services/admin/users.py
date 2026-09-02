@@ -6,8 +6,8 @@ from app.backend.schemas.admin import UpdateUser
 from app.backend.helpers.cache import clear_user_profile_cache
 from app.backend.helpers.validator import validate_admin_action
 from app.backend.schemas.user import SearchUsers
-from app.backend.utils.search import meili
-from app.backend.helpers.celery_tasks.search import sync_user_task, delete_user_task
+from app.backend.utils.meilisearch.client import meili
+from app.backend.helpers.celery_tasks.meilisearch.user import sync_user_task, delete_user_task
 
 
 async def search_users(data: SearchUsers, admin: User):

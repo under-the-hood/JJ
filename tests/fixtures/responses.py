@@ -16,3 +16,12 @@ def send_response_to_vacancy(applicant_client, create_vacancy, create_resume):
 
         return response_id
     return create_response
+
+
+@pytest.fixture(autouse=True)
+def sync_response(mocker):
+    return mocker.patch("app.backend.helpers.celery_tasks.meilisearch.response.sync_response_task.delay")
+
+@pytest.fixture(autouse=True)
+def delete_response(mocker):
+    return mocker.patch("app.backend.helpers.celery_tasks.meilisearch.response.delete_response_task.delay")

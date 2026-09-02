@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from app.backend.models.mails import Mails
-from app.backend.utils.search import sync_response
+from app.backend.utils.meilisearch.response import sync_response
 from app.backend.models.response import Response
 
 

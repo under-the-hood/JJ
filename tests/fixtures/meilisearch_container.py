@@ -3,7 +3,7 @@ import requests
 import meilisearch
 from testcontainers.core.container import DockerContainer
 
-import app.backend.utils.search as search_utils
+import app.backend.utils.meilisearch.client as meili_client 
 
 
 meili_container = (
@@ -28,7 +28,7 @@ while time.time() < _deadline:
 else:
     raise RuntimeError("Meilisearch container didn't become ready in time")
 
-search_utils.meili = meilisearch.Client(meili_url, "test_meili_key")
+meili_client.meili = meilisearch.Client(meili_url, "test_meili_key")
 
 def stop():
     try:

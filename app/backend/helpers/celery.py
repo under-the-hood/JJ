@@ -8,7 +8,10 @@ celery = Celery(
     broker=f"{settings.RABBITMQ}",
     backend=f"redis://{settings.REDIS_HOST}:6379/0",
     include=[
-        "app.backend.helpers.celery_tasks.search",
+        "app.backend.helpers.celery_tasks.meilisearch.user",
+        "app.backend.helpers.celery_tasks.meilisearch.vacancy",
+        "app.backend.helpers.celery_tasks.meilisearch.resume",
+        "app.backend.helpers.celery_tasks.meilisearch.response",
         "app.backend.helpers.celery_tasks.send_mail"
         ]
 )

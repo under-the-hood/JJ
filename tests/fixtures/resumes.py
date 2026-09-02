@@ -17,3 +17,12 @@ async def create_resume(applicant_client):
     resume_id = data["resume"]["id"]
 
     return resume_id
+
+
+@pytest.fixture(autouse=True)
+def sync_resume(mocker):
+    return mocker.patch("app.backend.helpers.celery_tasks.meilisearch.resume.sync_resume_task.delay")
+
+@pytest.fixture(autouse=True)
+def delete_resume(mocker):
+    return mocker.patch("app.backend.helpers.celery_tasks.meilisearch.resume.delete_resume_task.delay")
