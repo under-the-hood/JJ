@@ -13,7 +13,7 @@ class Vacancy(Base):
     city: Mapped[str]
 
     user = relationship('User', back_populates='vacancy')
-    responses = relationship('Response', back_populates='vacancy')
+    responses = relationship('Response', back_populates='vacancy', cascade="all, delete-orphan")
     invitations = relationship("Invitation", back_populates="vacancy")
 
     def vacancies_to_dict(self):

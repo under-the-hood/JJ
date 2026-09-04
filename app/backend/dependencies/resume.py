@@ -9,7 +9,7 @@ from app.backend.helpers.validator import validate_roles
 
 async def check_applicant(current_user: User = Depends(check_user)):
     if current_user.role != Role.applicant:
-        raise HTTPException(status_code=403, detail='Only applicants can make/update resumes')
+        raise HTTPException(status_code=403, detail='Only applicants can make/get/update resumes')
 
     return current_user
 

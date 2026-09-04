@@ -8,7 +8,7 @@ from app.backend.utils.hash import hashing_password, pwd_context
 from app.backend.core.auth import security
 from app.backend.models.user import User, Role
 from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, Delete
-from app.backend.dependencies.redis_cache import get_cache_key
+from app.backend.utils.redis_cache import get_cache_key
 from app.backend.models.mails import Mails
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
 from app.backend.helpers.celery_tasks.meilisearch.user import sync_user_task, delete_user_task
@@ -62,8 +62,8 @@ async def login(session: AsyncSession, data: Login, response: Response):
 
 async def get_info(current_user: User, redis: Redis):
 
-    key = get_cache_key("user", current_user.id, "profile")
-    cached_info = await redis.get(key)
+    cache_key = get_cache_key("user", current_user.id, "profile")
+    cached_info = await redis.get(cache_key)
 
     #If info about user have in cache, return cached info
     if cached_info:
@@ -75,7 +75,7 @@ async def get_info(current_user: User, redis: Redis):
                     'role': str(current_user.role)}
     
     #Else save info about user in cache on 1 hour
-    await redis.set(key, json.dumps(info), ex=3600)
+    await redis.set(cache_key, json.dumps(info), 3600)
 
     return info, "db"
 

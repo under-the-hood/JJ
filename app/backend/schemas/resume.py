@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, ConfigDict, TypeAdapter
 
 from app.backend.schemas.base import Base
 
@@ -14,3 +14,14 @@ class EditResume(Base):
     new_about: str | None = Field(default=None, min_length=0, max_length=150, pattern=r"^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;'@\+#/]+$")
     new_city: str | None = Field(default=None, min_length=2, max_length=25, pattern=r"^[a-zA-Zа-яА-Я\s\-]+$")
     new_stack: str | None = Field(default=None, min_length=2, max_length=35, pattern=r"^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;'@\+#/]+$")
+
+class ResumeOut(Base):
+    id: int
+    title: str
+    about: str
+    stack: str
+    city: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+resume_list_adapter = TypeAdapter(list[ResumeOut])

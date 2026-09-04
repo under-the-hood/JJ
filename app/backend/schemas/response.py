@@ -1,4 +1,4 @@
-from pydantic import Field, EmailStr
+from pydantic import Field, EmailStr, ConfigDict, TypeAdapter
 from enum import Enum
 
 from app.backend.schemas.base import Base
@@ -25,9 +25,13 @@ class ResumeRead(Base):
     id: int
     title: str
 
+    model_config = ConfigDict(from_attributes=True)
+
 class VacancyRead(Base):
     id: int
     title: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 class ResponseStatus(str, Enum):
     send = "send"
@@ -37,12 +41,19 @@ class ResponseStatus(str, Enum):
     rejected = 'rejected'
     hired = 'hired'
 
-class ResponseRead(Base):
+    model_config = ConfigDict(from_attributes=True)
+
+class ResponseReadSchema(Base):
     id: int
     cover_letter: str
     status: ResponseStatus
     resume: ResumeRead
     vacancy: VacancyRead
+
+    model_config = ConfigDict(from_attributes=True)
+
+response_list_adapter = TypeAdapter(list[ResponseReadSchema])
+
 
 class SetStatus(Base):
     status: Status

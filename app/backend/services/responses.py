@@ -2,21 +2,25 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
+import json
+from redis.asyncio import Redis
 
+from app.backend.helpers.cache import get_cache_key
+from app.backend.helpers.cache import clear_user_responses_cache
 from app.backend.models.response import Response
 from app.backend.models.user import User, Role
 from app.backend.models.vacancy import Vacancy
 from app.backend.helpers.resume import check_resume_owner
 from app.backend.helpers.vacancy import check_vacancy_owner
 from app.backend.models.mails import Mails
-from app.backend.schemas.response import ResponseSchema, SetStatus, SearchResponses
+from app.backend.schemas.response import ResponseSchema, SetStatus, SearchResponses, response_list_adapter
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
 from app.backend.helpers.validator import validate_user_role
 from app.backend.helpers.celery_tasks.meilisearch.response import sync_response_task, delete_response_task
 from app.backend.utils.meilisearch.client import meili
 
 
-async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, current_vacancy: Vacancy, current_user: User):
+async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, current_vacancy: Vacancy, current_user: User, redis: Redis):
     query_check = await session.execute(select(Response).where(Response.resume_id == data.resume_id, Response.vacancy_id == current_vacancy.id))
 
     if query_check.scalar_one_or_none():
@@ -40,6 +44,7 @@ async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, 
     await session.commit()
     await session.refresh(mail)
 
+    await clear_user_responses_cache(redis, current_user.id)
     sync_response_task.delay(response.id)
     send_mail_task.delay(mail.id)
 
@@ -87,25 +92,37 @@ async def search_responses(session: AsyncSession, data: SearchResponses, current
     return responses, total
 
 
-async def get_my_responses(session: AsyncSession, current_user: User):
+async def get_my_responses(session: AsyncSession, current_user: User, redis: Redis):
     
-    validate_user_role(current_user, Role.applicant, "You are not an applicant")
+    cache_key = get_cache_key("user", current_user.id, "user_responses")
+    cached_responses = await redis.get(cache_key)
+
+    if cached_responses:
+        responses = response_list_adapter.validate_json(cached_responses)
+        return responses, len(responses), "cache"
 
     query = await session.execute(select(Response).options(joinedload(Response.resume), joinedload(Response.vacancy)).where(Response.applicant_id == current_user.id))
     responses = query.scalars().all()
 
-    return responses
+    validated_responses = response_list_adapter.validate_python(responses)
+    responses_data = response_list_adapter.dump_python(validated_responses, mode="json")
+
+    await redis.set(cache_key, json.dumps(responses_data), 3600)
+
+    return responses_data, len(responses_data), "db"
 
 
-async def delete_response(session: AsyncSession, current_response: Response, current_user: User):
+async def delete_response(session: AsyncSession, current_response: Response, current_user: User, redis: Redis):
     validate_user_role(current_user, Role.applicant, "Only applicant can delete their own responses")
     
+    await clear_user_responses_cache(redis, current_response.applicant_id)
     delete_response_task.delay(current_response.id)
+    
     await session.delete(current_response)
     await session.commit()
 
 
-async def set_status(session: AsyncSession, data: SetStatus, current_response: Response, current_user: User):
+async def set_status(session: AsyncSession, data: SetStatus, current_response: Response, current_user: User, redis: Redis):
     
     validate_user_role(current_user, Role.tenant, "Only tenants can set status to responses")
     current_response.status = data.status
@@ -121,6 +138,7 @@ async def set_status(session: AsyncSession, data: SetStatus, current_response: R
     await session.refresh(current_response)
     await session.refresh(mail)
 
+    await clear_user_responses_cache(redis, current_response.applicant_id)
     sync_response_task.delay(current_response.id)
     send_mail_task.delay(mail.id)
 
