@@ -114,8 +114,6 @@ async def get_my_responses(session: AsyncSession, current_user: User, redis: Red
 
 
 async def delete_response(session: AsyncSession, current_response: Response, current_user: User, redis: Redis):
-    validate_user_role(current_user, Role.applicant, "Only applicant can delete their own responses")
-    
     await clear_user_responses_cache(redis, current_response.applicant_id)
     delete_response_task.delay(current_response.id)
     

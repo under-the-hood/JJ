@@ -8,6 +8,8 @@ from app.backend.models.resume import Resume
 from app.backend.dependencies.vacancy import check_tenant
 from app.backend.dependencies.resume import check_resume
 import app.backend.services.invitations as invitation_service
+from app.backend.models.invitations import Invitation
+from app.backend.dependencies.invitation import check_invitation_owner
 
 
 router = APIRouter(prefix="/invitation", tags=["Invitation"])
@@ -18,3 +20,9 @@ invitation_limit = rate_limiter_factory("/invitation/interview/{resume_id}", 5, 
 async def send_interview_invitation(session: session_dep, data: InvitationSchema, current_resume: Resume = Depends(check_resume), current_user: User = Depends(check_tenant)):
     invitation = await invitation_service.send_interview_invitation(session=session, data=data, current_resume=current_resume, current_user=current_user)
     return {"invitation": invitation}
+
+
+@router.delete("/{invitation_id}")
+async def delete_invitation(session: session_dep, current_invitation: Invitation = Depends(check_invitation_owner), current_user: User = Depends(check_tenant)):
+    await invitation_service.delete_invitation(session=session, current_invitation=current_invitation, current_user=current_user)
+    return {"message": "Invitation was deleted"}

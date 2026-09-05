@@ -41,3 +41,8 @@ async def send_interview_invitation(session: AsyncSession, data: InvitationSchem
     send_mail_task.delay(mail.id)
 
     return invitation
+
+
+async def delete_invitation(session: AsyncSession, current_invitation: Invitation, current_user: User):
+    await session.delete(current_invitation)
+    await session.commit()
