@@ -8,7 +8,7 @@ from app.backend.helpers.cache import clear_user_responses_cache
 
 
 async def delete_response(session: AsyncSession, current_response: Response, admin: User, redis: Redis):
-    clear_user_responses_cache(redis, current_response.applicant_id)
+    await clear_user_responses_cache(redis, current_response.applicant_id)
     delete_response_task.delay(current_response.id)
 
     await session.delete(current_response)

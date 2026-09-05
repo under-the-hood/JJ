@@ -98,7 +98,8 @@ async def get_my_responses(session: AsyncSession, current_user: User, redis: Red
     cached_responses = await redis.get(cache_key)
 
     if cached_responses:
-        responses = response_list_adapter.validate_json(cached_responses)
+        validated_responses = response_list_adapter.validate_json(cached_responses)
+        responses = response_list_adapter.dump_python(validated_responses, mode="json")
         return responses, len(responses), "cache"
 
     query = await session.execute(select(Response).options(joinedload(Response.resume), joinedload(Response.vacancy)).where(Response.applicant_id == current_user.id))

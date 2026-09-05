@@ -1,4 +1,4 @@
-from pydantic import Field, EmailStr
+from pydantic import Field, EmailStr, ConfigDict, TypeAdapter
 from enum import Enum
 
 from app.backend.schemas.base import Base
@@ -36,3 +36,14 @@ class Delete(Base):
 class SearchUsers(PaginationParams):
     email: EmailStr | None = Field(default=None)
     name: str | None = Field(default=None, min_length=3, max_length=15, pattern=r"^[a-zA-Zа-яА-Я\s\-']+$")
+
+
+class UserInfo(Base):
+    id: int
+    email: EmailStr
+    name: str
+    role: Role
+
+    model_config = ConfigDict(from_attributes=True)
+
+info_adapter = TypeAdapter(UserInfo)

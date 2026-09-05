@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.backend.utils.hash import hashing_password, pwd_context
 from app.backend.core.auth import security
 from app.backend.models.user import User, Role
-from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, Delete
+from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, Delete, info_adapter
 from app.backend.utils.redis_cache import get_cache_key
 from app.backend.models.mails import Mails
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
@@ -67,12 +67,12 @@ async def get_info(current_user: User, redis: Redis):
 
     #If info about user have in cache, return cached info
     if cached_info:
-        return json.loads(cached_info), "cache"
+        validated_info = info_adapter.validate_json(cached_info)
+        info = info_adapter.dump_python(validated_info, mode="json")
+        return info, "cache"
 
-    info = {'id': current_user.id,
-                    'email': current_user.email,
-                    'name': current_user.name,
-                    'role': str(current_user.role)}
+    validated_info = info_adapter.validate_python(current_user)
+    info = info_adapter.dump_python(validated_info, mode="json")
     
     #Else save info about user in cache on 1 hour
     await redis.set(cache_key, json.dumps(info), 3600)

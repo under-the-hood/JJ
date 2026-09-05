@@ -8,7 +8,7 @@ from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
 from app.backend.schemas.vacancy import CreateVacancy, EditVacancy, vacancy_list_adapter
 from app.backend.helpers.celery_tasks.meilisearch.vacancy import sync_vacancy_task, delete_vacancy_task
-from app.backend.helpers.cache import clear_user_vacancies_cache
+from app.backend.helpers.cache import clear_user_vacancies_cache, clear_responses_cache_for_vacancy
 
 
 async def create_vacancy(session: AsyncSession, data: CreateVacancy, current_user: User, redis: Redis):
@@ -31,7 +31,8 @@ async def get_my_vacancies(session: AsyncSession, current_user: User, redis: Red
     cached_vacancies = await redis.get(cache_key)
 
     if cached_vacancies:
-        vacancies = vacancy_list_adapter.validate_json(cached_vacancies)
+        validated_vacancies = vacancy_list_adapter.validate_json(cached_vacancies)
+        vacancies = vacancy_list_adapter.dump_python(validated_vacancies, mode="json")
         return vacancies, len(vacancies), "cache"
 
     query = await session.execute(select(Vacancy).where(Vacancy.tenant_id == current_user.id))
@@ -58,6 +59,8 @@ async def update_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: 
 
     await session.commit()
     await session.refresh(current_vacancy)
+
+    await clear_responses_cache_for_vacancy(session, current_vacancy.id, redis)
     await clear_user_vacancies_cache(redis, current_vacancy.tenant_id)
     
     sync_vacancy_task.delay(current_vacancy.id)
@@ -66,6 +69,7 @@ async def update_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: 
 async def delete_vacancy(session: AsyncSession, current_vacancy: Vacancy, redis: Redis):
     delete_vacancy_task.delay(current_vacancy.id)
     
+    await clear_responses_cache_for_vacancy(session, current_vacancy.id, redis)
     await clear_user_vacancies_cache(redis, current_vacancy.tenant_id)
 
     await session.delete(current_vacancy)

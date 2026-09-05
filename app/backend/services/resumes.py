@@ -32,8 +32,9 @@ async def get_my_resumes(session: AsyncSession, current_user: User, redis: Redis
     cached_resumes = await redis.get(cache_key)
 
     if cached_resumes:
-        cached_resumes = resume_list_adapter.validate_json(cached_resumes)
-        return cached_resumes, len(cached_resumes), "cache"
+        validated_resumes = resume_list_adapter.validate_json(cached_resumes)
+        resumes = resume_list_adapter.dump_python(validated_resumes, mode="json")
+        return resumes, len(resumes), "cache"
 
     resume_query = await session.execute(select(Resume).where(Resume.applicant_id == current_user.id))
     resumes = resume_query.scalars().all()
