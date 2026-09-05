@@ -22,7 +22,9 @@ async def send_interview_invitation(session: session_dep, data: InvitationSchema
     return {"invitation": invitation}
 
 
-@router.delete("/{invitation_id}")
+delete_invitation_limit = rate_limiter_factory("/invitation/{invitation_id}", 5, 60)
+
+@router.delete("/{invitation_id}", dependencies=[Depends(delete_invitation_limit)])
 async def delete_invitation(session: session_dep, current_invitation: Invitation = Depends(check_invitation_owner), current_user: User = Depends(check_tenant)):
     await invitation_service.delete_invitation(session=session, current_invitation=current_invitation, current_user=current_user)
     return {"message": "Invitation was deleted"}

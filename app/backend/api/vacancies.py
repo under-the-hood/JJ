@@ -27,13 +27,17 @@ async def get_my_vacancies(session: session_dep, current_user: User = Depends(ch
     return {"vacancies": vacancies, "total": total, "source": source}
 
 
-@router.patch('/{vacancy_id}')
+update_vacancy_limit = rate_limiter_factory("/vacancies/{vacancy_id}", 3, 60)
+
+@router.patch('/{vacancy_id}', dependencies=[Depends(update_vacancy_limit)])
 async def update_vacancy(session: session_dep, data: EditVacancy, current_vacancy: Vacancy = Depends(check_vacancy_owner), redis: Redis = Depends(get_redis)):
     await vacancy_service.update_vacancy(session=session, data=data, current_vacancy=current_vacancy, redis=redis)
     return {'message': 'Vacancy was updated', "vacancy": current_vacancy}
 
 
-@router.delete('/{vacancy_id}')
+delete_vacancy_limit = rate_limiter_factory("/vacancies/{vacancy_id}", 5, 60)
+
+@router.delete('/{vacancy_id}', dependencies=[Depends(delete_vacancy_limit)])
 async def delete_vacancy(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy_owner), redis: Redis = Depends(get_redis)):
     await vacancy_service.delete_vacancy(session=session, current_vacancy=current_vacancy, redis=redis)
     return {'message': 'Vacancy was deleted', "vacancy_id": current_vacancy.id}

@@ -27,11 +27,15 @@ async def get_my_resumes(session: session_dep, current_user: User = Depends(chec
     return {"resumes": resumes, "total": total, "source": source}
 
 
-@router.patch('/{resume_id}')
+update_resume_limit = rate_limiter_factory("/resumes/{resume_id}", 5, 60)
+
+@router.patch('/{resume_id}', dependencies=[Depends(update_resume_limit)])
 async def update_resume(session: session_dep, data: EditResume, current_resume: Resume = Depends(check_resume_owner), redis: Redis = Depends(get_redis)):
     await resume_service.update_resume(session=session, data=data, current_resume=current_resume, redis=redis)
     return {'message': 'Resume was edited', "resume": current_resume}
 
+
+delete_resume_limit = rate_limiter_factory("/resumes/{resume_id}", 5, 60)
 
 @router.delete('/{resume_id}')
 async def delete_resume(session: session_dep, current_resume: Resume = Depends(check_resume_owner), redis: Redis = Depends(get_redis)):

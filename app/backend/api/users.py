@@ -14,7 +14,7 @@ import app.backend.services.users as user_service
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-sign_up_limit = rate_limiter_factory_by_ip("/users/sign_up", 5, 60)
+sign_up_limit = rate_limiter_factory_by_ip("/users/sign_up", 3, 300)
 
 @router.post('/sign_up', dependencies=[Depends(sign_up_limit)])
 async def sign_up(session: session_dep, data: CreateUser = Depends(validate_user_registration), redis: Redis = Depends(get_redis)):
@@ -23,7 +23,7 @@ async def sign_up(session: session_dep, data: CreateUser = Depends(validate_user
     return {'message': 'User was created', "user": user}
 
 
-sign_in_limit = rate_limiter_factory_by_ip("/users/sign_in", 5, 60)
+sign_in_limit = rate_limiter_factory_by_ip("/users/sign_in", 5, 300)
 
 @router.post('/sign_in', dependencies=[Depends(sign_in_limit)])
 async def sign_in(session: session_dep, data: Login, response: Response):
@@ -32,14 +32,16 @@ async def sign_in(session: session_dep, data: Login, response: Response):
     return {'message': 'Login succesfull', 'token': access_token}
 
 
-@router.get('/me')
+get_info_limit = rate_limiter_factory("/users/me", 30, 60)
+
+@router.get('/me', dependencies=[Depends(get_info_limit)])
 async def get_info(current_user: User = Depends(check_user), redis: Redis = Depends(get_redis)):
 
     info, source = await user_service.get_info(current_user=current_user, redis=redis)
     return {"info": info, "source": source}
 
 
-password_limit = rate_limiter_factory("/users/me/password", 5, 60)
+password_limit = rate_limiter_factory("/users/me/password", 3, 300)
 
 @router.patch('/me/password', dependencies=[Depends(password_limit)])
 async def update_password(session: session_dep, data: EditPassword = Depends(validate_edit_password), current_user: User = Depends(check_user), redis: Redis = Depends(get_redis)):

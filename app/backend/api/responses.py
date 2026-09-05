@@ -36,6 +36,8 @@ async def get_my_responses(session: session_dep, current_user: User = Depends(ch
     return {"responses": responses, "total": total, "source": source}
 
 
+delete_response_limit = rate_limiter_factory("/responses/{response_id}", 5, 60)
+
 @router.delete("/{response_id}")
 async def delete_response(session: session_dep, current_response: Response = Depends(check_response_owner), current_user: User = Depends(check_applicant), redis: Redis = Depends(get_redis)):
     await response_service.delete_response(session=session, current_response=current_response, current_user=current_user, redis=redis)
