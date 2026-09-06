@@ -12,6 +12,7 @@ celery = Celery(
         "app.backend.helpers.celery_tasks.meilisearch.vacancy",
         "app.backend.helpers.celery_tasks.meilisearch.resume",
         "app.backend.helpers.celery_tasks.meilisearch.response",
+        "app.backend.helpers.celery_tasks.meilisearch.invitation",
         "app.backend.helpers.celery_tasks.send_mail"
         ]
 )

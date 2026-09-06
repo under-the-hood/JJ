@@ -9,12 +9,12 @@ import app.backend.helpers.vacancy as vacancy_helpers
 
 async def check_tenant(current_user: User = Depends(check_user)):
     if current_user.role != Role.tenant:
-        raise HTTPException(status_code=403, detail='Only tenants can make/update vacancies')
+        raise HTTPException(status_code=403, detail='You are not a tenant')
 
     return current_user
 
 async def check_tenant_or_admin(current_user: User = Depends(check_user)):
-    validate_roles(current_user, [Role.tenant, Role.admin], "Only tenants can do this")
+    validate_roles(current_user, [Role.tenant, Role.admin], "You are not a tenant")
     return current_user
 
 async def check_vacancy(session: session_dep, vacancy_id: int):

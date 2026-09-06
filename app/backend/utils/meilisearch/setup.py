@@ -14,10 +14,14 @@ def init_meilisearch():
     create_responses_task = meili.create_index("responses", {"primaryKey": "id"})
     meili.wait_for_task(create_responses_task.task_uid)
 
+    create_invitations_task = meili.create_index("invitations", {"primaryKey": "id"})
+    meili.wait_for_task(create_invitations_task.task_uid)
+
     vacancies_index = meili.index("vacancies")
     resumes_index = meili.index("resumes")
     users_index = meili.index("users")
     responses_index = meili.index("responses")
+    invitations_index = meili.index("invitations")
 
     vacancies_index.update_searchable_attributes(["title", "city"])
     vacancies_index.update_filterable_attributes(["compensation"])
@@ -28,3 +32,6 @@ def init_meilisearch():
 
     responses_index.update_searchable_attributes(["resume.title", "resume.stack"])
     responses_index.update_filterable_attributes(["status", "vacancy_id"])
+
+    invitations_index.update_searchable_attributes(["resume_title", "resume_stack", "vacancy_title"])
+    invitations_index.update_filterable_attributes(["tenant_id", "applicant_id", "vacancy_id", "resume_id"])
