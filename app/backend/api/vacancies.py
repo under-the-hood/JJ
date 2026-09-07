@@ -5,7 +5,7 @@ from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
 from app.backend.schemas.vacancy import CreateVacancy, EditVacancy
 from app.backend.database.database import session_dep
-from app.backend.dependencies.vacancy import check_vacancy_owner, check_tenant
+from app.backend.dependencies.vacancy import check_vacancy_owner_or_admin, check_tenant
 import app.backend.services.vacancies as vacancy_service
 from app.backend.helpers.rate_limiter import rate_limiter_factory
 from app.backend.database.redis_database import get_redis
@@ -30,7 +30,7 @@ async def get_my_vacancies(session: session_dep, current_user: User = Depends(ch
 update_vacancy_limit = rate_limiter_factory("/vacancies/{vacancy_id}", 3, 60)
 
 @router.patch('/{vacancy_id}', dependencies=[Depends(update_vacancy_limit)])
-async def update_vacancy(session: session_dep, data: EditVacancy, current_vacancy: Vacancy = Depends(check_vacancy_owner), redis: Redis = Depends(get_redis)):
+async def update_vacancy(session: session_dep, data: EditVacancy, current_vacancy: Vacancy = Depends(check_vacancy_owner_or_admin), redis: Redis = Depends(get_redis)):
     await vacancy_service.update_vacancy(session=session, data=data, current_vacancy=current_vacancy, redis=redis)
     return {'message': 'Vacancy was updated', "vacancy": current_vacancy}
 
@@ -38,6 +38,6 @@ async def update_vacancy(session: session_dep, data: EditVacancy, current_vacanc
 delete_vacancy_limit = rate_limiter_factory("/vacancies/{vacancy_id}", 5, 60)
 
 @router.delete('/{vacancy_id}', dependencies=[Depends(delete_vacancy_limit)])
-async def delete_vacancy(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy_owner), redis: Redis = Depends(get_redis)):
+async def delete_vacancy(session: session_dep, current_vacancy: Vacancy = Depends(check_vacancy_owner_or_admin), redis: Redis = Depends(get_redis)):
     await vacancy_service.delete_vacancy(session=session, current_vacancy=current_vacancy, redis=redis)
     return {'message': 'Vacancy was deleted', "vacancy_id": current_vacancy.id}

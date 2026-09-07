@@ -10,12 +10,11 @@ from app.backend.helpers.cache import clear_user_responses_cache
 from app.backend.models.response import Response
 from app.backend.models.user import User, Role
 from app.backend.models.vacancy import Vacancy
-from app.backend.helpers.resume import check_resume_owner
-from app.backend.helpers.vacancy import check_vacancy_owner
+from app.backend.helpers.resume import check_resume_owner_or_admin
+from app.backend.helpers.vacancy import check_vacancy_owner_or_admin
 from app.backend.models.mails import Mails
 from app.backend.schemas.response import ResponseSchema, SetStatus, SearchResponses, response_list_adapter
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
-from app.backend.helpers.validator import validate_user_role
 from app.backend.helpers.celery_tasks.meilisearch.response import sync_response_task, delete_response_task
 from app.backend.utils.meilisearch.client import meili
 
@@ -30,7 +29,7 @@ async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, 
     response.applicant_id = current_user.id
     response.vacancy_id = current_vacancy.id
 
-    current_resume = await check_resume_owner(session, data.resume_id, current_user.id)
+    current_resume = await check_resume_owner_or_admin(session, data.resume_id, current_user)
     
     session.add(response)
 
@@ -58,7 +57,7 @@ async def search_responses(session: AsyncSession, data: SearchResponses, current
         if not data.vacancy_id:
             raise HTTPException(status_code=400, detail="Tenant must specify vacancy_id for searching responses")
         
-        await check_vacancy_owner(session, data.vacancy_id, current_user.id)
+        await check_vacancy_owner_or_admin(session, data.vacancy_id, current_user)
         filters.append(f"vacancy_id = {data.vacancy_id}")
     else:
         if data.vacancy_id:
@@ -122,8 +121,6 @@ async def delete_response(session: AsyncSession, current_response: Response, cur
 
 
 async def set_status(session: AsyncSession, data: SetStatus, current_response: Response, current_user: User, redis: Redis):
-    
-    validate_user_role(current_user, Role.tenant, "Only tenants can set status to responses")
     current_response.status = data.status
 
     mail = Mails(

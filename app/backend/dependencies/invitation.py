@@ -17,8 +17,11 @@ async def check_invitation(session: session_dep, invitation_id: int):
     return current_invitation
 
 
-async def check_invitation_owner(session: session_dep, invitation_id: int, current_user: User = Depends(check_user)):
+async def check_invitation_owner_or_admin(session: session_dep, invitation_id: int, current_user: User = Depends(check_user)):
     current_invitation = await check_invitation(session, invitation_id)
+
+    if current_user.role == Role.admin:
+        return current_invitation
 
     detail = "It's not your invitation"
     if current_user.role == Role.tenant:

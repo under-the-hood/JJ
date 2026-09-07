@@ -20,5 +20,5 @@ async def check_applicant_or_admin(current_user: User = Depends(check_user)):
 async def check_resume(session: session_dep, resume_id: int):
     return await resume_helpers.get_resume(session, resume_id)
 
-async def check_resume_owner(session: session_dep, resume_id: int, current_user: User = Depends(check_applicant)):
-    return await resume_helpers.check_resume_owner(session, resume_id, current_user.id)
+async def check_resume_owner_or_admin(session: session_dep, resume_id: int, current_user: User = Depends(check_applicant_or_admin)):
+    return await resume_helpers.check_resume_owner_or_admin(session, resume_id, current_user)

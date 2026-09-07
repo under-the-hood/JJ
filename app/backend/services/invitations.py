@@ -6,7 +6,7 @@ from app.backend.models.user import User, Role
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
 from app.backend.schemas.invitations import InvitationSchema, SearchInvitation
 from app.backend.models.invitations import Invitation
-from app.backend.helpers.vacancy import check_vacancy_owner
+from app.backend.helpers.vacancy import check_vacancy_owner_or_admin
 from app.backend.utils.meilisearch.client import meili
 from app.backend.models.mails import Mails
 from app.backend.models.resume import Resume
@@ -20,7 +20,7 @@ async def send_interview_invitation(session: AsyncSession, data: InvitationSchem
 
     applicant_id = current_resume.applicant_id
     
-    current_vacancy = await check_vacancy_owner(session, data.vacancy_id, current_user.id)
+    current_vacancy = await check_vacancy_owner_or_admin(session, data.vacancy_id, current_user)
     
     invitation = Invitation(**data.model_dump())
     invitation.applicant_id = applicant_id

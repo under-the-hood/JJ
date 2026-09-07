@@ -11,7 +11,7 @@ async def test_update_resume(admin_client, create_resume):
         "new_stack": "FastAPI, PostgreSQL, Python, Docker"
     }
 
-    response = await admin_client.patch(f"/admin/resumes/{resume_id}", json=updated_resume)
+    response = await admin_client.patch(f"/resumes/{resume_id}", json=updated_resume)
 
     assert response.status_code == 200
 
@@ -21,6 +21,6 @@ async def test_delete_resume(admin_client, create_resume):
 
     resume_id = create_resume
 
-    response = await admin_client.request("DELETE", f"/admin/resumes/{resume_id}")
+    response = await admin_client.request("DELETE", f"/resumes/{resume_id}")
 
     assert response.status_code == 200

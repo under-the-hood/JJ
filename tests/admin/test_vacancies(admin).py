@@ -11,7 +11,7 @@ async def test_update_vacancy(admin_client, create_vacancy):
         "new_city": "Astana"
     }
     
-    response = await admin_client.patch(f"/admin/vacancies/{vacancy_id}", json=updated_vacancy)
+    response = await admin_client.patch(f"/vacancies/{vacancy_id}", json=updated_vacancy)
 
     assert response.status_code == 200
 
@@ -21,6 +21,6 @@ async def test_delete_vacancy(admin_client, create_vacancy):
 
     vacancy_id = create_vacancy
 
-    response = await admin_client.request("DELETE", f"/admin/vacancies/{vacancy_id}")
+    response = await admin_client.request("DELETE", f"/vacancies/{vacancy_id}")
 
     assert response.status_code == 200

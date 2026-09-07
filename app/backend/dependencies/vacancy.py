@@ -21,6 +21,6 @@ async def check_vacancy(session: session_dep, vacancy_id: int):
     current_vacancy = await vacancy_helpers.get_vacancy(session, vacancy_id)
     return current_vacancy
 
-async def check_vacancy_owner(session: session_dep, vacancy_id: int, current_user: User = Depends(check_tenant)):
-    current_vacancy = await vacancy_helpers.check_vacancy_owner(session, vacancy_id, current_user.id)
+async def check_vacancy_owner_or_admin(session: session_dep, vacancy_id: int, current_user: User = Depends(check_tenant_or_admin)):
+    current_vacancy = await vacancy_helpers.check_vacancy_owner_or_admin(session, vacancy_id, current_user)
     return current_vacancy

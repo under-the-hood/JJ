@@ -7,7 +7,7 @@ pytest_plugins = [
     "tests.fixtures.celery",
     "tests.fixtures.client",
     "tests.fixtures.database",
-    "tests.fixtures.invitation",
+    "tests.fixtures.invitations",
     "tests.fixtures.limiter",
     "tests.fixtures.meilisearch",
     "tests.fixtures.meilisearch_container",

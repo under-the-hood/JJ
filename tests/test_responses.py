@@ -26,6 +26,7 @@ async def test_send_response_to_vacancy(send_response_to_vacancy, send_mail, tes
 @pytest.mark.asyncio
 async def test_search_responses(admin_client, tenant_client, send_response_to_vacancy, create_vacancy, test_session):
     response_id = await send_response_to_vacancy()
+    
     query = await test_session.execute(
         select(Response)
         .options(joinedload(Response.resume))

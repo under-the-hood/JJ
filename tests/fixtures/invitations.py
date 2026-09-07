@@ -7,7 +7,7 @@ def send_interview_invitation(tenant_client, create_resume, create_vacancy):
             "vacancy_id": create_vacancy,
             "cover_letter": "Hello! We invite you to an interview"
         }
-        response = await tenant_client.post(f"/invitation/interview/{create_resume}", json=json)
+        response = await tenant_client.post(f"/invitations/interview/{create_resume}", json=json)
         assert response.status_code == 200
 
         invitation_id = response.json()["invitation"]["id"]
