@@ -9,6 +9,11 @@ class Role(str, Enum):
     tenant = 'tenant'
     applicant = 'applicant'
 
+class UserRole(str, Enum):
+    tenant = 'tenant'
+    applicant = 'applicant'
+    admin = 'admin'
+
 
 class CreateUser(Base):
     email: EmailStr
@@ -42,7 +47,7 @@ class UserInfo(Base):
     id: int
     email: EmailStr
     name: str
-    role: Role
+    role: UserRole
 
     model_config = ConfigDict(from_attributes=True)
 

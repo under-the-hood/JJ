@@ -120,7 +120,10 @@ html { background: #ffffff; }
   padding: 4px;
   border-radius: var(--radius-pill);
   flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.nav::-webkit-scrollbar { display: none; }
 .nav:empty { display: none; }
 .nav button {
   border: none;
@@ -132,6 +135,8 @@ html { background: #ffffff; }
   color: var(--text-muted);
   cursor: pointer;
   transition: all 0.25s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .nav button.active {
   background: var(--glass-bg-strong);

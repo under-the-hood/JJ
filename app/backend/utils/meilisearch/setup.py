@@ -34,4 +34,4 @@ def init_meilisearch():
     responses_index.update_filterable_attributes(["status", "vacancy_id"])
 
     invitations_index.update_searchable_attributes(["resume_title", "resume_stack", "vacancy_title"])
-    invitations_index.update_filterable_attributes(["tenant_id", "applicant_id", "vacancy_id", "resume_id"])
+    invitations_index.update_filterable_attributes(["tenant_id", "applicant_id", "vacancy_id", "resume_id", "status"])

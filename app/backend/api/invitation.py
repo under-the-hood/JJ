@@ -3,9 +3,10 @@ from fastapi import APIRouter, Depends
 from app.backend.dependencies.user import check_user
 from app.backend.helpers.rate_limiter import rate_limiter_factory
 from app.backend.database.database import session_dep
-from app.backend.schemas.invitations import InvitationSchema, SearchInvitation
+from app.backend.schemas.invitations import InvitationSchema, SearchInvitation, SetStatus
 from app.backend.models.user import User
 from app.backend.models.resume import Resume
+from app.backend.dependencies.resume import check_applicant
 from app.backend.dependencies.vacancy import check_tenant, check_tenant_or_admin
 from app.backend.dependencies.resume import check_resume
 import app.backend.services.invitations as invitation_service
@@ -21,6 +22,12 @@ invitation_limit = rate_limiter_factory("/invitation/interview/{resume_id}", 5, 
 async def send_interview_invitation(session: session_dep, data: InvitationSchema, current_resume: Resume = Depends(check_resume), current_user: User = Depends(check_tenant)):
     invitation = await invitation_service.send_interview_invitation(session=session, data=data, current_resume=current_resume, current_user=current_user)
     return {"invitation": invitation}
+
+
+@router.patch("/{invitation_id}/status")
+async def set_status(session: session_dep, data: SetStatus, current_invitation: Invitation = Depends(check_invitation_owner_or_admin), current_user: User = Depends(check_applicant)):
+    await invitation_service.set_status(session, data, current_invitation, current_user)
+    return {"message": "Invitation status was updated"}
 
 
 delete_invitation_limit = rate_limiter_factory("/invitation/{invitation_id}", 5, 60)

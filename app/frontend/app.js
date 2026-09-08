@@ -115,12 +115,14 @@ const NAV_BY_ROLE = {
     { key: "search-vacancies", label: "Search vacancies" },
     { key: "my-resumes", label: "My resumes" },
     { key: "my-responses", label: "My applications" },
+    { key: "my-invitations", label: "My invitations" },
     { key: "mailbox", label: "Mail" },
     { key: "profile", label: "Profile" },
   ],
   tenant: [
     { key: "search-resumes", label: "Search resumes" },
     { key: "my-vacancies", label: "My vacancies" },
+    { key: "my-invitations", label: "My invitations" },
     { key: "mailbox", label: "Mail" },
     { key: "profile", label: "Profile" },
   ],
@@ -173,6 +175,10 @@ async function setView(view) {
       case "my-vacancies": await renderMyVacancies(); break;
       case "my-resumes": await renderMyResumes(); break;
       case "my-responses": await renderMyResponses(); break;
+      case "my-invitations":
+        if (state.user.role === "tenant") await renderMyInvitationsTenant();
+        else await renderMyInvitationsApplicant();
+        break;
       case "mailbox": await renderMailbox(); break;
       case "admin": await renderAdmin(); break;
       case "profile": await renderProfile(); break;
@@ -475,7 +481,7 @@ async function openInviteModal(resumeId, resumeTitle) {
   document.getElementById("cancelInvite").onclick = closeModal;
   document.getElementById("submitInvite").onclick = async () => {
     try {
-      await post(`/invitation/interview/${resumeId}`, {
+      await post(`/invitations/interview/${resumeId}`, {
         vacancy_id: parseInt(document.getElementById("vacancySelect").value, 10),
         cover_letter: document.getElementById("coverLetter").value.trim(),
       });
@@ -589,7 +595,7 @@ async function deleteVacancy(id) {
 }
 
 const STATUS_LABELS = {
-  send: "Sent", viewed: "Viewed", shortlisted: "Shortlisted",
+  send: "Send", viewed: "Viewed", shortlisted: "Shortlisted",
   interview: "Interview", hired: "Hired", rejected: "Rejected",
 };
 
@@ -704,6 +710,190 @@ async function openResponsesModal(vacancyId, title) {
   };
 
   await renderList();
+}
+
+const INVITATION_STATUS_LABELS = { send: "Send", accepted: "Accepted", rejected: "Rejected" };
+
+/* ====================== my invitations (tenant, sent) ====================== */
+async function renderMyInvitationsTenant() {
+  const app = document.getElementById("app");
+  const invState = { query: "", offset: 0, limit: 10 };
+  app.innerHTML = `
+    <div class="view">
+      <h2 class="section-title" style="margin-bottom:16px;">My Invitations</h2>
+      <form id="invSearchForm" style="display:flex; gap:8px; align-items:end; margin-bottom:16px; flex-wrap:wrap;">
+        <div class="field" style="flex:1; min-width:160px; margin:0;">
+          <label>Search by candidate</label>
+          <input name="q" placeholder="Resume title">
+        </div>
+        <button class="btn btn-primary" type="submit">Search</button>
+      </form>
+      <div id="list" class="grid"></div>
+    </div>`;
+
+  async function load() {
+    const list = document.getElementById("list");
+    list.innerHTML = `<div class="center" style="padding:40px; grid-column:1/-1;"><div class="spinner"></div></div>`;
+    try {
+      const res = await get("/invitations" + qs({
+        resume_title: invState.query,
+        limit: invState.limit,
+        offset: invState.offset,
+      }));
+      const invitations = res.invitations || [];
+      const total = res.total ?? invitations.length;
+
+      if (!invitations.length) {
+        list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">You haven't sent any interview invitations yet</div>`;
+        return;
+      }
+
+      list.innerHTML = invitations.map(i => `
+        <div class="card glass">
+          <div class="card-top">
+            <h3 style="margin:0;">${escapeHtml(i.vacancy_title || "")}</h3>
+            ${i.status ? `<span class="status-badge status-${i.status}">${INVITATION_STATUS_LABELS[i.status] || i.status}</span>` : ""}
+          </div>
+          <div class="meta" style="margin-top:6px;"><span class="chip">${escapeHtml(i.resume_title || "")}</span></div>
+          <div style="display:flex; gap:8px; margin-top:16px;">
+            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${i.id}">Delete</button>
+          </div>
+        </div>`).join("");
+
+      list.innerHTML += `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; grid-column:1/-1;">
+          <span class="muted" style="font-size:13px;">Total: ${total}</span>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-glass btn-sm" id="invPrev" ${invState.offset <= 0 ? "disabled" : ""}>Previous</button>
+            <button class="btn btn-glass btn-sm" id="invNext" ${invState.offset + invState.limit >= total ? "disabled" : ""}>Next</button>
+          </div>
+        </div>`;
+
+      list.querySelectorAll("button[data-act='delete']").forEach(btn => {
+        btn.onclick = () => {
+          openModal(`
+            <h2>Delete Invitation?</h2>
+            <p class="muted">This action cannot be undone.</p>
+            <div class="modal-actions">
+              <button class="btn btn-glass" id="cancelD">Cancel</button>
+              <button class="btn btn-danger" id="confirmD">Delete</button>
+            </div>`);
+          document.getElementById("cancelD").onclick = closeModal;
+          document.getElementById("confirmD").onclick = async () => {
+            try {
+              await del(`/invitations/${btn.dataset.id}`);
+              toast("Invitation deleted");
+              closeModal();
+              await load();
+            } catch (err) { reportError(err); }
+          };
+        };
+      });
+
+      const prevBtn = document.getElementById("invPrev");
+      const nextBtn = document.getElementById("invNext");
+      if (prevBtn) prevBtn.onclick = () => { invState.offset = Math.max(0, invState.offset - invState.limit); load(); };
+      if (nextBtn) nextBtn.onclick = () => { invState.offset += invState.limit; load(); };
+    } catch (err) {
+      reportError(err);
+      list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Failed to load</div>`;
+    }
+  }
+
+  document.getElementById("invSearchForm").onsubmit = (event) => {
+    event.preventDefault();
+    invState.query = event.target.querySelector("input[name='q']").value.trim();
+    invState.offset = 0;
+    load();
+  };
+
+  await load();
+}
+
+/* ====================== my invitations (applicant, received) ====================== */
+async function renderMyInvitationsApplicant() {
+  const app = document.getElementById("app");
+  const invState = { query: "", offset: 0, limit: 10 };
+  app.innerHTML = `
+    <div class="view">
+      <h2 class="section-title" style="margin-bottom:16px;">My Invitations</h2>
+      <form id="invSearchForm" style="display:flex; gap:8px; align-items:end; margin-bottom:16px; flex-wrap:wrap;">
+        <div class="field" style="flex:1; min-width:160px; margin:0;">
+          <label>Search by vacancy</label>
+          <input name="q" placeholder="Vacancy title">
+        </div>
+        <button class="btn btn-primary" type="submit">Search</button>
+      </form>
+      <div id="list" class="grid"></div>
+    </div>`;
+
+  async function load() {
+    const list = document.getElementById("list");
+    list.innerHTML = `<div class="center" style="padding:40px; grid-column:1/-1;"><div class="spinner"></div></div>`;
+    try {
+      const res = await get("/invitations" + qs({
+        vacancy_title: invState.query,
+        limit: invState.limit,
+        offset: invState.offset,
+      }));
+      const invitations = res.invitations || [];
+      const total = res.total ?? invitations.length;
+
+      if (!invitations.length) {
+        list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">No interview invitations yet</div>`;
+        return;
+      }
+
+      list.innerHTML = invitations.map(i => `
+        <div class="card glass">
+          <div class="card-top">
+            <h3 style="margin:0;">${escapeHtml(i.vacancy_title || "")}</h3>
+          </div>
+          ${i.cover_letter ? `<div class="about">${escapeHtml(i.cover_letter)}</div>` : ""}
+          <div class="field" style="margin-top:14px; margin-bottom:0;">
+            <select data-inv="${i.id}">
+              ${Object.keys(INVITATION_STATUS_LABELS).map(s =>
+                `<option value="${s}" ${s === i.status ? "selected" : ""}>${INVITATION_STATUS_LABELS[s]}</option>`).join("")}
+            </select>
+          </div>
+        </div>`).join("");
+
+      list.innerHTML += `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; grid-column:1/-1;">
+          <span class="muted" style="font-size:13px;">Total: ${total}</span>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-glass btn-sm" id="invPrev" ${invState.offset <= 0 ? "disabled" : ""}>Previous</button>
+            <button class="btn btn-glass btn-sm" id="invNext" ${invState.offset + invState.limit >= total ? "disabled" : ""}>Next</button>
+          </div>
+        </div>`;
+
+      list.querySelectorAll("select[data-inv]").forEach(sel => {
+        sel.onchange = async () => {
+          try {
+            await patch(`/invitations/${sel.dataset.inv}/status`, { status: sel.value });
+            toast("Status updated");
+          } catch (err) { reportError(err); }
+        };
+      });
+
+      const prevBtn = document.getElementById("invPrev");
+      const nextBtn = document.getElementById("invNext");
+      if (prevBtn) prevBtn.onclick = () => { invState.offset = Math.max(0, invState.offset - invState.limit); load(); };
+      if (nextBtn) nextBtn.onclick = () => { invState.offset += invState.limit; load(); };
+    } catch (err) {
+      reportError(err);
+      list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Failed to load</div>`;
+    }
+  }
+
+  document.getElementById("invSearchForm").onsubmit = (event) => {
+    event.preventDefault();
+    invState.query = event.target.querySelector("input[name='q']").value.trim();
+    invState.offset = 0;
+    load();
+  };
+
+  await load();
 }
 
 /* ====================== my resumes (applicant) ====================== */
@@ -1022,6 +1212,7 @@ const ADMIN_TABS = [
   { key: "vacancies", label: "Vacancies" },
   { key: "resumes", label: "Resumes" },
   { key: "responses", label: "Applications" },
+  { key: "invitations", label: "Invitations" },
 ];
 
 const adminState = { tab: "users", offset: 0, limit: 10, query: "", status: "" };
@@ -1058,6 +1249,7 @@ async function loadAdminTab() {
     if (adminState.tab === "vacancies") await loadAdminVacancies(host);
     if (adminState.tab === "resumes") await loadAdminResumes(host);
     if (adminState.tab === "responses") await loadAdminResponses(host);
+    if (adminState.tab === "invitations") await loadAdminInvitations(host);
   } catch (err) {
     reportError(err);
     host.innerHTML = `<div class="empty-state">Failed to load</div>`;
@@ -1124,6 +1316,57 @@ function confirmDelete(title, body, onConfirm) {
       await loadAdminTab();
     } catch (err) { reportError(err); }
   };
+}
+
+/* ---- admin: invitations ---- */
+async function loadAdminInvitations(host) {
+  const res = await get("/invitations" + qs({
+    resume_title: adminState.query,
+    limit: adminState.limit,
+    offset: adminState.offset,
+  }));
+  const invitations = res.invitations || [];
+  const total = res.total ?? invitations.length;
+
+  if (!invitations.length) {
+    host.innerHTML = adminSearchMarkup("Search by resume title") + `<div class="empty-state">No invitations</div>`;
+    wireAdminSearch(host);
+    return;
+  }
+
+  host.innerHTML = `
+    ${adminSearchMarkup("Search by resume title")}
+    <div class="panel glass" style="padding:8px;">
+      ${invitations.map(i => `
+        <div class="card" style="margin:8px 0;">
+          <div class="card-top">
+            <div>
+              <div style="font-weight:700;">Invitation #${i.id}</div>
+              <div class="muted" style="font-size:13px;">
+                Tenant ID: ${i.tenant_id} · Applicant ID: ${i.applicant_id}
+              </div>
+            </div>
+            ${i.status ? `<span class="status-badge status-${i.status}">${INVITATION_STATUS_LABELS[i.status] || i.status}</span>` : ""}
+          </div>
+          <div class="meta" style="margin-top:10px;">
+            <span class="chip">${escapeHtml(i.vacancy_title || "")}</span>
+            <span class="chip">${escapeHtml(i.resume_title || "")}</span>
+          </div>
+          <div style="margin-top:12px;">
+            <button class="btn btn-danger btn-sm" data-act="delete" data-id="${i.id}">Delete</button>
+          </div>
+        </div>`).join("")}
+    </div>
+    ${paginationControls(total)}`;
+
+  host.querySelectorAll("button[data-act]").forEach(btn => {
+    btn.onclick = () => confirmDelete(
+      "Delete Invitation?", "This action cannot be undone.",
+      () => del(`/invitations/${btn.dataset.id}`).then(() => toast("Invitation deleted"))
+    );
+  });
+  wireAdminSearch(host);
+  wirePagination();
 }
 
 /* ---- admin: users ---- */
@@ -1349,7 +1592,7 @@ function responsesSearchMarkup() {
   const statuses = Object.keys(STATUS_LABELS);
   const activeStatus = adminState.status || statuses[0];
   const statusOptions = statuses
-    .map(s => `<option value="${s}" ${activeStatus === s ? "selected" : ""}>${s === "send" ? "Send" : STATUS_LABELS[s]}</option>`)
+    .map(s => `<option value="${s}" ${activeStatus === s ? "selected" : ""}>${STATUS_LABELS[s]}</option>`)
     .join("");
   return `
     <form id="adminSearchForm" class="panel glass" style="display:flex; gap:8px; align-items:end; margin-bottom:16px; flex-wrap:wrap;">

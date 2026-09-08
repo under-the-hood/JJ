@@ -4,6 +4,7 @@ import enum
 
 from app.backend.models.base import Base
 
+
 class ResponseStatus(enum.Enum):
     send = 'send'
     viewed = 'viewed'
@@ -11,7 +12,6 @@ class ResponseStatus(enum.Enum):
     interview = 'interview'
     rejected = 'rejected'
     hired = 'hired'
-
 
 class Response(Base):
     __tablename__ = 'responses'

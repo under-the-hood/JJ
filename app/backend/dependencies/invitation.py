@@ -1,5 +1,6 @@
 from fastapi import HTTPException, Depends
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
 from app.backend.database.database import session_dep
 from app.backend.models.invitations import Invitation
@@ -8,7 +9,7 @@ from app.backend.dependencies.user import check_user
 
 
 async def check_invitation(session: session_dep, invitation_id: int):
-    query = await session.execute(select(Invitation).where(Invitation.id == invitation_id))
+    query = await session.execute(select(Invitation).options(joinedload(Invitation.vacancy), joinedload(Invitation.resume)).where(Invitation.id == invitation_id))
     current_invitation = query.scalar_one_or_none()
 
     if not current_invitation:

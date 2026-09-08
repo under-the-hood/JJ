@@ -20,6 +20,18 @@ async def test_delete_invitation(tenant_client, send_interview_invitation):
 
 
 @pytest.mark.asyncio
+async def test_set_status(applicant_client, send_interview_invitation):
+    invitation_id = await send_interview_invitation()
+
+    status = {
+        "status": "accepted"
+    }
+
+    response = await applicant_client.patch(f"/invitations/{invitation_id}/status", json=status)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
 async def test_search_invitations(admin_client, tenant_client, applicant_client, send_interview_invitation, test_session, create_vacancy, create_resume):
     invitation_id = await send_interview_invitation()
     

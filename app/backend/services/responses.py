@@ -76,7 +76,7 @@ async def search_responses(session: AsyncSession, data: SearchResponses, current
         query_parts.append(data.stack.strip())
 
     if data.status:
-        filters.append(f"status = '{data.status}'")
+        filters.append(f"status = '{data.status.value}'")
 
     if filters:
         search_options["filter"] = filters
@@ -126,7 +126,7 @@ async def set_status(session: AsyncSession, data: SetStatus, current_response: R
     mail = Mails(
         recipient_id = current_response.applicant_id,
         subject = "Application Status Updated",
-        body = f"Hello!\nYour application status for {current_response.vacancy.title} has been updated to {current_response.status}."
+        body = f"Hello!\nYour application status for {current_response.vacancy.title} has been updated to {current_response.status.value}."
     )
 
     session.add(mail)

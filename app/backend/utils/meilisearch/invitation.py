@@ -9,7 +9,8 @@ def sync_invitation(invitation: Invitation):
         "tenant_id": invitation.tenant_id,
         "resume_title": invitation.resume.title,
         "resume_stack": invitation.resume.stack,
-        "vacancy_title": invitation.vacancy.title
+        "vacancy_title": invitation.vacancy.title,
+        "status": invitation.status.value
     }
     task = meili.index("invitations").add_documents([document])
     finished = meili.wait_for_task(task.task_uid)

@@ -4,7 +4,7 @@ from fastapi import HTTPException
 
 from app.backend.models.user import User, Role
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
-from app.backend.schemas.invitations import InvitationSchema, SearchInvitation
+from app.backend.schemas.invitations import InvitationSchema, SearchInvitation, SetStatus
 from app.backend.models.invitations import Invitation
 from app.backend.helpers.vacancy import check_vacancy_owner_or_admin
 from app.backend.utils.meilisearch.client import meili
@@ -49,6 +49,26 @@ async def send_interview_invitation(session: AsyncSession, data: InvitationSchem
     return invitation
 
 
+async def set_status(session: AsyncSession, data: SetStatus, current_invitation: Invitation, current_user: User):
+    current_invitation.status = data.status
+
+    mail = Mails(
+        recipient_id = current_invitation.tenant_id,
+        subject = "Invitation status was updated",
+        body = f"Hello!\nInvitation status for {current_invitation.vacancy.title} was updated to {data.status.value}."
+    )
+
+    session.add(mail)
+    await session.commit()
+    await session.refresh(current_invitation)
+    await session.refresh(mail)
+
+    sync_invitation_task.delay(current_invitation.id)
+    send_mail_task.delay(mail.id)
+
+    return current_invitation
+
+
 async def delete_invitation(session: AsyncSession, current_invitation: Invitation, current_user: User):
     delete_invitation_task.delay(current_invitation.id)
 
@@ -89,6 +109,9 @@ async def search_invitations(data: SearchInvitation, current_user: User):
 
     if data.vacancy_title:
         query_parts.append(data.vacancy_title.strip())
+
+    if data.status:
+        filters.append(f"status = '{data.status.value}'")
 
     if filters:
         search_options["filter"] = filters
