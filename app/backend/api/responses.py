@@ -1,18 +1,21 @@
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
 
-from app.backend.database.redis_database import get_redis
+import app.backend.services.responses as response_service
 from app.backend.database.database import session_dep
-from app.backend.dependencies.resume import check_applicant, check_applicant_or_admin
-from app.backend.dependencies.vacancy import check_tenant, check_vacancy, check_tenant_or_admin
+from app.backend.database.redis_database import get_redis
 from app.backend.dependencies.response import check_response_owner_or_admin
+from app.backend.dependencies.resume import check_applicant, check_applicant_or_admin
+from app.backend.dependencies.vacancy import (
+    check_tenant,
+    check_tenant_or_admin,
+    check_vacancy,
+)
+from app.backend.helpers.rate_limiter import rate_limiter_factory
+from app.backend.models.response import Response
 from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
-from app.backend.models.response import Response
-from app.backend.schemas.response import ResponseSchema,  SetStatus, SearchResponses
-from app.backend.helpers.rate_limiter import rate_limiter_factory
-import app.backend.services.responses as response_service
-
+from app.backend.schemas.response import ResponseSchema, SearchResponses, SetStatus
 
 router = APIRouter(prefix="/responses", tags=["Response"])
 

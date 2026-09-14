@@ -2,7 +2,6 @@ from celery import Celery
 
 from app.backend.config import settings
 
-
 celery = Celery(
     "jj_project",
     broker=f"{settings.RABBITMQ}",

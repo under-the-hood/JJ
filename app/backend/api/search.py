@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends
 
-from app.backend.dependencies.vacancy import check_tenant_or_admin
+import app.backend.services.search as search_service
 from app.backend.dependencies.resume import check_applicant_or_admin
+from app.backend.dependencies.vacancy import check_tenant_or_admin
+from app.backend.helpers.rate_limiter import rate_limiter_factory
 from app.backend.models.user import User
 from app.backend.schemas.search import SearchResumes, SearchVacancies
-from app.backend.helpers.rate_limiter import rate_limiter_factory
-import app.backend.services.search as search_service
-
 
 router = APIRouter(prefix="/search", tags=['Search'])
 

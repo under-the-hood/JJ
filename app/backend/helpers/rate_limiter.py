@@ -1,9 +1,10 @@
 from typing import Annotated
+
 from fastapi import Depends, HTTPException, Request
 
-from app.backend.utils.rate_limiter import RateLimiter, get_rate_limiter
 from app.backend.dependencies.user import get_user_token
 from app.backend.models.user import User
+from app.backend.utils.rate_limiter import RateLimiter, get_rate_limiter
 
 
 async def check_limit(rate_limiter: RateLimiter, key_suffix: str, endpoint: str, max_requests: int, window_seconds: int):

@@ -1,18 +1,29 @@
-from fastapi import HTTPException, Response
-from sqlalchemy import select
-from redis.asyncio import Redis
 import json
+
+from fastapi import HTTPException, Response
+from redis.asyncio import Redis
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.backend.utils.hash import hashing_password, pwd_context
 from app.backend.core.auth import security
-from app.backend.models.user import User, Role
-from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, Delete, info_adapter
-from app.backend.utils.redis_cache import get_cache_key
-from app.backend.models.mails import Mails
-from app.backend.helpers.celery_tasks.send_mail import send_mail_task
-from app.backend.helpers.celery_tasks.meilisearch.user import sync_user_task, delete_user_task
 from app.backend.helpers.cache import clear_user_profile_cache
+from app.backend.helpers.celery_tasks.meilisearch.user import (
+    delete_user_task,
+    sync_user_task,
+)
+from app.backend.helpers.celery_tasks.send_mail import send_mail_task
+from app.backend.models.mails import Mails
+from app.backend.models.user import Role, User
+from app.backend.schemas.user import (
+    CreateUser,
+    Delete,
+    EditName,
+    EditPassword,
+    Login,
+    info_adapter,
+)
+from app.backend.utils.hash import hashing_password, pwd_context
+from app.backend.utils.redis_cache import get_cache_key
 
 
 async def create_user(session: AsyncSession, data: CreateUser, redis: Redis):
@@ -73,7 +84,7 @@ async def get_info(current_user: User, redis: Redis):
 
     validated_info = info_adapter.validate_python(current_user)
     info = info_adapter.dump_python(validated_info, mode="json")
-    
+
     #Else save info about user in cache on 1 hour
     await redis.set(cache_key, json.dumps(info), 3600)
 

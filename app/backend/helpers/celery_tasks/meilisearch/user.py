@@ -1,7 +1,7 @@
-from app.backend.helpers.celery import celery
 from app.backend.database.database import celery_session
-from app.backend.utils.meilisearch.user import sync_user, delete_user
+from app.backend.helpers.celery import celery
 from app.backend.models.user import User
+from app.backend.utils.meilisearch.user import delete_user, sync_user
 
 
 @celery.task(name="sync_user_task")

@@ -1,15 +1,14 @@
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
 
-from app.backend.database.redis_database import get_redis
-from app.backend.models.user import User
-from app.backend.models.resume import Resume
-from app.backend.database.database import session_dep
-from app.backend.schemas.resume import CreateResume, EditResume
-from app.backend.dependencies.resume import check_applicant, check_resume_owner_or_admin
 import app.backend.services.resumes as resume_service
+from app.backend.database.database import session_dep
+from app.backend.database.redis_database import get_redis
+from app.backend.dependencies.resume import check_applicant, check_resume_owner_or_admin
 from app.backend.helpers.rate_limiter import rate_limiter_factory
-
+from app.backend.models.resume import Resume
+from app.backend.models.user import User
+from app.backend.schemas.resume import CreateResume, EditResume
 
 router = APIRouter(prefix="/resumes", tags=["Resume"])
 

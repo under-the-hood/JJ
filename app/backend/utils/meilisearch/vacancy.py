@@ -10,7 +10,7 @@ def sync_vacancy(vacancy: Vacancy):
         "city": vacancy.city,
         "compensation": vacancy.compensation
     }
-    
+
     task = meili.index("vacancies").add_documents([document])
     finished = meili.wait_for_task(task.task_uid)
     return finished

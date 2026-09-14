@@ -1,9 +1,9 @@
 from fastapi import HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.backend.models.resume import Resume
-from app.backend.models.user import User, Role
+from app.backend.models.user import Role, User
 
 
 async def get_resume(session: AsyncSession, resume_id: int):

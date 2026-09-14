@@ -1,15 +1,21 @@
-from fastapi import APIRouter, Response, Depends
+from fastapi import APIRouter, Depends, Response
 from redis.asyncio import Redis
 
-from app.backend.database.database import session_dep
-from app.backend.models.user import User
-from app.backend.schemas.user import CreateUser, Login, EditPassword, EditName, Delete
-from app.backend.dependencies.user import check_user
-from app.backend.dependencies.password import validate_user_registration, validate_edit_password, validate_delete_user
-from app.backend.helpers.rate_limiter import rate_limiter_factory, rate_limiter_factory_by_ip
-from app.backend.database.redis_database import get_redis
 import app.backend.services.users as user_service
-
+from app.backend.database.database import session_dep
+from app.backend.database.redis_database import get_redis
+from app.backend.dependencies.password import (
+    validate_delete_user,
+    validate_edit_password,
+    validate_user_registration,
+)
+from app.backend.dependencies.user import check_user
+from app.backend.helpers.rate_limiter import (
+    rate_limiter_factory,
+    rate_limiter_factory_by_ip,
+)
+from app.backend.models.user import User
+from app.backend.schemas.user import CreateUser, Delete, EditName, EditPassword, Login
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -18,7 +24,7 @@ sign_up_limit = rate_limiter_factory_by_ip("/users/sign_up", 3, 300)
 
 @router.post('/sign_up', dependencies=[Depends(sign_up_limit)])
 async def sign_up(session: session_dep, data: CreateUser = Depends(validate_user_registration), redis: Redis = Depends(get_redis)):
-    
+
     user = await user_service.create_user(session=session, data=data, redis=redis)
     return {'message': 'User was created', "user": user}
 

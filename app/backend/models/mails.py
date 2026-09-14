@@ -1,7 +1,8 @@
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.backend.models.base import Base
+
 
 class Mails(Base):
     __tablename__ = "mails"

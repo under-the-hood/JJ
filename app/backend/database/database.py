@@ -1,12 +1,12 @@
-from sqlalchemy.pool import NullPool
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from typing import Annotated
+
 from fastapi import Depends
 from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
 from app.backend.config import settings
-
 
 engine = create_async_engine(settings.database, future=True, echo=False, poolclass=NullPool)
 

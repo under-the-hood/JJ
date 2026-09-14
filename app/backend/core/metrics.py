@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Response
 import prometheus_client
+from fastapi import FastAPI, Response
 from prometheus_fastapi_instrumentator import Instrumentator
 
 

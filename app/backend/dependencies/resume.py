@@ -1,10 +1,10 @@
 from fastapi import Depends, HTTPException
 
-from app.backend.dependencies.user import check_user
 import app.backend.helpers.resume as resume_helpers
 from app.backend.database.database import session_dep
-from app.backend.models.user import User, Role
+from app.backend.dependencies.user import check_user
 from app.backend.helpers.validator import validate_roles
+from app.backend.models.user import Role, User
 
 
 async def check_applicant(current_user: User = Depends(check_user)):

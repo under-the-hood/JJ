@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.fixture
 def send_interview_invitation(tenant_client, create_resume, create_vacancy):
     async def create_invitation():

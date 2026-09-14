@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.fixture
 async def create_vacancy(tenant_client):
 
@@ -13,7 +14,7 @@ async def create_vacancy(tenant_client):
 
     data = response.json()
     assert "vacancy" in data, data
-    vacancy_id = data["vacancy"]["id"]    
+    vacancy_id = data["vacancy"]["id"]
 
     return vacancy_id
 

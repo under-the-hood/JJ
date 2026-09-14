@@ -4,7 +4,7 @@ from app.backend.utils.meilisearch.client import meili
 def init_meilisearch():
     create_vacancies_task = meili.create_index("vacancies", {"primaryKey": "id"})
     meili.wait_for_task(create_vacancies_task.task_uid)
-    
+
     create_resumes_task = meili.create_index("resumes", {"primaryKey": "id"})
     meili.wait_for_task(create_resumes_task.task_uid)
 

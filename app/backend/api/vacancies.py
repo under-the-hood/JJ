@@ -1,15 +1,14 @@
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
 
+import app.backend.services.vacancies as vacancy_service
+from app.backend.database.database import session_dep
+from app.backend.database.redis_database import get_redis
+from app.backend.dependencies.vacancy import check_tenant, check_vacancy_owner_or_admin
+from app.backend.helpers.rate_limiter import rate_limiter_factory
 from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
 from app.backend.schemas.vacancy import CreateVacancy, EditVacancy
-from app.backend.database.database import session_dep
-from app.backend.dependencies.vacancy import check_vacancy_owner_or_admin, check_tenant
-import app.backend.services.vacancies as vacancy_service
-from app.backend.helpers.rate_limiter import rate_limiter_factory
-from app.backend.database.redis_database import get_redis
-
 
 router = APIRouter(prefix="/vacancies", tags=["Vacancy"])
 

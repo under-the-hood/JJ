@@ -1,27 +1,20 @@
 import sys
 from os.path import abspath, dirname
+
 sys.path.insert(0, dirname(dirname(abspath(__file__))))
 
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from app.backend.models.base import Base
-from app.backend.models.mails import Mails
-from app.backend.models.response import Response
-from app.backend.models.resume import Resume
-from app.backend.models.user import User
-from app.backend.models.vacancy import Vacancy
-from app.backend.models.invitations import Invitation
 from app.backend.config import settings
+from app.backend.models.base import Base
 
 config.set_main_option('sqlalchemy.url', f"{settings.database}?async_fallback=True")
 

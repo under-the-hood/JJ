@@ -1,7 +1,7 @@
+from app.backend.database.database import celery_session
 from app.backend.helpers.celery import celery
 from app.backend.models.response import Response
-from app.backend.database.database import celery_session
-from app.backend.utils.meilisearch.response import sync_response, delete_response
+from app.backend.utils.meilisearch.response import delete_response, sync_response
 
 
 @celery.task(name="sync_response_task")
