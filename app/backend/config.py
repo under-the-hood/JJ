@@ -1,7 +1,7 @@
 import os
-from pydantic_settings import BaseSettings
 from pathlib import Path
 
+from pydantic_settings import BaseSettings
 
 current_dir = Path(__file__).parent.parent.parent
 
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     @classmethod
     def load_settings(cls):
         mode = os.getenv("MODE", "DEV").upper()
-        
+
         if mode == "TEST":
             env_file = ".test.env"
         elif mode == "PROD":

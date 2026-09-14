@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.fixture
 def send_response_to_vacancy(applicant_client, create_vacancy, create_resume):
     async def create_response():

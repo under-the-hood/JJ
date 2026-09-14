@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_update_vacancy(admin_client, create_vacancy):
 
@@ -10,7 +11,7 @@ async def test_update_vacancy(admin_client, create_vacancy):
         "new_compensation": 550000,
         "new_city": "Astana"
     }
-    
+
     response = await admin_client.patch(f"/vacancies/{vacancy_id}", json=updated_vacancy)
 
     assert response.status_code == 200

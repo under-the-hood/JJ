@@ -1,8 +1,9 @@
-from typing import Annotated
-from redis.asyncio import Redis
 import random
 from time import time
+from typing import Annotated
+
 from fastapi import Depends
+from redis.asyncio import Redis
 
 from app.backend.database.redis_database import get_redis
 
@@ -23,7 +24,7 @@ class RateLimiter:
             pipeline.zadd(key, {current_request: current_ms})
 
             pipeline.expire(key, window_seconds)
-            
+
             result = await pipeline.execute()
 
         _, current_count, _, _ = result

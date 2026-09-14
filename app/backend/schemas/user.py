@@ -1,5 +1,6 @@
-from pydantic import Field, EmailStr, ConfigDict, TypeAdapter
 from enum import Enum
+
+from pydantic import ConfigDict, EmailStr, Field, TypeAdapter
 
 from app.backend.schemas.base import Base
 from app.backend.schemas.search import PaginationParams

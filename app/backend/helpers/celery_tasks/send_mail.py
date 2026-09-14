@@ -1,11 +1,8 @@
-from app.backend.utils.smtp_email import email_backend
-from app.backend.models.mails import Mails
-from app.backend.helpers.celery import celery
-from app.backend.models.user import User
-from app.backend.models.vacancy import Vacancy
-from app.backend.models.resume import Resume
-from app.backend.models.response import Response
 from app.backend.database.database import celery_session
+from app.backend.helpers.celery import celery
+from app.backend.models.mails import Mails
+from app.backend.models.user import User
+from app.backend.utils.smtp_email import email_backend
 
 
 @celery.task(name="send_mail_task")

@@ -40,6 +40,14 @@ html { background: #ffffff; }
   box-shadow: var(--glass-shadow);
 }
 
+.text-link {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: 600;
+}
+.text-link:hover { opacity: 0.8; }
+
 /* ---------- topbar ---------- */
 .topbar {
   position: sticky;

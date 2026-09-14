@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_update_resume(admin_client, create_resume):
     resume_id = create_resume

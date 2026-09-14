@@ -1,14 +1,18 @@
 import json
-from sqlalchemy import select
+
 from redis.asyncio import Redis
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.backend.utils.redis_cache import get_cache_key
-from app.backend.models.user import User
-from app.backend.models.resume import Resume
-from app.backend.schemas.resume import CreateResume, EditResume, resume_list_adapter
-from app.backend.helpers.celery_tasks.meilisearch.resume import sync_resume_task, delete_resume_task
 from app.backend.helpers.cache import clear_user_resumes_cache
+from app.backend.helpers.celery_tasks.meilisearch.resume import (
+    delete_resume_task,
+    sync_resume_task,
+)
+from app.backend.models.resume import Resume
+from app.backend.models.user import User
+from app.backend.schemas.resume import CreateResume, EditResume, resume_list_adapter
+from app.backend.utils.redis_cache import get_cache_key
 
 
 async def create_resume(session: AsyncSession, data: CreateResume, current_user: User, redis: Redis):

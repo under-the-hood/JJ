@@ -1,11 +1,11 @@
-from fastapi import HTTPException, Depends
+from fastapi import Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from app.backend.database.database import session_dep
-from app.backend.models.invitations import Invitation
-from app.backend.models.user import User, Role
 from app.backend.dependencies.user import check_user
+from app.backend.models.invitations import Invitation
+from app.backend.models.user import Role, User
 
 
 async def check_invitation(session: session_dep, invitation_id: int):

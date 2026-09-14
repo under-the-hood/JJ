@@ -231,7 +231,7 @@ function renderLogin() {
         <div class="field"><label>Password</label><input type="password" id="password"></div>
         <button class="btn btn-primary" id="submitLogin" style="width:100%;">Sign in</button>
         <p class="muted" style="text-align:center; margin-top:16px; font-size:14px;">
-          Don't have an account? <a href="#" id="goRegister">Sign up</a>
+          Don't have an account? <a class="text-link" id="goRegister">Sign up</a>
         </p>
       </div>
     </div>`;
@@ -265,7 +265,7 @@ function renderRegister() {
         <div class="field"><label>Repeat password</label><input type="password" id="repeat_password"></div>
         <button class="btn btn-primary" id="submitRegister" style="width:100%;">Create account</button>
         <p class="muted" style="text-align:center; margin-top:16px; font-size:14px;">
-          Already have an account? <a href="#" id="goLogin">Sign in</a>
+          Already have an account? <a class="text-link" id="goLogin">Sign in</a>
         </p>
       </div>
     </div>`;
@@ -1011,7 +1011,8 @@ async function loadMyResponses() {
   const list = document.getElementById("list");
   list.innerHTML = `<div class="center" style="padding:40px; grid-column:1/-1;"><div class="spinner"></div></div>`;
   try {
-    const responses = await get("/responses/my");
+    const data = await get("/responses/my");
+    const responses = data.responses;
     if (!responses.length) {
       list.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">You haven't applied to any vacancies yet</div>`;
       return;
@@ -1754,9 +1755,9 @@ function applyTheme(theme) {
     toggle.querySelector(".theme-icon").innerHTML = isDark
       ? `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path></svg>`
       : "☾";
-    toggle.setAttribute("aria-label", isDark ? "Switch to light theme" : "Switch to dark theme");
-    toggle.title = isDark ? "Switch to light theme" : "Switch to dark theme";
   }
+  const themeColorMeta = document.getElementById("themeColorMeta");
+  if (themeColorMeta) themeColorMeta.setAttribute("content", isDark ? "#111218" : "#ffffff");
 }
 
 function initTheme() {

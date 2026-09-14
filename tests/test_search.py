@@ -2,8 +2,8 @@ import pytest
 
 from app.backend.models.resume import Resume
 from app.backend.models.vacancy import Vacancy
-from app.backend.utils.meilisearch.vacancy import sync_vacancy
 from app.backend.utils.meilisearch.resume import sync_resume
+from app.backend.utils.meilisearch.vacancy import sync_vacancy
 
 
 @pytest.mark.asyncio

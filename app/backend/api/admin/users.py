@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
 
+import app.backend.services.admin.users as admin_users
 from app.backend.database.database import session_dep
+from app.backend.database.redis_database import get_redis
 from app.backend.dependencies.user import check_admin, check_user_by_id
 from app.backend.models.user import User
 from app.backend.schemas.admin import UpdateUser
-from app.backend.database.redis_database import get_redis
-import app.backend.services.admin.users as admin_users
 from app.backend.schemas.user import SearchUsers
-
 
 router = APIRouter(prefix="/users", tags=['Admin | Users'])
 

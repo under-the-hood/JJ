@@ -1,8 +1,8 @@
-import pytest
 import fakeredis.aioredis
+import pytest
 
-from app.main import app
 from app.backend.database.redis_database import get_redis
+from app.main import app
 
 
 @pytest.fixture(scope="session")

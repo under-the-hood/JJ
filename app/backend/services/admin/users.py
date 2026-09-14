@@ -1,13 +1,16 @@
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.backend.helpers.cache import clear_user_profile_cache
+from app.backend.helpers.celery_tasks.meilisearch.user import (
+    delete_user_task,
+    sync_user_task,
+)
+from app.backend.helpers.validator import validate_admin_action
 from app.backend.models.user import User
 from app.backend.schemas.admin import UpdateUser
-from app.backend.helpers.cache import clear_user_profile_cache
-from app.backend.helpers.validator import validate_admin_action
 from app.backend.schemas.user import SearchUsers
 from app.backend.utils.meilisearch.client import meili
-from app.backend.helpers.celery_tasks.meilisearch.user import sync_user_task, delete_user_task
 
 
 async def search_users(data: SearchUsers, admin: User):
@@ -38,7 +41,7 @@ async def update_user(session: AsyncSession, data: UpdateUser, current_user: Use
 
     if data.new_name:
         current_user.name = data.new_name
-    
+
     if data.new_role:
         current_user.role = data.new_role
 

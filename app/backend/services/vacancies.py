@@ -1,14 +1,21 @@
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from redis.asyncio import Redis
 import json
 
-from app.backend.utils.redis_cache import get_cache_key
+from redis.asyncio import Redis
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.backend.helpers.cache import (
+    clear_responses_cache_for_vacancy,
+    clear_user_vacancies_cache,
+)
+from app.backend.helpers.celery_tasks.meilisearch.vacancy import (
+    delete_vacancy_task,
+    sync_vacancy_task,
+)
 from app.backend.models.user import User
 from app.backend.models.vacancy import Vacancy
 from app.backend.schemas.vacancy import CreateVacancy, EditVacancy, vacancy_list_adapter
-from app.backend.helpers.celery_tasks.meilisearch.vacancy import sync_vacancy_task, delete_vacancy_task
-from app.backend.helpers.cache import clear_user_vacancies_cache, clear_responses_cache_for_vacancy
+from app.backend.utils.redis_cache import get_cache_key
 
 
 async def create_vacancy(session: AsyncSession, data: CreateVacancy, current_user: User, redis: Redis):
@@ -62,13 +69,13 @@ async def update_vacancy(session: AsyncSession, current_vacancy: Vacancy, data: 
 
     await clear_responses_cache_for_vacancy(session, current_vacancy.id, redis)
     await clear_user_vacancies_cache(redis, current_vacancy.tenant_id)
-    
+
     sync_vacancy_task.delay(current_vacancy.id)
 
 
 async def delete_vacancy(session: AsyncSession, current_vacancy: Vacancy, redis: Redis):
     delete_vacancy_task.delay(current_vacancy.id)
-    
+
     await clear_responses_cache_for_vacancy(session, current_vacancy.id, redis)
     await clear_user_vacancies_cache(redis, current_vacancy.tenant_id)
 

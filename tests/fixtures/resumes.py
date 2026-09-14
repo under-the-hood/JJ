@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.fixture
 async def create_resume(applicant_client):
 

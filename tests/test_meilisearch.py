@@ -1,8 +1,8 @@
 import pytest
 
 from app.backend.models.vacancy import Vacancy
-from app.backend.utils.meilisearch.vacancy import sync_vacancy
 from app.backend.utils.meilisearch.client import meili
+from app.backend.utils.meilisearch.vacancy import sync_vacancy
 
 
 @pytest.mark.asyncio

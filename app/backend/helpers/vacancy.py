@@ -1,9 +1,9 @@
 from fastapi import HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.backend.models.user import Role, User
 from app.backend.models.vacancy import Vacancy
-from app.backend.models.user import User, Role
 
 
 async def get_vacancy(session: AsyncSession, vacancy_id: int):

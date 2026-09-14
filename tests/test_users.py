@@ -35,7 +35,7 @@ async def test_update_password(tenant_client):
 
 @pytest.mark.asyncio
 async def test_update_name(tenant_client):
-        
+
     new_name = {
         "new_name": "Andrey"
     }

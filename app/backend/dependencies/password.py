@@ -1,11 +1,11 @@
-from fastapi import HTTPException, Depends
+from fastapi import Depends, HTTPException
 from sqlalchemy import select
 
-from app.backend.schemas.user import CreateUser, EditPassword, Delete
-from app.backend.models.user import User
 from app.backend.database.database import session_dep
 from app.backend.dependencies.user import check_user
-from app.backend.utils.password import verify_passwords_match, verify_password
+from app.backend.models.user import User
+from app.backend.schemas.user import CreateUser, Delete, EditPassword
+from app.backend.utils.password import verify_password, verify_passwords_match
 
 
 async def validate_user_registration(data: CreateUser, session: session_dep):

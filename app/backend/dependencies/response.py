@@ -1,11 +1,11 @@
-from fastapi import HTTPException, Depends
-from sqlalchemy.orm import joinedload
+from fastapi import Depends, HTTPException
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
-from app.backend.models.response import Response
-from app.backend.models.user import User, Role
 from app.backend.database.database import session_dep
 from app.backend.dependencies.user import check_user
+from app.backend.models.response import Response
+from app.backend.models.user import Role, User
 
 
 async def check_response(session: session_dep, response_id: int):
@@ -27,5 +27,5 @@ async def check_response_owner_or_admin(current_response: Response = Depends(che
     else:
         if current_response.resume.applicant_id != current_user.id:
             raise HTTPException(status_code=403, detail="It's not your resume")
-    
+
     return current_response

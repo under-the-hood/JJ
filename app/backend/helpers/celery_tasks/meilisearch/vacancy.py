@@ -1,7 +1,7 @@
+from app.backend.database.database import celery_session
 from app.backend.helpers.celery import celery
 from app.backend.models.vacancy import Vacancy
-from app.backend.database.database import celery_session
-from app.backend.utils.meilisearch.vacancy import sync_vacancy, delete_vacancy
+from app.backend.utils.meilisearch.vacancy import delete_vacancy, sync_vacancy
 
 
 @celery.task(name="sync_vacancy_task")

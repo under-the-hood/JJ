@@ -1,4 +1,5 @@
-import tests.fixtures.meilisearch_container as meilisearch_container
+from tests.fixtures import meilisearch_container
+
 
 def pytest_sessionfinish(session, exitstatus):
     meilisearch_container.stop()

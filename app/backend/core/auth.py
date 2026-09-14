@@ -1,5 +1,6 @@
-from authx import AuthXConfig, AuthX
 from datetime import timedelta
+
+from authx import AuthX, AuthXConfig
 
 from app.backend.config import settings
 

@@ -1,10 +1,10 @@
 import time
-import requests
+
 import meilisearch
+import requests
 from testcontainers.core.container import DockerContainer
 
-import app.backend.utils.meilisearch.client as meili_client 
-
+import app.backend.utils.meilisearch.client as meili_client
 
 meili_container = (
     DockerContainer("getmeili/meilisearch:v1.6")

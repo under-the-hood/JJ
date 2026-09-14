@@ -1,5 +1,6 @@
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
+
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.backend.models.base import Base
 

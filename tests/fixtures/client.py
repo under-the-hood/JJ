@@ -1,6 +1,7 @@
-import pytest
 from contextlib import asynccontextmanager
-from httpx import AsyncClient, ASGITransport
+
+import pytest
+from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 from tests.fixtures.auth import get_token
@@ -13,10 +14,10 @@ async def create_client(role: str, email: str, session):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         # 1. Получаем токен для конкретной роли и email
         token = await get_token(ac, role, email, session)
-        
+
         # 2. Устанавливаем Bearer token в дефолтные заголовки клиента
         ac.headers["Authorization"] = f"Bearer {token}"
-        
+
         yield ac
 
 

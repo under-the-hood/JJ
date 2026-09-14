@@ -5,6 +5,7 @@ from sqlalchemy.orm import joinedload
 from app.backend.models.invitations import Invitation
 from app.backend.utils.meilisearch.invitation import sync_invitation
 
+
 @pytest.mark.asyncio
 async def test_send_interview_invitation(send_interview_invitation):
     invitation_id = await send_interview_invitation()
@@ -34,7 +35,7 @@ async def test_set_status(applicant_client, send_interview_invitation):
 @pytest.mark.asyncio
 async def test_search_invitations(admin_client, tenant_client, applicant_client, send_interview_invitation, test_session, create_vacancy, create_resume):
     invitation_id = await send_interview_invitation()
-    
+
     query = await test_session.execute(
         select(Invitation)
         .options(joinedload(Invitation.resume), joinedload(Invitation.vacancy))

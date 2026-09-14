@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 
-from app.backend.models.user import User, Role
+from app.backend.models.user import Role, User
 
 
 def validate_admin_action(current_user: User, current_admin: User):

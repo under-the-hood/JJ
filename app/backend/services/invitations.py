@@ -1,16 +1,23 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.backend.models.user import User, Role
+from app.backend.helpers.celery_tasks.meilisearch.invitation import (
+    delete_invitation_task,
+    sync_invitation_task,
+)
 from app.backend.helpers.celery_tasks.send_mail import send_mail_task
-from app.backend.schemas.invitations import InvitationSchema, SearchInvitation, SetStatus
-from app.backend.models.invitations import Invitation
 from app.backend.helpers.vacancy import check_vacancy_owner_or_admin
-from app.backend.utils.meilisearch.client import meili
+from app.backend.models.invitations import Invitation
 from app.backend.models.mails import Mails
 from app.backend.models.resume import Resume
-from app.backend.helpers.celery_tasks.meilisearch.invitation import sync_invitation_task, delete_invitation_task
+from app.backend.models.user import Role, User
+from app.backend.schemas.invitations import (
+    InvitationSchema,
+    SearchInvitation,
+    SetStatus,
+)
+from app.backend.utils.meilisearch.client import meili
 
 
 async def send_interview_invitation(session: AsyncSession, data: InvitationSchema, current_resume: Resume, current_user: User):
@@ -19,9 +26,9 @@ async def send_interview_invitation(session: AsyncSession, data: InvitationSchem
         raise HTTPException(status_code=400, detail="You have already sent interview invitation to this resume")
 
     applicant_id = current_resume.applicant_id
-    
+
     current_vacancy = await check_vacancy_owner_or_admin(session, data.vacancy_id, current_user)
-    
+
     invitation = Invitation(**data.model_dump())
     invitation.applicant_id = applicant_id
     invitation.tenant_id = current_user.id
@@ -31,7 +38,7 @@ async def send_interview_invitation(session: AsyncSession, data: InvitationSchem
 
     mail = Mails(
         recipient_id = applicant_id,
-        subject = f"You have been invited to an interview!",
+        subject = "You have been invited to an interview!",
         body = (
             f"Tenant {current_user.name} invited you to an interview\n"
             f"Vacancy:\ntitle: {current_vacancy.title}\ncompensation: {current_vacancy.compensation}\n\n"
@@ -81,7 +88,7 @@ async def search_invitations(data: SearchInvitation, current_user: User):
 
     if current_user.role == Role.tenant:
         filters.append(f"tenant_id = {current_user.id}")
-    
+
     if current_user.role == Role.applicant:
         filters.append(f"applicant_id = {current_user.id}")
 

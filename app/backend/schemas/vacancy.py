@@ -1,4 +1,4 @@
-from pydantic import Field, ConfigDict, TypeAdapter
+from pydantic import ConfigDict, Field, TypeAdapter
 
 from app.backend.schemas.base import Base
 

@@ -1,5 +1,6 @@
-from pydantic import Field
 import enum
+
+from pydantic import Field
 
 from app.backend.schemas.base import Base
 from app.backend.schemas.search import PaginationParams
@@ -24,7 +25,7 @@ class SearchInvitation(PaginationParams):
     resume_id: int | None = Field(default=None)
 
     status: InvitationStatus | None = Field(default=None)
-    
+
     resume_title: str | None = Field(default=None, min_length=2, max_length=100, pattern=r"^[a-zA-Zа-яА-Я0-9\s\.,\-\+#&\(\)/]+$")
     resume_stack: str | None = Field(default=None, min_length=2, max_length=100, pattern=r"^[a-zA-Zа-яА-Я0-9\s\.,!\?\-\(\):;'@\+#/]+$")
     vacancy_title: str | None = Field(default=None, min_length=2, max_length=100, pattern=r"^[a-zA-Zа-яА-Я0-9\s\.,\-\+#&\(\)/]+$")

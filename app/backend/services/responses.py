@@ -1,21 +1,29 @@
-from fastapi import HTTPException
-from sqlalchemy import select
-from sqlalchemy.orm import joinedload
-from sqlalchemy.ext.asyncio import AsyncSession
 import json
-from redis.asyncio import Redis
 
-from app.backend.helpers.cache import get_cache_key
-from app.backend.helpers.cache import clear_user_responses_cache
-from app.backend.models.response import Response
-from app.backend.models.user import User, Role
-from app.backend.models.vacancy import Vacancy
+from fastapi import HTTPException
+from redis.asyncio import Redis
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
+
+from app.backend.helpers.cache import clear_user_responses_cache, get_cache_key
+from app.backend.helpers.celery_tasks.meilisearch.response import (
+    delete_response_task,
+    sync_response_task,
+)
+from app.backend.helpers.celery_tasks.send_mail import send_mail_task
 from app.backend.helpers.resume import check_resume_owner_or_admin
 from app.backend.helpers.vacancy import check_vacancy_owner_or_admin
 from app.backend.models.mails import Mails
-from app.backend.schemas.response import ResponseSchema, SetStatus, SearchResponses, response_list_adapter
-from app.backend.helpers.celery_tasks.send_mail import send_mail_task
-from app.backend.helpers.celery_tasks.meilisearch.response import sync_response_task, delete_response_task
+from app.backend.models.response import Response
+from app.backend.models.user import Role, User
+from app.backend.models.vacancy import Vacancy
+from app.backend.schemas.response import (
+    ResponseSchema,
+    SearchResponses,
+    SetStatus,
+    response_list_adapter,
+)
 from app.backend.utils.meilisearch.client import meili
 
 
@@ -30,7 +38,7 @@ async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, 
     response.vacancy_id = current_vacancy.id
 
     current_resume = await check_resume_owner_or_admin(session, data.resume_id, current_user)
-    
+
     session.add(response)
 
     mail = Mails(
@@ -52,11 +60,11 @@ async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, 
 
 async def search_responses(session: AsyncSession, data: SearchResponses, current_user: User):
     filters = []
-    
+
     if current_user.role != Role.admin:
         if not data.vacancy_id:
             raise HTTPException(status_code=400, detail="Tenant must specify vacancy_id for searching responses")
-        
+
         await check_vacancy_owner_or_admin(session, data.vacancy_id, current_user)
         filters.append(f"vacancy_id = {data.vacancy_id}")
     else:
@@ -92,7 +100,7 @@ async def search_responses(session: AsyncSession, data: SearchResponses, current
 
 
 async def get_my_responses(session: AsyncSession, current_user: User, redis: Redis):
-    
+
     cache_key = get_cache_key("user", current_user.id, "user_responses")
     cached_responses = await redis.get(cache_key)
 
@@ -115,7 +123,7 @@ async def get_my_responses(session: AsyncSession, current_user: User, redis: Red
 async def delete_response(session: AsyncSession, current_response: Response, current_user: User, redis: Redis):
     await clear_user_responses_cache(redis, current_response.applicant_id)
     delete_response_task.delay(current_response.id)
-    
+
     await session.delete(current_response)
     await session.commit()
 
