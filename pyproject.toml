@@ -7,12 +7,12 @@ exclude = [
     "app/backend/migrations",
 ]
 
-[tool.ruff.lint]
+[tool.ruff.linter]
 select = ["E", "F", "I", "W"]
 
 ignore = [
     "E501"
 ]
 
-[tool.ruff.lint.per-file-ignores]
+[tool.ruff.linter.per-file-ignores]
 "app/backend/migrations/versions/*" = ["E", "F", "I", "W"]
