@@ -12,10 +12,7 @@ async def create_client(role: str, email: str, session):
     transport = ASGITransport(app=app)
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        # 1. Получаем токен для конкретной роли и email
         token = await get_token(ac, role, email, session)
-
-        # 2. Устанавливаем Bearer token в дефолтные заголовки клиента
         ac.headers["Authorization"] = f"Bearer {token}"
 
         yield ac
@@ -37,6 +34,11 @@ async def admin_client(test_session):
 @pytest.fixture
 async def applicant_client(test_session):
     async with create_client("applicant", "applicant_account@example.com", test_session) as ac:
+        yield ac
+
+@pytest.fixture
+async def second_applicant_client(test_session):
+    async with create_client("applicant", "second_applicant_account@example.com", test_session) as ac:
         yield ac
 
 
