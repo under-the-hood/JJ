@@ -2,16 +2,18 @@ import pytest
 
 
 @pytest.fixture
-async def create_resume(applicant_client):
-
-    new_resume = {
+def valid_resume_payload():
+    return {
         "title": "FastAPI Developer",
         "about": "Im a junior FastAPI developer",
         "city": "Almaty",
         "stack": "FastAPI, PostgreSQL, Python"
     }
 
-    response = await applicant_client.post("/resumes", json=new_resume)
+
+@pytest.fixture
+async def create_resume(applicant_client, valid_resume_payload):
+    response = await applicant_client.post("/resumes", json=valid_resume_payload)
 
     data = response.json()
     assert "resume" in data, data
