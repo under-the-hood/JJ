@@ -8,7 +8,6 @@ from app.backend.utils.meilisearch.vacancy import sync_vacancy
 
 @pytest.mark.asyncio
 async def test_search_resumes(tenant_client, admin_client, create_resume, test_session):
-
     resume = await test_session.get(Resume, create_resume)
     sync_resume(resume)
 

@@ -15,5 +15,6 @@ pytest_plugins = [
     "tests.fixtures.redis",
     "tests.fixtures.responses",
     "tests.fixtures.resumes",
+    "tests.fixtures.users",
     "tests.fixtures.vacancies"
 ]

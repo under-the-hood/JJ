@@ -10,7 +10,6 @@ from app.main import app
 
 @pytest.fixture(scope='session', autouse=True)
 async def setup_db():
-
     celery.conf.update(task_always_eager=True, task_eager_propagates=True)
     assert settings.MODE == 'TEST'
 

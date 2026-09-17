@@ -57,7 +57,6 @@ async def test_delete_response(applicant_client, send_response_to_vacancy):
 
 @pytest.mark.asyncio
 async def test_set_status(tenant_client, send_response_to_vacancy):
-
     response_id = await send_response_to_vacancy()
 
     status = {
