@@ -18,25 +18,25 @@ class UserRole(str, Enum):
 
 class CreateUser(Base):
     email: EmailStr
-    password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
-    repeat_password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
+    password: str = Field(min_length=8, max_length=25, pattern = r'^[a-zA-Z0-9_@#$%^&+=]+$')
+    repeat_password: str = Field(min_length=8, max_length=25, pattern = r'^[a-zA-Z0-9_@#$%^&+=]+$')
     role: Role
     name: str = Field(min_length=3, max_length=15, pattern=r"^[a-zA-Zа-яА-Я\s\-']+$")
 
 class Login(Base):
     email: EmailStr
-    password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
+    password: str = Field(min_length=8, max_length=25, pattern = r'^[a-zA-Z0-9_@#$%^&+=]+$')
 
 class EditPassword(Base):
-    old_password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
-    new_password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
-    repeat_new_password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
+    old_password: str = Field(min_length=8, max_length=25, pattern = r'^[a-zA-Z0-9_@#$%^&+=]+$')
+    new_password: str = Field(min_length=8, max_length=25, pattern = r'^[a-zA-Z0-9_@#$%^&+=]+$')
+    repeat_new_password: str = Field(min_length=8, max_length=25, pattern = r'^[a-zA-Z0-9_@#$%^&+=]+$')
 
 class EditName(Base):
     new_name: str = Field(min_length=3, max_length=15, pattern=r"^[a-zA-Zа-яА-Я\s\-']+$")
 
 class Delete(Base):
-    password: str = Field(min_length=8, max_length=25, pattern=r'^[a-zA-Z0-9@#$%^&+=]+$')
+    password: str = Field(min_length=8, max_length=25, pattern = r'^[a-zA-Z0-9_@#$%^&+=]+$')
 
 
 class SearchUsers(PaginationParams):
