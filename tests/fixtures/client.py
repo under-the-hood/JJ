@@ -46,3 +46,8 @@ async def second_applicant_client(test_session):
 async def tenant_client(test_session):
     async with create_client("tenant", "tenant_account@example.com", test_session) as ac:
         yield ac
+
+@pytest.fixture
+async def second_tenant_client(test_session):
+    async with create_client("tenant", "second_tenant_account@example.com", test_session) as ac:
+        yield ac
