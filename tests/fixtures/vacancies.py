@@ -2,6 +2,15 @@ import pytest
 
 
 @pytest.fixture
+def valid_vacancy_payload():
+    return {
+        "title": "Python developer",
+        "compensation": 500000,
+        "city": "Almaty"
+    }
+
+
+@pytest.fixture
 async def create_vacancy(tenant_client):
     new_vacancy = {
         "title": "Python developer",
