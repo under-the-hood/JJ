@@ -2,6 +2,13 @@ import pytest
 
 
 @pytest.fixture
+def valid_invitation_payload(create_vacancy):
+    return {
+        "vacancy_id": create_vacancy,
+        "cover_letter": "Hello! We invite you to an interview"
+    }
+
+@pytest.fixture
 def send_interview_invitation(tenant_client, create_resume, create_vacancy):
     async def create_invitation():
         json = {
