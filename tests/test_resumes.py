@@ -45,13 +45,13 @@ async def test_delete_resume(applicant_client, create_resume):
 
 
 @pytest.mark.asyncio
-async def test_create_resume_as_tenant_403(tenant_client, valid_resume_payload):
+async def test_create_resume_as_tenant(tenant_client, valid_resume_payload):
     response = await tenant_client.post("/resumes", json=valid_resume_payload)
     assert response.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_update_resume_as_other_applicant_403(second_applicant_client, create_resume):
+async def test_update_resume_as_not_owner(second_applicant_client, create_resume):
     upadted_resume = {
         "new_title": "Python Dev"
     }
@@ -61,13 +61,13 @@ async def test_update_resume_as_other_applicant_403(second_applicant_client, cre
 
 
 @pytest.mark.asyncio
-async def test_delete_resume_as_other_applicant_403(second_applicant_client, create_resume):
+async def test_delete_resume_as_not_owner(second_applicant_client, create_resume):
     delete_other_resume = await second_applicant_client.request("DELETE", f"/resumes/{create_resume}")
     assert delete_other_resume.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_update_non_existent_resume_404(applicant_client):
+async def test_update_nonexistent_resume(applicant_client):
     resume_id = 999999999
 
     upadted_resume = {
@@ -79,7 +79,7 @@ async def test_update_non_existent_resume_404(applicant_client):
 
 
 @pytest.mark.asyncio
-async def test_delete_non_existent_resume_404(applicant_client):
+async def test_delete_nonexistent_resume_404(applicant_client):
     resume_id = 999999999
 
     response = await applicant_client.request("DELETE", f"/resumes/{resume_id}")
@@ -93,7 +93,7 @@ async def test_create_resume_without_auth(client, valid_resume_payload):
 
 
 @pytest.mark.asyncio
-async def test_create_resume_with_invalid_data(applicant_client):
+async def test_create_resume_with_invalid_fields(applicant_client):
     new_resume = {
         "title": "py",
         "about": "I'm a <>junior FastAPI developer",
