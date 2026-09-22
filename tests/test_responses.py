@@ -66,3 +66,80 @@ async def test_set_status(tenant_client, send_response_to_vacancy):
     response = await tenant_client.patch(f"/responses/{response_id}/status", json=status)
 
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_send_response_duplicate(applicant_client, create_vacancy, valid_response_payload):
+    first_response = await applicant_client.post(f"/responses/vacancies/{create_vacancy}", json=valid_response_payload)
+    assert first_response.status_code == 200
+
+    second_response = await applicant_client.post(f"/responses/vacancies/{create_vacancy}", json=valid_response_payload)
+    assert second_response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_send_response_without_auth(client, create_vacancy, valid_response_payload):
+    response = await client.post(f"/responses/vacancies/{create_vacancy}", json=valid_response_payload)
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_send_response_as_not_applicant(tenant_client, create_vacancy, valid_response_payload):
+    response = await tenant_client.post(f"/responses/vacancies/{create_vacancy}", json=valid_response_payload)
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_search_responses_without_vacancy_id(tenant_client):
+    response = await tenant_client.get("/responses")
+    assert response.status_code == 400
+
+
+@pytest.mark.asycnio
+async def test_search_responses_as_not_vacancy_owner(second_tenant_client, create_vacancy):
+    json = {
+        "vacancy_id": create_vacancy
+    }
+
+    response = await second_tenant_client.get("/responses", params=json)
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_delete_response_as_not_owner(second_applicant_client, send_response_to_vacancy):
+    response_id = await send_response_to_vacancy()
+
+    response = await second_applicant_client.request("DELETE", f"/responses/{response_id}")
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_set_status_as_not_owner(second_tenant_client, send_response_to_vacancy):
+    response_id = await send_response_to_vacancy()
+
+    status = {
+        "status": "hired"
+    }
+
+    response = await second_tenant_client.patch(f"/responses/{response_id}/status", json=status)
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_send_response_vacancy_not_found(applicant_client, valid_response_payload):
+    vacancy_id = 999999
+
+    response = await applicant_client.post(f"/responses/vacancies/{vacancy_id}", json=valid_response_payload)
+    assert response.status_code == 404
+
+
+@pytest.mark.asycnio
+async def test_set_invalid_status(tenant_client, send_response_to_vacancy):
+    response_id = await send_response_to_vacancy()
+
+    status = {
+        "status": "invalid status"
+    }
+
+    response = await tenant_client.patch(f"/responses/{response_id}/status", json=status)
+    assert response.status_code == 422

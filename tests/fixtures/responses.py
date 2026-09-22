@@ -2,6 +2,13 @@ import pytest
 
 
 @pytest.fixture
+def valid_response_payload(create_resume):
+    return {
+            "resume_id": create_resume,
+            "cover_letter": "Hello! I want work in your company!",
+        }
+
+@pytest.fixture
 def send_response_to_vacancy(applicant_client, create_vacancy, create_resume):
     async def create_response():
         cover_letter = {
