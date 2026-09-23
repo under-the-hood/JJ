@@ -18,9 +18,7 @@ async def check_response(session: session_dep, response_id: int):
     return current_response
 
 
-async def check_response_owner_or_admin(current_response: Response = Depends(check_response), current_user: User = Depends(check_user)):
-    if current_user.role == Role.admin:
-        return current_response
+async def check_response_ownership(current_response: Response = Depends(check_response), current_user: User = Depends(check_user)):
     if current_user.role == Role.tenant:
         if current_response.vacancy.tenant_id != current_user.id:
             raise HTTPException(status_code=403, detail="It's not your vacancy")
@@ -29,3 +27,14 @@ async def check_response_owner_or_admin(current_response: Response = Depends(che
             raise HTTPException(status_code=403, detail="It's not your resume")
 
     return current_response
+
+
+async def check_response_owner(current_response: Response = Depends(check_response), current_user: User = Depends(check_user)):
+    return await check_response_ownership(current_response, current_user)
+
+
+async def check_response_owner_or_admin(current_response: Response = Depends(check_response), current_user: User = Depends(check_user)):
+    if current_user.role == Role.admin:
+        return current_response
+
+    return await check_response_ownership(current_response, current_user)

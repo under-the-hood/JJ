@@ -4,7 +4,7 @@ from redis.asyncio import Redis
 import app.backend.services.responses as response_service
 from app.backend.database.database import session_dep
 from app.backend.database.redis_database import get_redis
-from app.backend.dependencies.response import check_response_owner_or_admin
+from app.backend.dependencies.response import check_response_owner, check_response_owner_or_admin
 from app.backend.dependencies.resume import check_applicant, check_applicant_or_admin
 from app.backend.dependencies.vacancy import (
     check_tenant,
@@ -50,6 +50,6 @@ async def delete_response(session: session_dep, current_response: Response = Dep
 set_status_limiter = rate_limiter_factory("/responses/{response_id}/status", 5, 60)
 
 @router.patch('/{response_id}/status', dependencies=[Depends(set_status_limiter)])
-async def set_status(session: session_dep, data: SetStatus, current_response: Response = Depends(check_response_owner_or_admin), current_user: User = Depends(check_tenant), redis: Redis = Depends(get_redis)):
+async def set_status(session: session_dep, data: SetStatus, current_response: Response = Depends(check_response_owner), current_user: User = Depends(check_tenant), redis: Redis = Depends(get_redis)):
     await response_service.set_status(session=session, data=data, current_response=current_response, current_user=current_user, redis=redis)
     return {'message': 'Status was updated', "response_id": current_response.id}
