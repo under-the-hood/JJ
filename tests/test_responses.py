@@ -95,7 +95,7 @@ async def test_search_responses_without_vacancy_id(tenant_client):
     assert response.status_code == 400
 
 
-@pytest.mark.asycnio
+@pytest.mark.asyncio
 async def test_search_responses_as_not_vacancy_owner(second_tenant_client, create_vacancy):
     json = {
         "vacancy_id": create_vacancy
@@ -133,7 +133,7 @@ async def test_send_response_vacancy_not_found(applicant_client, valid_response_
     assert response.status_code == 404
 
 
-@pytest.mark.asycnio
+@pytest.mark.asyncio
 async def test_set_invalid_status(tenant_client, send_response_to_vacancy):
     response_id = await send_response_to_vacancy()
 

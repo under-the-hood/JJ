@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 import app.backend.services.invitations as invitation_service
 from app.backend.database.database import session_dep
-from app.backend.dependencies.invitation import check_invitation_owner_or_admin
+from app.backend.dependencies.invitation import check_invitation_owner, check_invitation_owner_or_admin
 from app.backend.dependencies.resume import check_applicant, check_resume
 from app.backend.dependencies.user import check_user
 from app.backend.dependencies.vacancy import check_tenant, check_tenant_or_admin
@@ -29,7 +29,7 @@ async def send_interview_invitation(session: session_dep, data: InvitationSchema
 set_status_limiter = rate_limiter_factory("/invitations/{invitation_id}/status", 5, 60)
 
 @router.patch("/{invitation_id}/status")
-async def set_status(session: session_dep, data: SetStatus, current_invitation: Invitation = Depends(check_invitation_owner_or_admin), current_user: User = Depends(check_applicant)):
+async def set_status(session: session_dep, data: SetStatus, current_invitation: Invitation = Depends(check_invitation_owner), current_user: User = Depends(check_applicant)):
     await invitation_service.set_status(session, data, current_invitation, current_user)
     return {"message": "Invitation status was updated"}
 
