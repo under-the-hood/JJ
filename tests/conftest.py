@@ -1,5 +1,6 @@
 from tests.fixtures import meilisearch_container
 
+
 def pytest_sessionfinish(session, exitstatus):
     meilisearch_container.stop()
 

@@ -111,7 +111,7 @@ async def test_admin_delete_other_admin(admin_client, second_admin_client):
 @pytest.mark.asyncio
 async def test_update_nonexistent_user(admin_client, valid_update_user_payload):
     user_id = 99999
-    
+
     response = await admin_client.patch(f"/admin/users/{user_id}", json=valid_update_user_payload)
     assert response.status_code == 404
 

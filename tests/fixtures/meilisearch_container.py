@@ -6,7 +6,6 @@ from testcontainers.core.container import DockerContainer
 
 import app.backend.utils.meilisearch.client as meili_client
 
-
 meili_container = (
     DockerContainer("getmeili/meilisearch:v1.6")
     .with_env("MEILI_MASTER_KEY", "test_meili_key")
