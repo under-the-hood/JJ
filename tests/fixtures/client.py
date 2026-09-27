@@ -30,6 +30,11 @@ async def admin_client(test_session):
     async with create_client("admin", "admin_account@example.com", test_session) as ac:
         yield ac
 
+@pytest.fixture
+async def second_admin_client(test_session):
+    async with create_client("admin", "second_admin_account@example.com", test_session) as ac:
+        yield ac
+
 
 @pytest.fixture
 async def applicant_client(test_session):

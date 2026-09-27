@@ -2,6 +2,7 @@ import pytest
 
 from app.backend.models.user import User
 from app.backend.utils.meilisearch.user import sync_user
+from tests.fixtures.users import get_id
 
 
 @pytest.mark.asyncio
@@ -32,17 +33,10 @@ async def test_search_users(admin_client, applicant_client, test_session):
 
 
 @pytest.mark.asyncio
-async def test_update_user(admin_client, applicant_client):
-    user_info = await applicant_client.get("/users/me")
-    user_id = user_info.json()["info"]["id"]
+async def test_update_user(admin_client, applicant_client, valid_update_user_payload):
+    user_id = await get_id(applicant_client)
 
-    updated_user = {
-        "new_name": "Artur",
-        "new_role": "tenant"
-    }
-
-    response = await admin_client.patch(f"admin/users/{user_id}", json=updated_user)
-
+    response = await admin_client.patch(f"admin/users/{user_id}", json=valid_update_user_payload)
     assert response.status_code == 200
 
 
@@ -64,3 +58,83 @@ async def test_delete_user(admin_client, applicant_client):
     response = await admin_client.request("DELETE", f"/admin/users/{user_id}")
 
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_update_user_as_not_admin(applicant_client, valid_update_user_payload):
+    user_id = await get_id(applicant_client)
+
+    response = await applicant_client.patch(f"/admin/users/{user_id}", json=valid_update_user_payload)
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_delete_user_as_not_admin(applicant_client):
+    user_id = await get_id(applicant_client)
+
+    response = await applicant_client.request("DELETE", f"/admin/users/{user_id}")
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_admin_update_self(admin_client, valid_update_user_payload):
+    user_id = await get_id(admin_client)
+
+    response = await admin_client.patch(f"/admin/users/{user_id}", json=valid_update_user_payload)
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_admin_delete_self(admin_client):
+    user_id = await get_id(admin_client)
+
+    response = await admin_client.request("DELETE", f"/admin/users/{user_id}")
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_admin_update_other_admin(admin_client, second_admin_client, valid_update_user_payload):
+    admin_id = await get_id(admin_client)
+
+    response = await second_admin_client.patch(f"/admin/users/{admin_id}", json=valid_update_user_payload)
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_admin_delete_other_admin(admin_client, second_admin_client):
+    admin_id = await get_id(admin_client)
+
+    response = await second_admin_client.request("DELETE", f"/admin/users/{admin_id}")
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_update_nonexistent_user(admin_client, valid_update_user_payload):
+    user_id = 99999
+    
+    response = await admin_client.patch(f"/admin/users/{user_id}", json=valid_update_user_payload)
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_nonexistent_user(admin_client):
+    user_id = 99999
+
+    response = await admin_client.request("DELETE", f"/admin/users/{user_id}")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_update_user_without_auth(client, applicant_client, valid_update_user_payload):
+    user_id = await get_id(applicant_client)
+
+    response = await client.patch(f"/admin/users/{user_id}", json=valid_update_user_payload)
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_delete_user_without_auth(client, applicant_client):
+    user_id = await get_id(applicant_client)
+
+    response = await client.request("DELETE", f"/admin/users/{user_id}")
+    assert response.status_code == 401
