@@ -1,4 +1,4 @@
-import fakeredis.aioredis
+import fakeredis
 import pytest
 
 from app.backend.database.redis_database import get_redis
@@ -7,7 +7,7 @@ from app.main import app
 
 @pytest.fixture(scope="session")
 async def test_redis_server():
-    return fakeredis.aioredis.FakeServer()
+    return fakeredis.FakeServer()
 
 
 @pytest.fixture(autouse=True)
