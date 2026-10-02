@@ -19,8 +19,8 @@ async def search_users(data: SearchUsers = Depends(), admin: User = Depends(chec
 
 @router.patch("/{user_id}")
 async def update_user(session: session_dep, data: UpdateUser, current_user: User = Depends(check_user_by_id), admin: User = Depends(check_admin), redis: Redis = Depends(get_redis)):
-    await admin_users.update_user(session=session, data=data, current_user=current_user, admin=admin, redis = redis)
-    return {"message": "User was updated", "user": current_user}
+    user = await admin_users.update_user(session=session, data=data, current_user=current_user, admin=admin, redis = redis)
+    return {"message": "User was updated", "user": user}
 
 
 @router.delete('/{user_id}')

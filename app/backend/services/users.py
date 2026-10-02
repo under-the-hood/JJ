@@ -27,7 +27,6 @@ from app.backend.utils.redis_cache import get_cache_key
 
 
 async def create_user(session: AsyncSession, data: CreateUser, redis: Redis):
-
     new_user = User(
         email = data.email,
         role = Role(data.role.value),
@@ -54,11 +53,10 @@ async def create_user(session: AsyncSession, data: CreateUser, redis: Redis):
     send_mail_task.delay(mail.id)
     sync_user_task.delay(new_user.id)
 
-    return new_user
+    return info_adapter.dump_python(info_adapter.validate_python(new_user), mode="json")
 
 
 async def login(session: AsyncSession, data: Login, response: Response):
-
     query = await session.execute(select(User).where(User.email == data.email))
     current_user = query.scalar_one_or_none()
 
@@ -72,7 +70,6 @@ async def login(session: AsyncSession, data: Login, response: Response):
 
 
 async def get_info(current_user: User, redis: Redis):
-
     cache_key = get_cache_key("user", current_user.id, "profile")
     cached_info = await redis.get(cache_key)
 
@@ -110,7 +107,6 @@ async def update_password(session: AsyncSession, data: EditPassword, current_use
 
 
 async def update_name(session: AsyncSession, data: EditName, current_user: User, redis: Redis):
-
     current_user.name = data.new_name
 
     await session.commit()
@@ -118,9 +114,10 @@ async def update_name(session: AsyncSession, data: EditName, current_user: User,
 
     await clear_user_profile_cache(redis, current_user.id)
 
+    return info_adapter.dump_python(info_adapter.validate_python(current_user), mode="json")
+
 
 async def delete_user(session: AsyncSession, data: Delete, current_user: User, redis: Redis):
-
     await session.delete(current_user)
     await session.commit()
 

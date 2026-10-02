@@ -5,7 +5,7 @@ from app.backend.models.user import Role, User
 
 def validate_admin_action(current_user: User, current_admin: User):
     if current_user.id == current_admin.id or current_user.role == Role.admin:
-        raise HTTPException(status_code=403, detail='You can not edit/delete your/others admin account')
+        raise HTTPException(status_code=403, detail='You can not update/delete your/others admin account')
 
     return current_admin
 

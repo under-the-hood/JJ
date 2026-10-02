@@ -9,7 +9,7 @@ from app.backend.helpers.celery_tasks.meilisearch.user import (
 from app.backend.helpers.validator import validate_admin_action
 from app.backend.models.user import User
 from app.backend.schemas.admin import UpdateUser
-from app.backend.schemas.user import SearchUsers
+from app.backend.schemas.user import SearchUsers, info_adapter
 from app.backend.utils.meilisearch.client import meili
 
 
@@ -50,6 +50,8 @@ async def update_user(session: AsyncSession, data: UpdateUser, current_user: Use
 
     sync_user_task.delay(current_user.id)
     await clear_user_profile_cache(redis, current_user.id)
+
+    return info_adapter.dump_python(info_adapter.validate_python(current_user), mode="json")
 
 
 async def delete_user(session: AsyncSession, current_user: User, admin: User, redis: Redis):
