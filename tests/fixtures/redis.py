@@ -12,13 +12,11 @@ async def test_redis_server():
 
 @pytest.fixture(autouse=True)
 async def get_test_redis(test_redis_server):
-
     test_redis_conn = fakeredis.aioredis.FakeRedis(
         server=test_redis_server,
         decode_responses=True)
 
     app.dependency_overrides[get_redis] = lambda: test_redis_conn
-
     yield test_redis_conn
 
     await test_redis_conn.flushall()

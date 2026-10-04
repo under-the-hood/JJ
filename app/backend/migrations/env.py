@@ -15,6 +15,12 @@ if config.config_file_name is not None:
 
 from app.backend.config import settings
 from app.backend.models.base import Base
+from app.backend.models.user import User
+from app.backend.models.vacancy import Vacancy
+from app.backend.models.resume import Resume
+from app.backend.models.response import Response
+from app.backend.models.invitations import Invitation
+from app.backend.models.mails import Mails
 
 config.set_main_option('sqlalchemy.url', f"{settings.database}?async_fallback=True")
 

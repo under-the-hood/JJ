@@ -5,6 +5,7 @@ from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
+from sqlalchemy.exc import IntegrityError
 
 from app.backend.helpers.cache import clear_user_responses_cache, get_cache_key
 from app.backend.helpers.celery_tasks.meilisearch.response import (
@@ -30,8 +31,9 @@ from app.backend.utils.meilisearch.client import meili
 async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, current_vacancy: Vacancy, current_user: User, redis: Redis):
     query_check = await session.execute(select(Response).where(Response.resume_id == data.resume_id, Response.vacancy_id == current_vacancy.id))
 
+    duplicate_response_error = HTTPException(status_code=400, detail='You have already applied to this vacancy with this resume')
     if query_check.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail='You have already applied to this vacancy with this resume')
+        raise duplicate_response_error
 
     response = Response(**data.model_dump())
     response.applicant_id = current_user.id
@@ -48,7 +50,13 @@ async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, 
     )
 
     session.add(mail)
-    await session.commit()
+
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise duplicate_response_error
+    
     await session.refresh(mail)
 
     await clear_user_responses_cache(redis, current_user.id)
@@ -100,7 +108,6 @@ async def search_responses(session: AsyncSession, data: SearchResponses, current
 
 
 async def get_my_responses(session: AsyncSession, current_user: User, redis: Redis):
-
     cache_key = get_cache_key("user", current_user.id, "user_responses")
     cached_responses = await redis.get(cache_key)
 

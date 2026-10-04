@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.backend.models.base import Base
@@ -16,6 +16,7 @@ class ResponseStatus(enum.Enum):
 
 class Response(Base):
     __tablename__ = 'responses'
+    __table_args__ = (UniqueConstraint("resume_id", "vacancy_id"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     applicant_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
