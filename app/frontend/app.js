@@ -240,7 +240,7 @@ function renderLogin() {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
     try {
-      await post("/users/sign_in", { email, password });
+      await post("/users/login", { email, password });
       await fetchMe();
       toast("Welcome");
       setView(defaultViewForRole(state.user.role));
@@ -279,7 +279,7 @@ function renderRegister() {
       repeat_password: document.getElementById("repeat_password").value,
     };
     try {
-      await post("/users/sign_up", body);
+      await post("/users/register", body);
       toast("Account created, please sign in now");
       setView("login");
     } catch (err) { reportError(err); }

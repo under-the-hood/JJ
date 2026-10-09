@@ -8,8 +8,8 @@ def init_meilisearch():
     create_resumes_task = meili.create_index("resumes", {"primaryKey": "id"})
     meili.wait_for_task(create_resumes_task.task_uid)
 
-    create_users_task = meili.create_index("users", {"primaryKey": "id"})
-    meili.wait_for_task(create_users_task.task_uid)
+    registers_task = meili.create_index("users", {"primaryKey": "id"})
+    meili.wait_for_task(registers_task.task_uid)
 
     create_responses_task = meili.create_index("responses", {"primaryKey": "id"})
     meili.wait_for_task(create_responses_task.task_uid)

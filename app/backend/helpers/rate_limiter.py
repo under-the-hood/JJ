@@ -28,9 +28,14 @@ def rate_limiter_factory(endpoint: str, max_requests: int, window_seconds: int):
     return dependency
 
 
+def get_client_ip(request: Request) -> str:
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.client.host
+
 def rate_limiter_factory_by_ip(endpoint: str, max_requests: int, window_seconds: int):
     async def dependency(request: Request, rate_limiter: Annotated[RateLimiter, Depends(get_rate_limiter)]):
-
-        await check_limit(rate_limiter, request.client.host, endpoint, max_requests, window_seconds)
+        await check_limit(rate_limiter, get_client_ip(request), endpoint, max_requests, window_seconds)
 
     return dependency

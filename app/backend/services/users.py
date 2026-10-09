@@ -1,6 +1,7 @@
 import json
+import time
 
-from fastapi import HTTPException, Response
+from fastapi import HTTPException, Response, Cookie
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,7 +27,7 @@ from app.backend.utils.hash import hashing_password, pwd_context
 from app.backend.utils.redis_cache import get_cache_key
 
 
-async def create_user(session: AsyncSession, data: CreateUser, redis: Redis):
+async def register(session: AsyncSession, data: CreateUser, redis: Redis):
     new_user = User(
         email = data.email,
         role = Role(data.role.value),
@@ -67,6 +68,21 @@ async def login(session: AsyncSession, data: Login, response: Response):
     security.set_access_cookies(token, response=response)
 
     return token
+
+
+async def logout(response: Response, token: Cookie, redis: Redis):
+    if token:
+        payload = security._decode_token(token)
+        
+        ttl = int(payload.exp.timestamp() - time.time())
+        if ttl > 0:     #if the TTL has not expired
+            blacklist = await redis.set(f"blacklist:{payload.jti}", "1", ex=ttl)
+            if blacklist:
+                print(f"\nyes\n")
+
+        response.delete_cookie(security.config.JWT_ACCESS_COOKIE_NAME)
+        if security.config.JWT_COOKIE_CSRF_PROTECT:
+            response.delete_cookie("csrf_access_token")
 
 
 async def get_info(current_user: User, redis: Redis):

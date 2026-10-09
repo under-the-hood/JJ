@@ -15,7 +15,7 @@ async def test_search_users(admin_client, applicant_client, test_session):
         "name": "FindMe"
     }
 
-    user_response = await applicant_client.post("/users/sign_up", json=user_for_search)
+    user_response = await applicant_client.post("/users/register", json=user_for_search)
     assert user_response.status_code == 200
 
     user_id = user_response.json()["user"]["id"]
@@ -51,7 +51,7 @@ async def test_delete_user(admin_client, applicant_client):
         "name": "DeleteMe"
     }
 
-    user_response = await applicant_client.post("/users/sign_up", json=user_for_delete)
+    user_response = await applicant_client.post("/users/register", json=user_for_delete)
     assert user_response.status_code == 200
 
     user_id = user_response.json()["user"]["id"]

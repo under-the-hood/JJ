@@ -3,9 +3,9 @@ import json
 from fastapi import HTTPException
 from redis.asyncio import Redis
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from sqlalchemy.exc import IntegrityError
 
 from app.backend.helpers.cache import clear_user_responses_cache, get_cache_key
 from app.backend.helpers.celery_tasks.meilisearch.response import (
@@ -56,7 +56,7 @@ async def send_response_to_vacancy(session: AsyncSession, data: ResponseSchema, 
     except IntegrityError:
         await session.rollback()
         raise duplicate_response_error
-    
+
     await session.refresh(mail)
 
     await clear_user_responses_cache(redis, current_user.id)

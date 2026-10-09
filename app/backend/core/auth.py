@@ -1,3 +1,4 @@
+import os
 from datetime import timedelta
 
 from authx import AuthX, AuthXConfig
@@ -13,5 +14,7 @@ config.JWT_COOKIE_CSRF_PROTECT=False
 config.JWT_COOKIE_HTTP_ONLY = True
 config.JWT_COOKIE_SECURE = False
 config.JWT_COOKIE_SAMESITE = "lax"
+config.JWT_COOKIE_SECURE = os.getenv("MODE") == "PROD"
+config.JWT_COOKIE_CSRF_PROTECT = True
 
 security = AuthX(config = config)

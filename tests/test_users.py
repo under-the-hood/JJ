@@ -54,67 +54,67 @@ async def test_delete_user(tenant_client):
 
 
 @pytest.mark.asyncio
-async def test_sign_up_with_existing_email(client, valid_user_payload):
-    first_response = await client.post("/users/sign_up", json=valid_user_payload)
+async def test_register_with_existing_email(client, valid_user_payload):
+    first_response = await client.post("/users/register", json=valid_user_payload)
     assert first_response.status_code == 200
 
-    second_response = await client.post("/users/sign_up", json=valid_user_payload)
+    second_response = await client.post("/users/register", json=valid_user_payload)
     assert second_response.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_sign_up_with_mismatched_passwords(client, valid_user_payload):
+async def test_register_with_mismatched_passwords(client, valid_user_payload):
     new_user = {
         **valid_user_payload,
         "repeat_password": "123456789"
     }
 
-    response = await client.post("/users/sign_up", json=new_user)
+    response = await client.post("/users/register", json=new_user)
     assert response.status_code == 400
 
 
 @pytest.mark.asyncio
-async def test_sign_up_with_invalid_email(client, valid_user_payload):
+async def test_register_with_invalid_email(client, valid_user_payload):
     new_user = {
         **valid_user_payload,
         "email": "--new_account@example.com--"
     }
 
-    response = await client.post("/users/sign_up", json=new_user)
+    response = await client.post("/users/register", json=new_user)
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_sign_up_with_too_short_password(client, valid_user_payload):
+async def test_register_with_too_short_password(client, valid_user_payload):
     new_user = {
         **valid_user_payload,
         "password": "123",
         "repeat_password": "123"
     }
 
-    response = await client.post("/users/sign_up", json=new_user)
+    response = await client.post("/users/register", json=new_user)
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_sign_in_with_wrong_password(client):
-    sign_in = {
+async def test_login_with_wrong_password(client):
+    login = {
         "email": "applicant_account@example.com",
         "password": "wrong_password"
     }
 
-    response = await client.post("/users/sign_in", json=sign_in)
+    response = await client.post("/users/login", json=login)
     assert response.status_code == 401
 
 
 @pytest.mark.asyncio
-async def test_sign_in_with_nonexistent_email(client):
-    sign_in = {
+async def test_login_with_nonexistent_email(client):
+    login = {
         "email": "nonexistent_email@example.com",
         "password": "12345678"
     }
 
-    response = await client.post("/users/sign_in", json=sign_in)
+    response = await client.post("/users/login", json=login)
     assert response.status_code == 401
 
 

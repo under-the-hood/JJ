@@ -14,7 +14,7 @@ async def get_token(client, role, email, session):
         "role": reg_role
     }
 
-    await client.post("/users/sign_up", json=new_user)
+    await client.post("/users/register", json=new_user)
 
     #Change role in database for admin
     if role == "admin":
@@ -24,9 +24,13 @@ async def get_token(client, role, email, session):
         admin_user = (await session.execute(select(User).where(User.email == email))).scalar_one()
         await session.refresh(admin_user)
 
-    login_response = await client.post('/users/sign_in', json={
+    login_response = await client.post('/users/login', json={
         'email': email,
         'password': new_user["password"]
     })
-
+    
+    csrf_token = client.cookies.get("csrf_access_token")
+    if csrf_token:
+        client.headers["X-CSRF-TOKEN"] = csrf_token
+    
     return login_response.json().get("token")

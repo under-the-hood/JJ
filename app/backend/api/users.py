@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, Cookie
 from redis.asyncio import Redis
 
 import app.backend.services.users as user_service
@@ -20,20 +20,26 @@ from app.backend.schemas.user import CreateUser, Delete, EditName, EditPassword,
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-sign_up_limit = rate_limiter_factory_by_ip("/users/sign_up", 3, 300)
+register_limit = rate_limiter_factory_by_ip("/users/register", 3, 300)
 
-@router.post('/sign_up', dependencies=[Depends(sign_up_limit)])
-async def sign_up(session: session_dep, data: CreateUser = Depends(validate_user_registration), redis: Redis = Depends(get_redis)):
-    user = await user_service.create_user(session=session, data=data, redis=redis)
+@router.post('/register', dependencies=[Depends(register_limit)])
+async def register(session: session_dep, data: CreateUser = Depends(validate_user_registration), redis: Redis = Depends(get_redis)):
+    user = await user_service.register(session=session, data=data, redis=redis)
     return {'message': 'User was created', "user": user}
 
 
-sign_in_limit = rate_limiter_factory_by_ip("/users/sign_in", 5, 300)
+login_limit = rate_limiter_factory_by_ip("/users/login", 5, 300)
 
-@router.post('/sign_in', dependencies=[Depends(sign_in_limit)])
-async def sign_in(session: session_dep, data: Login, response: Response):
+@router.post('/login', dependencies=[Depends(login_limit)])
+async def login(session: session_dep, data: Login, response: Response):
     access_token = await user_service.login(session=session, data=data, response=response)
     return {'message': 'Login succesfull', 'token': access_token}
+
+
+@router.post("/logout")
+async def logout(response: Response, token: str = Cookie(default=None), redis: Redis = Depends(get_redis)):
+    await user_service.logout(response=response, token=token, redis=redis)
+    return {"message": "logged out"}
 
 
 get_info_limit = rate_limiter_factory("/users/me", 30, 60)
