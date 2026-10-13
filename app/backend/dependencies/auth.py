@@ -1,4 +1,4 @@
-from fastapi import Cookie, HTTPException, Header, Depends
+from fastapi import Cookie, Depends, Header, HTTPException
 from redis.asyncio import Redis
 
 from app.backend.core.auth import security

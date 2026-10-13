@@ -31,3 +31,10 @@ def valid_update_user_payload():
 async def get_id(client):
     response = await client.get("/users/me")
     return response.json()["info"]["id"]
+
+
+def session_headers(client):
+    return {
+        "Cookie": f"token={client.cookies.get('token')}",
+        "X-CSRF-TOKEN": client.cookies.get("csrf_access_token"),
+    }

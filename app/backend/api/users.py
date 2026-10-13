@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response, Cookie
+from fastapi import APIRouter, Cookie, Depends, Response
 from redis.asyncio import Redis
 
 import app.backend.services.users as user_service

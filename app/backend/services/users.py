@@ -1,7 +1,7 @@
 import json
 import time
 
-from fastapi import HTTPException, Response, Cookie
+from fastapi import Cookie, HTTPException, Response
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -73,12 +73,10 @@ async def login(session: AsyncSession, data: Login, response: Response):
 async def logout(response: Response, token: Cookie, redis: Redis):
     if token:
         payload = security._decode_token(token)
-        
+
         ttl = int(payload.exp.timestamp() - time.time())
         if ttl > 0:     #if the TTL has not expired
-            blacklist = await redis.set(f"blacklist:{payload.jti}", "1", ex=ttl)
-            if blacklist:
-                print(f"\nyes\n")
+            await redis.set(f"blacklist:{payload.jti}", "1", ex=ttl)
 
         response.delete_cookie(security.config.JWT_ACCESS_COOKIE_NAME)
         if security.config.JWT_COOKIE_CSRF_PROTECT:
