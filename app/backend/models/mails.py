@@ -8,7 +8,7 @@ class Mails(Base):
     __tablename__ = "mails"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    recipient_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    recipient_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     subject: Mapped[str]
     body: Mapped[str]
 

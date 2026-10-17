@@ -8,7 +8,7 @@ class Resume(Base):
     __tablename__ = 'resumes'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    applicant_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
+    applicant_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), index=True)
     title: Mapped[str]
     about: Mapped[str]
     stack: Mapped[str]

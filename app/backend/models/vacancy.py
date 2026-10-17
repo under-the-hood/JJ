@@ -8,7 +8,7 @@ class Vacancy(Base):
     __tablename__ = 'vacancies'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    tenant_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
+    tenant_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), index=True)
     title: Mapped[str]
     compensation: Mapped[int]
     city: Mapped[str]

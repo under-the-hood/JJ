@@ -19,9 +19,9 @@ class Response(Base):
     __table_args__ = (UniqueConstraint("resume_id", "vacancy_id"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    applicant_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
-    resume_id: Mapped[int] = mapped_column(ForeignKey('resumes.id', ondelete='CASCADE'))
-    vacancy_id: Mapped[int] = mapped_column(ForeignKey('vacancies.id', ondelete='CASCADE'))
+    applicant_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), index=True)
+    resume_id: Mapped[int] = mapped_column(ForeignKey('resumes.id', ondelete='CASCADE'), index=True)
+    vacancy_id: Mapped[int] = mapped_column(ForeignKey('vacancies.id', ondelete='CASCADE'), index=True)
     cover_letter: Mapped[str | None] = mapped_column(default=None)
     status: Mapped[ResponseStatus] = mapped_column(default=ResponseStatus.send)
 

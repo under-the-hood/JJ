@@ -1,11 +1,11 @@
 import json
 import time
 
+from authx.exceptions import JWTDecodeError
 from fastapi import Cookie, HTTPException, Response
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from authx.exceptions import JWTDecodeError
 
 from app.backend.core.auth import security
 from app.backend.helpers.cache import clear_user_profile_cache
