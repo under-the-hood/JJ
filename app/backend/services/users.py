@@ -5,6 +5,7 @@ from fastapi import Cookie, HTTPException, Response
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from authx.exceptions import JWTDecodeError
 
 from app.backend.core.auth import security
 from app.backend.helpers.cache import clear_user_profile_cache
@@ -72,15 +73,19 @@ async def login(session: AsyncSession, data: Login, response: Response):
 
 async def logout(response: Response, token: Cookie, redis: Redis):
     if token:
-        payload = security._decode_token(token)
+        try:
+            payload = security._decode_token(token)
+        except JWTDecodeError:
+            payload = None
 
-        ttl = int(payload.exp.timestamp() - time.time())
-        if ttl > 0:     #if the TTL has not expired
-            await redis.set(f"blacklist:{payload.jti}", "1", ex=ttl)
+        if payload is not None:
+            ttl = int(payload.exp.timestamp() - time.time())
+            if ttl > 0:     #if the TTL has not expired
+                await redis.set(f"blacklist:{payload.jti}", "1", ex=ttl)
 
-        response.delete_cookie(security.config.JWT_ACCESS_COOKIE_NAME)
-        if security.config.JWT_COOKIE_CSRF_PROTECT:
-            response.delete_cookie("csrf_access_token")
+    response.delete_cookie(security.config.JWT_ACCESS_COOKIE_NAME)
+    if security.config.JWT_COOKIE_CSRF_PROTECT:
+        response.delete_cookie("csrf_access_token")
 
 
 async def get_info(current_user: User, redis: Redis):
