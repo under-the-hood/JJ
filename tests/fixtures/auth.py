@@ -33,4 +33,4 @@ async def get_token(client, role, email, session):
     if csrf_token:
         client.headers["X-CSRF-TOKEN"] = csrf_token
 
-    return login_response.json().get("token")
+    return login_response.json().get("access_token")

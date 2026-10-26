@@ -13,13 +13,13 @@ async def test_create_user(tenant_client):
 
 @pytest.mark.asyncio
 async def test_logout(tenant_client):
-    assert tenant_client.cookies.get("token") is not None
+    assert tenant_client.cookies.get("access_token") is not None
     assert tenant_client.cookies.get("csrf_access_token") is not None
 
     response = await tenant_client.post("/users/logout")
     assert response.status_code == 200
 
-    assert tenant_client.cookies.get("token") is None
+    assert tenant_client.cookies.get("access_token") is None
     assert tenant_client.cookies.get("csrf_access_token") is None
 
 
@@ -181,7 +181,7 @@ async def test_logout_with_expired_token(applicant_client):
 
 @pytest.mark.asyncio
 async def test_logout_blacklist_ttl(applicant_client, get_test_redis):
-    token_jti = security._decode_token(applicant_client.cookies.get("token")).jti
+    token_jti = security._decode_token(applicant_client.cookies.get("access_token")).jti
 
     await applicant_client.post("/users/logout")
 

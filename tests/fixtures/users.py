@@ -35,6 +35,6 @@ async def get_id(client):
 
 def session_headers(client):
     return {
-        "Cookie": f"token={client.cookies.get('token')}",
+        "Cookie": f"access_token={client.cookies.get('access_token')}",
         "X-CSRF-TOKEN": client.cookies.get("csrf_access_token"),
     }

@@ -1,13 +1,13 @@
 import json
-import time
 
-from authx.exceptions import JWTDecodeError
+from authx import TokenPayload
 from fastapi import Cookie, HTTPException, Response
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.backend.core.auth import security
+from app.backend.helpers.auth import revoke_token
 from app.backend.helpers.cache import clear_user_profile_cache
 from app.backend.helpers.celery_tasks.meilisearch.user import (
     delete_user_task,
@@ -65,27 +65,33 @@ async def login(session: AsyncSession, data: Login, response: Response):
     if not current_user or not pwd_context.verify(data.password, current_user.password):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
 
-    token = security.create_access_token(uid=str(current_user.id))
-    security.set_access_cookies(token, response=response)
+    access_token = security.create_access_token(uid=str(current_user.id))
+    refresh_token = security.create_refresh_token(uid=str(current_user.id))
 
-    return token
+    security.set_access_cookies(access_token, response=response)
+    security.set_refresh_cookies(refresh_token, response=response)
+
+    return access_token, refresh_token
 
 
-async def logout(response: Response, token: Cookie, redis: Redis):
-    if token:
-        try:
-            payload = security._decode_token(token)
-        except JWTDecodeError:
-            payload = None
+async def refresh(response: Response, payload: TokenPayload, redis: Redis):
+    if await redis.exists(f"blacklist:{payload.jti}"):
+        raise HTTPException(status_code=401, detail="Token has been revoked")
 
-        if payload is not None:
-            ttl = int(payload.exp.timestamp() - time.time())
-            if ttl > 0:     #if the TTL has not expired
-                await redis.set(f"blacklist:{payload.jti}", "1", ex=ttl)
+    access_token = security.create_access_token(uid=payload.sub)
+    security.set_access_cookies(access_token, response=response)
 
-    response.delete_cookie(security.config.JWT_ACCESS_COOKIE_NAME)
+    return access_token
+
+
+async def logout(response: Response, access_token: Cookie, refresh_token: Cookie, redis: Redis):
+    await revoke_token(access_token, redis)
+    await revoke_token(refresh_token, redis)
+
+    security.unset_cookies(response=response)
     if security.config.JWT_COOKIE_CSRF_PROTECT:
         response.delete_cookie("csrf_access_token")
+        response.delete_cookie("csrf_refresh_token")
 
 
 async def get_info(current_user: User, redis: Redis):
