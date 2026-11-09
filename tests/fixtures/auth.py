@@ -24,7 +24,7 @@ async def get_token(client, role, email, session):
         admin_user = (await session.execute(select(User).where(User.email == email))).scalar_one()
         await session.refresh(admin_user)
 
-    login_response = await client.post('/users/login', json={
+    login_response = await client.post('/auth/login', json={
         'email': email,
         'password': new_user["password"]
     })
